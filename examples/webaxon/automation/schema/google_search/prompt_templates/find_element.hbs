@@ -1,0 +1,14 @@
+Find the HTML element that best matches this description: "{{description}}"
+
+Return ONLY the __id__ attribute value (just the number, nothing else).
+If you cannot find a matching element, return "NOT_FOUND".
+
+{{#if options}}
+Hints: {{#each options}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
+{{/if}}
+
+<PageHTML>
+{{html}}
+</PageHTML>
+
+Your response (just the __id__ number):

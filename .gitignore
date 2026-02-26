@@ -1,0 +1,52 @@
+# Ignore development and build artifacts
+_dev/
+_archive/
+_runtime/
+_tmp/
+_logs/
+__pycache__/
+_tmp*
+*.pyc
+*.pyo
+*.pyd
+*.so
+*.log
+
+# Ignore pytest-related files
+.pytest_cache/
+.pytest_*
+
+# Ignore IDE/editor configurations
+.idea/
+.idea_*
+
+# Ignore system files
+.DS_Store
+Thumbs.dbnul
+.hypothesis/
+# Build directories
+build/
+dist/
+
+# PyInstaller
+*.spec
+**/goodtime/build/
+**/goodtime/dist/
+
+# Large binary app bundles
+packaged/app/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+**/_knowledge_store/
+
+# Wheel packages
+*.whl
+
+# Dev data (saved HTML snapshots with embedded keys)
+dev_data/
+
+# Test recordings (large screenshot files)
+test_case_recordings/

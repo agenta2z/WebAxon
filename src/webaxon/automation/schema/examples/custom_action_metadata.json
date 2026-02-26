@@ -1,0 +1,61 @@
+{
+  "version": "1.0",
+  "description": "Custom action type metadata example",
+  "actions": [
+    {
+      "name": "click",
+      "default_strategy": "id",
+      "requires_target": true,
+      "supported_args": [],
+      "required_args": [],
+      "description": "Click on a UI element",
+      "selenium_function": "click_element",
+      "allow_follow_up": false,
+      "allow_attachments": false
+    },
+    {
+      "name": "input_text",
+      "default_strategy": "id",
+      "requires_target": true,
+      "supported_args": ["text", "clear_content"],
+      "required_args": ["text"],
+      "description": "Input text into a field",
+      "selenium_function": "input_text",
+      "allow_follow_up": false,
+      "allow_attachments": true
+    },
+    {
+      "name": "visit_url",
+      "default_strategy": "literal",
+      "requires_target": true,
+      "supported_args": [],
+      "required_args": [],
+      "description": "Navigate to a URL",
+      "selenium_function": "visit_url",
+      "allow_follow_up": false,
+      "allow_attachments": false
+    },
+    {
+      "name": "custom_hover",
+      "default_strategy": "css",
+      "requires_target": true,
+      "supported_args": ["duration"],
+      "required_args": [],
+      "description": "Hover over an element for a specified duration",
+      "selenium_function": "hover_element",
+      "allow_follow_up": false,
+      "allow_attachments": false
+    },
+    {
+      "name": "custom_double_click",
+      "default_strategy": "xpath",
+      "requires_target": true,
+      "supported_args": [],
+      "required_args": [],
+      "description": "Double-click on an element",
+      "selenium_function": "double_click_element",
+      "allow_follow_up": false,
+      "allow_attachments": false
+    }
+  ]
+}

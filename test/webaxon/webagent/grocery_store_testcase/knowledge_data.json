@@ -1,0 +1,101 @@
+{
+  "metadata": {
+    "user:[name]": {
+      "entity_type": "user",
+      "properties": {
+        "FirstName": "[first_name]",
+        "LastName": "[last_name]",
+        "Location": "[city], [state], [country]",
+        "ZipCode": "[zip_code]",
+        "PhoneNumber": "[phone_number]",
+        "Family": [
+          {"Relation": "Son", "Age": 9, "FirstName": "[child_first_name]", "LastName": "[child_last_name]"}
+        ]
+      }
+    },
+    "store:safeway": {
+      "entity_type": "store",
+      "properties": {
+        "Name": "Safeway",
+        "URL": "https://www.safeway.com",
+        "MemberEmail": "[email]",
+        "LoginMethod": "google",
+        "DeliveryPolicy": "free delivery for qualifying purchases"
+      }
+    },
+    "store:qfc": {
+      "entity_type": "store",
+      "properties": {
+        "Name": "QFC",
+        "URL": "https://www.qfc.com",
+        "MemberEmail": "[email]",
+        "DeliveryPolicy": "free delivery for qualifying purchases"
+      }
+    },
+    "store:wholefoods": {
+      "entity_type": "store",
+      "properties": {
+        "Name": "Whole Foods",
+        "URL": "https://www.wholefoodsmarket.com",
+        "MemberEmail": "[email]",
+        "MembershipType": "prime"
+      }
+    }
+  },
+  "pieces": [
+    {
+      "piece_id": "safeway-membership",
+      "content": "User is a Safeway member. Frequent customer with free delivery for qualifying purchases. Store URL: https://www.safeway.com",
+      "knowledge_type": "fact",
+      "info_type": "user_profile",
+      "tags": ["grocery", "safeway", "membership"],
+      "entity_id": "user:[name]",
+      "embedding_text": "Safeway grocery store membership account login delivery"
+    },
+    {
+      "piece_id": "qfc-membership",
+      "content": "User is a QFC member. Frequent customer with free delivery for qualifying purchases. Store URL: https://www.qfc.com",
+      "knowledge_type": "fact",
+      "info_type": "user_profile",
+      "tags": ["grocery", "qfc", "membership"],
+      "entity_id": "user:[name]",
+      "embedding_text": "QFC grocery store membership account delivery"
+    },
+    {
+      "piece_id": "wholefoods-membership",
+      "content": "User is a Whole Foods prime member. Store URL: https://www.wholefoodsmarket.com",
+      "knowledge_type": "fact",
+      "info_type": "user_profile",
+      "tags": ["grocery", "wholefoods", "membership", "prime"],
+      "entity_id": "user:[name]",
+      "embedding_text": "Whole Foods grocery store prime membership Amazon"
+    },
+    {
+      "piece_id": "grocery-shopping-procedure",
+      "content": "Grocery Shopping Procedure: 1) Log in to the store if user is a member to apply member pricing and discounts. 2) Find the right store and location using the user's zip code. 3) Add all items to cart, apply all available coupons, and proceed to checkout to view the final price.",
+      "knowledge_type": "procedure",
+      "info_type": "instructions",
+      "tags": ["grocery", "skill", "procedure", "workflow"],
+      "entity_id": null,
+      "embedding_text": "grocery shopping steps procedure workflow login store location cart checkout coupons order buy purchase"
+    }
+  ],
+  "graph": {
+    "nodes": [
+      {"node_id": "user:[name]", "node_type": "user", "label": "[first_name] [last_name]"},
+      {"node_id": "store:safeway", "node_type": "store", "label": "Safeway"},
+      {"node_id": "store:qfc", "node_type": "store", "label": "QFC"},
+      {"node_id": "store:wholefoods", "node_type": "store", "label": "Whole Foods"},
+      {"node_id": "procedure:grocery_shopping", "node_type": "procedure", "label": "Grocery Shopping Procedure"}
+    ],
+    "edges": [
+      {"source_id": "user:[name]", "target_id": "store:safeway", "edge_type": "SHOPS_AT", "properties": {"piece_id": "safeway-membership"}},
+      {"source_id": "user:[name]", "target_id": "store:qfc", "edge_type": "SHOPS_AT", "properties": {"piece_id": "qfc-membership"}},
+      {"source_id": "user:[name]", "target_id": "store:wholefoods", "edge_type": "SHOPS_AT", "properties": {"piece_id": "wholefoods-membership"}},
+      {"source_id": "user:[name]", "target_id": "procedure:grocery_shopping", "edge_type": "HAS_SKILL", "properties": {"piece_id": "grocery-shopping-procedure"}},
+      {"source_id": "store:safeway", "target_id": "procedure:grocery_shopping", "edge_type": "USES_PROCEDURE", "properties": {"piece_id": "grocery-shopping-procedure"}},
+      {"source_id": "store:qfc", "target_id": "procedure:grocery_shopping", "edge_type": "USES_PROCEDURE", "properties": {"piece_id": "grocery-shopping-procedure"}},
+      {"source_id": "store:wholefoods", "target_id": "procedure:grocery_shopping", "edge_type": "USES_PROCEDURE", "properties": {"piece_id": "grocery-shopping-procedure"}}
+    ]
+  }
+}

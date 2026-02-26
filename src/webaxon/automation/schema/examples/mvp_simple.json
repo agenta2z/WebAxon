@@ -1,0 +1,46 @@
+{
+  "version": "1.0",
+  "id": "mvp_simple_test",
+  "description": "Simple MVP test with various action types and strategies",
+  "actions": [
+    {
+      "id": "open_google",
+      "type": "visit_url",
+      "target": "https://www.google.com",
+      "args": {}
+    },
+    {
+      "id": "find_search_box_by_name",
+      "type": "input_text",
+      "target": {
+        "strategy": "xpath",
+        "value": "//input[@name='q']"
+      },
+      "args": {
+        "text": "WebAgent automation"
+      }
+    },
+    {
+      "id": "click_search_button",
+      "type": "click",
+      "target": {
+        "strategy": "xpath",
+        "value": "//input[@name='btnK']"
+      }
+    },
+    {
+      "id": "wait_for_results",
+      "type": "wait",
+      "args": {
+        "seconds": 2
+      }
+    },
+    {
+      "id": "find_by_description_example",
+      "type": "click",
+      "target": {
+        "description": "the first search result link"
+      }
+    }
+  ]
+}

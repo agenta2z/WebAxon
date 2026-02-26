@@ -1,0 +1,18 @@
+Find the HTML element that best matches this description: "{{description}}"
+
+{{#if options}}
+Hints: {{#each options}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
+{{/if}}
+
+<PageHTML>
+{{html}}
+</PageHTML>
+
+## Response Format
+Return the __id__ attribute value of the matching element wrapped in <TargetElementID> tags.
+If you cannot find a matching element, return <TargetElementID>NOT_FOUND</TargetElementID>.
+
+Example response:
+<TargetElementID>42</TargetElementID>
+
+Your response:

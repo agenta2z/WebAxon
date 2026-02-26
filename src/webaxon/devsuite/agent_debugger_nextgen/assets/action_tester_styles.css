@@ -1,0 +1,319 @@
+/* Action Tester Tab Styling */
+
+/* Button hover effects */
+#action-tester-launch-btn:hover {
+    background-color: #15A869 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(25, 195, 125, 0.3);
+    transition: all 0.2s ease;
+}
+
+#action-tester-close-btn:hover {
+    background-color: #E85555 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+    transition: all 0.2s ease;
+}
+
+#action-tester-assign-ids-btn:hover {
+    background-color: #3A8EEF !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(74, 158, 255, 0.3);
+    transition: all 0.2s ease;
+}
+
+#run-sequence-btn:hover {
+    background-color: #15A869 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(25, 195, 125, 0.3);
+    transition: all 0.2s ease;
+}
+
+#validate-json-btn:hover {
+    background-color: #3A8EEF !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(74, 158, 255, 0.3);
+    transition: all 0.2s ease;
+}
+
+#load-template-btn:hover {
+    background-color: #7E7E90 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(142, 142, 160, 0.3);
+    transition: all 0.2s ease;
+}
+
+#action-tester-new-test-btn:hover {
+    background-color: #15A869 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(25, 195, 125, 0.3);
+    transition: all 0.2s ease;
+}
+
+/* Button active state */
+#action-tester-launch-btn:active,
+#action-tester-close-btn:active,
+#action-tester-assign-ids-btn:active,
+#run-sequence-btn:active,
+#validate-json-btn:active,
+#load-template-btn:active,
+#action-tester-new-test-btn:active {
+    transform: translateY(0px);
+    transition: all 0.1s ease;
+}
+
+/* Button transitions */
+#action-tester-launch-btn,
+#action-tester-close-btn,
+#action-tester-assign-ids-btn,
+#run-sequence-btn,
+#validate-json-btn,
+#load-template-btn,
+#action-tester-new-test-btn {
+    transition: all 0.2s ease;
+}
+
+/* Test item hover effects */
+div[id*="test-item"]:hover {
+    background-color: rgba(25, 195, 125, 0.1) !important;
+    transition: background-color 0.2s ease;
+}
+
+/* Test close button hover */
+button[id*="test-close-btn"]:hover {
+    background-color: rgba(255, 107, 107, 0.2) !important;
+    transform: scale(1.1);
+    transition: all 0.2s ease;
+}
+
+/* Action reference collapsible hover */
+details summary:hover {
+    background-color: rgba(25, 195, 125, 0.1) !important;
+    transition: background-color 0.2s ease;
+}
+
+/* Loading animation for browser status */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.loading {
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Smooth transitions for status updates */
+#browser-status-indicator,
+#browser-window-count,
+#browser-active-window,
+#browser-current-url {
+    transition: color 0.3s ease, background-color 0.3s ease;
+}
+
+/* Editor focus effect */
+#action-sequence-editor:focus {
+    border-color: #19C37D !important;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(25, 195, 125, 0.2);
+    transition: all 0.2s ease;
+}
+
+/* Scrollbar styling for better aesthetics */
+#action-sequence-editor::-webkit-scrollbar,
+#sequence-execution-results::-webkit-scrollbar,
+#action-reference-content::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+#action-sequence-editor::-webkit-scrollbar-track,
+#sequence-execution-results::-webkit-scrollbar-track,
+#action-reference-content::-webkit-scrollbar-track {
+    background: #2C2D3A;
+    border-radius: 4px;
+}
+
+#action-sequence-editor::-webkit-scrollbar-thumb,
+#sequence-execution-results::-webkit-scrollbar-thumb,
+#action-reference-content::-webkit-scrollbar-thumb {
+    background: #565869;
+    border-radius: 4px;
+}
+
+#action-sequence-editor::-webkit-scrollbar-thumb:hover,
+#sequence-execution-results::-webkit-scrollbar-thumb:hover,
+#action-reference-content::-webkit-scrollbar-thumb:hover {
+    background: #6E6E81;
+}
+
+/* Panel transitions */
+#action-tester-left-panel,
+#action-tester-right-panel {
+    transition: opacity 0.3s ease;
+}
+
+/* Result message animations */
+#assign-ids-result {
+    transition: opacity 0.3s ease, display 0.3s ease;
+}
+
+/* Success/error message styling */
+.success-message {
+    color: #19C37D !important;
+    background-color: rgba(25, 195, 125, 0.1) !important;
+    border-left: 3px solid #19C37D !important;
+    padding: 8px 12px !important;
+    border-radius: 4px !important;
+    margin-top: 8px !important;
+    animation: slideIn 0.3s ease;
+}
+
+.error-message {
+    color: #FF6B6B !important;
+    background-color: rgba(255, 107, 107, 0.1) !important;
+    border-left: 3px solid #FF6B6B !important;
+    padding: 8px 12px !important;
+    border-radius: 4px !important;
+    margin-top: 8px !important;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    #action-tester-left-panel {
+        width: 55% !important;
+    }
+    
+    #action-tester-right-panel {
+        width: 45% !important;
+    }
+}
+
+@media (max-width: 900px) {
+    #action-tester-left-panel,
+    #action-tester-right-panel {
+        width: 100% !important;
+        padding: 10px !important;
+    }
+    
+    #action-tester-left-panel {
+        margin-bottom: 20px;
+    }
+}
+
+/* Active test indicator animation */
+.active-test-indicator {
+    animation: glow 2s ease-in-out infinite;
+}
+
+@keyframes glow {
+    0%, 100% {
+        box-shadow: 0 0 5px rgba(25, 195, 125, 0.5);
+    }
+    50% {
+        box-shadow: 0 0 15px rgba(25, 195, 125, 0.8);
+    }
+}
+
+/* Execution results styling enhancements */
+#sequence-execution-results {
+    transition: all 0.3s ease;
+}
+
+#sequence-execution-results:empty::before {
+    content: "No sequence executed yet";
+    color: #8E8EA0;
+    font-style: italic;
+}
+
+/* Section headers with subtle animation */
+.section-header {
+    transition: color 0.2s ease;
+}
+
+.section-header:hover {
+    color: #19C37D !important;
+}
+
+/* Loading spinner for async operations */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(25, 195, 125, 0.3);
+    border-top-color: #19C37D;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+/* Disabled button state */
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed !important;
+    transform: none !important;
+}
+
+button:disabled:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Smooth fade-in for panels */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+#main-panel-action-tester-tab {
+    animation: fadeIn 0.3s ease;
+}
+
+/* Test list panel enhancements */
+.test-list-container {
+    transition: all 0.2s ease;
+}
+
+/* Action reference panel enhancements */
+details {
+    transition: all 0.2s ease;
+}
+
+details[open] summary {
+    border-bottom-color: #19C37D !important;
+    transition: border-color 0.2s ease;
+}
+
+/* Code block styling in action reference */
+pre {
+    transition: background-color 0.2s ease;
+}
+
+pre:hover {
+    background-color: #1F2030 !important;
+}

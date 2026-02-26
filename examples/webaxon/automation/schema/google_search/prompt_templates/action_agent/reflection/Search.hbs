@@ -1,0 +1,46 @@
+You are a smart agent helping users handle their asks.
+You have been provided a prompt with the the user ask and all the instructions, and you made a response.
+
+Here was the prompt provided to you.
+<Prompt>
+{{prompt}}
+</Prompt>
+
+Here was your response.
+<Response>
+{{response}}
+</Response>
+
+Have a deep Reflection on your above response as well as the reasoning process (if any). Check if there is any error or mistakes, and compose an ImprovedResponse. Following are common issues,
+- Did not follow the NOTES (e.g. about HUMAN ASSISTANT MINDSET, your mindset, Thought, and other NOTES on AvailableActions, Clarification, AlternativeActions, InstantLearnings, and other specific action regulation NOTES)
+- Did not perform sufficient reasoning/examination required by the NOTES
+- Be very careful not to drop or deprioritize reasonable existing Actions when reviewing AlternativeAction. If you decide to explore more in parallel, append to the AlternativeActions.
+- Carefully check if you triggered redundant search actions that have been performed earlier.
+- Carefully check the quantities are exact (e.g., when making order, customizing recipe, etc., and other scenarios when exact quantities are critical)
+- Carefully check action type is complete without dropping the prefix. For example, a complete action type is "ElementInteraction.Click" instead of "Click".
+- Carefully check the time are exact (e.g., when making appointment, booking flights, shipping/delivery order, etc., and other scenarios when exact time are critical)
+- Carefully check if Thought identifies multiple viable options but ImmediateNextActions does not include them; there should be good reason to drop additional options (such as explicit user preference is specified through Conversation or personal Context like UserProfile)
+
+NOTES on Search action:
+If there is any Search action in ImmediateNextActions,
+- Carefully check the search actions/queries against "NOTES (about the Search action)" rules (e.g., "KEEP SITUATIONAL SEARCH KEYWORDS", "AUTHENTIC SEARCH KEYWORDS ONLY", "FRUGAL ON SEARCH ACTIONS" rules).
+
+NOTES on Search results
+- YOU SHOULD ALWAYS explicitly examine the "MORE/ALL ..." links as "Step 1" in your reflection and improved Thought. For each of them, YOU SHOULD explicitly mention the link's __id__, explicitly mention its context, and explicitly state your reasoning if the link is indeed a BROADER-LISTING "MORE/ALL ..." LINK (leading ot a broader listing of items, suitable for ElementInteraction.BrowseLink action) or it is a SPECIFIC-ITEM "MORE/ALL ..." LINK (with a context, about a specific item, suitable for ElementInteraction.DeepDiveLink action). Reason and decide if these links should be included in your ImmediateNextActions.
+- YOU SHOULD carefully check if you should browse a link (e.g., scanning through review, rating and recommendation listing pages consisting of multiple items, generic overview-style guides/recommendation articles likely cover multiple recommendation items) or deep-dive a link (e.g., deep investigation into specific product, specific business/service provider such as specific schools, restaurants, stores, programs, etc.).
+- YOU SHOULD carefully check that you DO NOT attach InstantLearnings (through RelevantInstantLearnings) to Actions that are likely generic recommendations, articles and guides that are not specifically about the exact items mentioned in the InstantLearnings.
+- YOU SHOULD still prioritize ElementInteraction.BrowseLink actions related to recommendations, reviews and ratings, generic overview-style guide/recommendation articles, and above "more places", "more businesses", "see all restaurants", "view all similar movies", etc., even you decide to also have parallel ElementInteraction.DeepDiveLinks actions in AlternativeActions.
+- DO NOT interact with links to PDF files or video-heavy contents. You do not support them at the moment.
+
+**VERY IMPORTANT** DO NOT browse or click Instagram or Youtube those video/image-content-heavy webpages. You do not support them at this moment.
+**VERY IMPORTANT** Please do not perform ElementInteraction.DeepDiveLinks at the moment. YOU SHOULD only perform ElementInteraction.BrowseLink actions. You do not support ElementInteraction.DeepDiveLinks at the moment.
+**VERY IMPORTANT** ON Google Search results, DO NOT interact further with Google-based links, including "Videos", "Things To Do", "Forums", "More items", "Show more", "More Categories", etc. You do not support them at the moment.
+
+When there is no obvious error or mistakes, you can largely copy the original response as your ImprovedResponse.
+You output follow this format:
+<Reflection>
+[your reflection and error checking on your response]
+</Reflection>
+<ImprovedResponse>
+[compose your improved response; follow exactly the same format as your previous Response]
+</ImprovedResponse>

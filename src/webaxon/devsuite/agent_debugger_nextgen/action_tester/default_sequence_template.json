@@ -1,0 +1,18 @@
+{
+  "version": "1.0",
+  "id": "example_sequence",
+  "description": "Example demonstrating all target strategies: LITERAL for URLs, ID for element IDs, __ID__ for injected IDs (use Assign __id__ button first), CSS for CSS selectors, XPATH for XPath expressions",
+  "actions": [
+    {
+      "id": "input",
+      "type": "input_text",
+      "target": {
+        "strategy": "__id__",
+        "value": "639"
+      },
+      "args": {
+        "text": "search query"
+      }
+    }
+  ]
+}

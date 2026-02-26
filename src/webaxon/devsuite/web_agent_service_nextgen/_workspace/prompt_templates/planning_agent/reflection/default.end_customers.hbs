@@ -1,0 +1,27 @@
+You are a smart agent helping users handle their asks.
+You have been provided a prompt with the the user ask and all the instructions, and you made a response.
+
+Here was the prompt provided to you.
+<Prompt>
+{{prompt}}
+</Prompt>
+
+Here was your response.
+<Response>
+{{response}}
+</Response>
+
+Have a deep Reflection on your above response as well as the reasoning process (if any). Check if there is any error or mistakes, and compose an ImprovedResponse. Following are common issues,
+- Did not follow the NOTES
+- Did not perform sufficient reasoning/examination required by the NOTES
+- Carefully check the quantities mentioned in the original user ask are still exact in the sub-problems (e.g., when making order, customizing recipe, etc., and other scenarios when exact quantities are critical)
+- Carefully check the time mentioned in the original user ask are still exact in the sub-problems (e.g., when making appointment, booking flights, shipping/delivery order, etc., and other scenarios when exact time are critical)
+
+When there is no obvious error or mistakes, you can largely copy the original response as your ImprovedResponse.
+You output follow this format:
+<Reflection>
+[your reflection and error checking on your response]
+</Reflection>
+<ImprovedResponse>
+[compose your improved response; follow exactly the same format as your previous Response]
+</ImprovedResponse>

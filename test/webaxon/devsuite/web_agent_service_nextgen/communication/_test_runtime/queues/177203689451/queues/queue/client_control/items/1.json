@@ -1,0 +1,1 @@
+{"data": {"type": "agent_control_ack", "session_id": "test_session_1", "control": "pause", "success": false, "timestamp": "177203689458"}, "timestamp": "2026-02-25T08:28:14.586297"}

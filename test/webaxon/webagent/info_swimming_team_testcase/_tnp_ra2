@@ -1,0 +1,2161 @@
+You are a Smart Agent specialized in task planning and problem-solving through a structured Conversation.
+ - You may engage in multi-turn conversations with users
+ - Each turn is labeled as either <User> ... </User> or <Agent> ... </Agent> in the Conversation section.
+Your current role is to make a response to user's latest ask in the Conversation, given the following HTMLContent,
+
+<HTMLContent>
+<body __id__="141" class="post-template-default single single-post postid-21924 single-format-standard wp-custom-logo wp-embed-responsive lasso-v331 no-anchor-scroll footer-on-bottom hide-focus-outline link-style-standard has-sidebar content-title-style-normal content-width-normal content-style-unboxed content-vertical-padding-show non-transparent-header mobile-non-transparent-header promote-enable-check">
+<div __id__="143" class="site wp-site-blocks">
+<a __id__="144" class="skip-link screen-reader-text scroll-ignore" href="#main">Skip to content</a>
+<div __id__="154" class="site-header-top-section-center site-header-section site-header-section-center">
+<a __id__="158" href="https://lajollamom.com/san-diego-resources/">Get My San Diego Zoo &amp; Other Discounts &gt;</a>
+</div>
+<div __id__="163" class="site-header-main-section-left site-header-section site-header-section-left">
+<a __id__="166" class="brand has-logo-image" href="https://lajollamom.com/"><img __id__="167" alt="La Jolla Mom logo" class="custom-logo" src="https://lajollamom.com/wp-content/uploads/2024/08/cropped-la-jolla-mom-logo.png"/></a>
+</div>
+<div __id__="168" class="site-header-main-section-right site-header-section site-header-section-right">
+<span __id__="173" class="screen-reader-text">Search for:</span>
+<input __id__="174" class="search-field" name="s" type="search"/>
+<input __id__="175" class="search-submit" type="submit"/>
+<a __id__="184" class="button header-button button-size-medium button-style-filled" href="/tickets/">Save on Tickets</a>
+</div>
+<div __id__="189" class="site-header-bottom-section-center site-header-section site-header-section-center">
+<div __id__="190" class="site-header-item site-header-focus-item site-header-item-main-navigation header-navigation-layout-stretch-false header-navigation-layout-fill-stretch-false">
+<ul __id__="193" class="menu"><li __id__="194" class="sd-submenu menu-item menu-item-type-taxonomy menu-item-object-category current-post-ancestor current-menu-parent current-post-parent menu-item-has-children menu-item-139602"><a __id__="195" href="https://lajollamom.com/san-diego/"><span __id__="196" class="nav-drop-title-wrap">San Diego</span></a>
+<ul __id__="202" class="sub-menu">
+<li __id__="203" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139604"><a __id__="204" href="https://lajollamom.com/san-diego/san-diego-hotels/">San Diego Hotels</a></li>
+<li __id__="205" class="menu-item menu-item-type-taxonomy menu-item-object-category current-post-ancestor current-menu-parent current-post-parent menu-item-139603"><a __id__="206" href="https://lajollamom.com/san-diego/things-to-do/">Things to Do</a></li>
+<li __id__="207" class="ljm-menu-divider-desktop menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139622"><a __id__="208" href="https://lajollamom.com/san-diego/restaurants/">Where to Eat</a></li>
+<li __id__="209" class="ljm-menu-divider menu-item menu-item-type-post_type menu-item-object-page menu-item-139640"><a __id__="210" href="https://lajollamom.com/san-diego-family-vacation/">Family Vacations</a></li>
+<li __id__="211" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139618"><a __id__="212" href="https://lajollamom.com/san-diego/la-jolla/">La Jolla</a></li>
+<li __id__="213" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139614"><a __id__="214" href="https://lajollamom.com/san-diego/coronado/">Coronado Island</a></li>
+<li __id__="215" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139612"><a __id__="216" href="https://lajollamom.com/san-diego/balboa-park/">Balboa Park</a></li>
+<li __id__="217" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139616"><a __id__="218" href="https://lajollamom.com/san-diego/downtown/">Downtown San Diego</a></li>
+<li __id__="219" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139619"><a __id__="220" href="https://lajollamom.com/san-diego/mission-beach-mission-bay/">Mission Beach &amp; Mission Bay</a></li>
+<li __id__="221" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139621"><a __id__="222" href="https://lajollamom.com/san-diego/pacific-beach/">Pacific Beach</a></li>
+<li __id__="223" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139615"><a __id__="224" href="https://lajollamom.com/san-diego/del-mar/">Del Mar</a></li>
+<li __id__="225" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139617"><a __id__="226" href="https://lajollamom.com/san-diego/encinitas/">Encinitas</a></li>
+<li __id__="227" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139613"><a __id__="228" href="https://lajollamom.com/san-diego/carlsbad/">Carlsbad</a></li>
+<li __id__="229" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139620"><a __id__="230" href="https://lajollamom.com/san-diego/oceanside/">Oceanside</a></li>
+</ul>
+</li>
+<li __id__="231" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-has-children menu-item-139607"><a __id__="232" href="https://lajollamom.com/hotels/"><span __id__="233" class="nav-drop-title-wrap">Hotel Reviews</span></a>
+<ul __id__="239" class="sub-menu">
+<li __id__="240" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-141808"><a __id__="241" href="https://lajollamom.com/hotel-booking-tool/" title="Add Our VIP Benefits to Your Reservation">Hotel Booking Tool</a></li>
+</ul>
+</li>
+<li __id__="242" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-has-children menu-item-139623"><a __id__="243" href="https://lajollamom.com/theme-parks/"><span __id__="244" class="nav-drop-title-wrap">Theme Parks</span></a>
+<ul __id__="250" class="sub-menu">
+<li __id__="251" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139626"><a __id__="252" href="https://lajollamom.com/theme-parks/san-diego-zoo/">San Diego Zoo</a></li>
+<li __id__="253" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139627"><a __id__="254" href="https://lajollamom.com/theme-parks/san-diego-zoo-safari-park/">San Diego Zoo Safari Park</a></li>
+<li __id__="255" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139625"><a __id__="256" href="https://lajollamom.com/theme-parks/legoland-california/">LEGOLAND California</a></li>
+<li __id__="257" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139628"><a __id__="258" href="https://lajollamom.com/theme-parks/seaworld-san-diego/">SeaWorld San Diego Guide</a></li>
+<li __id__="259" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139624"><a __id__="260" href="https://lajollamom.com/theme-parks/disneyland-resort/">Disneyland Resort</a></li>
+<li __id__="261" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139629"><a __id__="262" href="https://lajollamom.com/theme-parks/universal-studios-hollywood/">Universal Studios Hollywood</a></li>
+</ul>
+</li>
+<li __id__="263" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-has-children menu-item-139605"><a __id__="264" href="https://lajollamom.com/destinations/"><span __id__="265" class="nav-drop-title-wrap">Destinations</span></a>
+<ul __id__="271" class="sub-menu">
+<li __id__="272" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-has-children menu-item-139630"><a __id__="273" href="https://lajollamom.com/destinations/asia/"><span __id__="274" class="nav-drop-title-wrap">Asia</span></a>
+<ul __id__="280" class="sub-menu">
+<li __id__="281" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-141623"><a __id__="282" href="https://lajollamom.com/destinations/asia/hong-kong/">Hong Kong</a></li>
+<li __id__="283" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-141625"><a __id__="284" href="https://lajollamom.com/destinations/asia/singapore/">Singapore</a></li>
+<li __id__="285" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-141624"><a __id__="286" href="https://lajollamom.com/destinations/asia/japan/">Japan</a></li>
+<li __id__="287" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-141622"><a __id__="288" href="https://lajollamom.com/destinations/asia/china/">China</a></li>
+</ul>
+</li>
+<li __id__="289" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-has-children menu-item-139606"><a __id__="290" href="https://lajollamom.com/destinations/united-states/"><span __id__="291" class="nav-drop-title-wrap">United States</span></a>
+<ul __id__="297" class="sub-menu">
+<li __id__="298" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-141626"><a __id__="299" href="https://lajollamom.com/destinations/united-states/california/">California</a></li>
+<li __id__="300" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-141628"><a __id__="301" href="https://lajollamom.com/destinations/united-states/hawaii/">Hawaii</a></li>
+<li __id__="302" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-141627"><a __id__="303" href="https://lajollamom.com/destinations/united-states/florida/">Florida</a></li>
+<li __id__="304" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-141629"><a __id__="305" href="https://lajollamom.com/destinations/united-states/new-york-city/">New York City</a></li>
+</ul>
+</li>
+<li __id__="306" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139609"><a __id__="307" href="https://lajollamom.com/destinations/europe/">Europe</a></li>
+<li __id__="308" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139610"><a __id__="309" href="https://lajollamom.com/destinations/mexico-caribbean/">Mexico and Caribbean</a></li>
+</ul>
+</li>
+<li __id__="310" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-139632"><a __id__="311" href="https://lajollamom.com/resources/">Resources &amp; Discounts</a></li>
+<li __id__="312" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-139635"><a __id__="313" href="https://lajollamom.com/about/"><span __id__="314" class="nav-drop-title-wrap">About</span></a>
+<ul __id__="320" class="sub-menu">
+<li __id__="321" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-139633"><a __id__="322" href="https://lajollamom.com/our-services/">Our Services</a></li>
+<li __id__="323" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-139637"><a __id__="324" href="https://lajollamom.com/newsletter/">Newsletter</a></li>
+<li __id__="325" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-139631"><a __id__="326" href="https://lajollamom.com/help/">Help &amp; FAQs</a></li>
+<li __id__="327" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-139634"><a __id__="328" href="https://lajollamom.com/contact/">Contact</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div __id__="337" class="site-header-main-section-left site-header-section site-header-section-left">
+<a __id__="340" class="brand has-logo-image" href="https://lajollamom.com/"><img __id__="341" alt="La Jolla Mom logo" class="custom-logo" src="https://lajollamom.com/wp-content/uploads/2024/08/cropped-la-jolla-mom-logo.png"/></a>
+</div>
+<div __id__="342" class="site-header-main-section-right site-header-section site-header-section-right">
+<button __id__="345" aria-label="Open menu" class="menu-toggle-open drawer-toggle menu-toggle-style-default">
+</button>
+<a __id__="354" class="button mobile-header-button button-size-small button-style-filled" href="/tickets/">Save on Tickets</a>
+</div>
+<div __id__="355" class="wrap kt-clear">
+<div __id__="359" class="kt-inside-inner-col"><a __id__="363" class="kadence-bc-home" href="https://lajollamom.com/"><span __id__="364">Home</span></a> <span __id__="365" class="bc-delimiter">/</span> <a __id__="367" href="https://lajollamom.com/san-diego/"><span __id__="368">San Diego</span></a> <span __id__="369" class="bc-delimiter">/</span> <a __id__="371" href="https://lajollamom.com/san-diego/things-to-do/"><span __id__="372">San Diego Attractions &amp; Things to Do</span></a> <span __id__="373" class="bc-delimiter">/</span> <span __id__="374" class="kadence-bread-current">55 Best Things to Do in San Diego With Kids: Ultimate Guide to Fun Family Activities</span>
+<h1 __id__="375" class="kt-adv-heading133495_8e4a44-b9 wp-block-kadence-advancedheading">55 Best Things to Do in San Diego With Kids: Ultimate Guide to Fun Family Activities</h1>
+
+This is the most comprehensive guide to San Diego family activities you’ll find —curated by a local mom who knows exactly what both residents and visitors like to do and why.
+
+
+**Last updated: December 29, 2024 **
+
+
+<div __id__="382" class="kt-inside-inner-col">
+<img __id__="385" alt="" class="kb-img wp-image-128302" src="https://lajollamom.com/wp-content/w3-webp/uploads/2024/07/katie-dillon-san-diego-blog.jpgw3.webp"/>
+
+By
+
+<a __id__="387" class="kb-advanced-heading-link kt-adv-heading-link133495_974bef-5e kb-author-name" href="https://lajollamom.com/author/katie-dillon/">
+Katie Dillon
+</a>
+<a __id__="398" class="kb-advanced-image-link" href="https://lajollamom.com/author/katie-dillon/"><img __id__="400" alt="" class="kb-img wp-image-128302" src="https://lajollamom.com/wp-content/w3-webp/uploads/2024/07/katie-dillon-san-diego-blog.jpgw3.webp"/></a>
+<a __id__="403" class="kb-advanced-heading-link kt-adv-heading-link133495_94638d-a8 author-name-link hls-none" href="https://lajollamom.com/author/katie-dillon/">
+Katie Dillon
+</a>
+<a __id__="407" aria-label="Facebook" class="kt-svg-icon-link" href="https://www.facebook.com/LaJollaMom/"><title __id__="410">Facebook</title></a>
+<a __id__="413" aria-label="Instagram" class="kt-svg-icon-link" href="https://www.instagram.com/lajollamom/"><title __id__="416">Instagram</title></a>
+<a __id__="421" aria-label="Linkedin" class="kt-svg-icon-link" href="https://www.linkedin.com/in/lajollamom/"><title __id__="424">Linkedin</title></a>
+<a __id__="427" aria-label="Pinterest" class="kt-svg-icon-link" href="https://www.pinterest.com/lajollamom/"><title __id__="430">Pinterest</title></a>
+<div __id__="433" class="kt-inside-inner-col">
+
+Katie Dillon is a travel advisor and founder of La Jolla Mom. She uses her extensive hotel knowledge and local insights to help readers experience the best of San Diego, figure out how to buy attraction tickets for less, and use her special perks at luxury hotels worldwide.
+
+</div>
+</div>
+</div>
+<div __id__="438" class="content-container site-container">
+<main __id__="439" class="site-main">
+<div __id__="440" class="content-wrap">
+<div __id__="445" class="kt-inside-inner-col">
+
+Jump to Section
+
+<ul __id__="451" class="kb-table-of-content-list kb-table-of-content-list-columns-1 kb-table-of-content-list-style-none kb-table-of-content-link-style-plain"><li __id__="452"><a __id__="453" class="kb-table-of-contents__entry" href="#top-things-to-do-in-san-diego-with-kids">Top Things to Do in San Diego With Kids</a></li><li __id__="454"><a __id__="455" class="kb-table-of-contents__entry" href="#best-museums-in-san-diego-for-kids">Best Museums in San Diego for Kids</a></li><li __id__="456"><a __id__="457" class="kb-table-of-contents__entry" href="#best-san-diego-beaches-for-families">Best San Diego Beaches for Families</a></li><li __id__="458"><a __id__="459" class="kb-table-of-contents__entry" href="#fun-outdoor-san-diego-kids-activities">Fun Outdoor San Diego Kids Activities</a></li><li __id__="460"><a __id__="461" class="kb-table-of-contents__entry" href="#best-san-diego-tours-for-kids-and-teens">Best San Diego Tours for Kids and Teens</a></li><li __id__="462"><a __id__="463" class="kb-table-of-contents__entry" href="#family-friendly-seasonal-activities">Family-Friendly Seasonal Activities</a></li><li __id__="464"><a __id__="465" class="kb-table-of-contents__entry" href="#things-to-do-in-san-diego-with-toddlers">Things to Do in San Diego With Toddlers</a></li><li __id__="466"><a __id__="467" class="kb-table-of-contents__entry" href="#how-to-save-money-on-your-san-diego-family-vacation">How to Save Money on Your San Diego Family Vacation</a></li><li __id__="468"><a __id__="469" class="kb-table-of-contents__entry" href="#familyfriendly-places-to-stay">Family-Friendly Places to Stay</a></li><li __id__="470"><a __id__="471" class="kb-table-of-contents__entry" href="#fa-qs-about-activities-in-san-diego-for-kids">FAQs About Activities in San Diego for Kids</a></li></ul>
+</div>
+<button __id__="479" aria-label="Expand Table of Contents" class="kb-table-of-contents-title-btn kb-table-of-contents-toggle"><span __id__="480" class="kb-table-of-contents-title">Jump to Section</span></button><ul __id__="482" class="kb-table-of-content-list kb-table-of-content-list-columns-1 kb-table-of-content-list-style-none kb-table-of-content-link-style-plain"><li __id__="483"><a __id__="484" class="kb-table-of-contents__entry" href="#top-things-to-do-in-san-diego-with-kids">Top Things to Do in San Diego With Kids</a></li><li __id__="485"><a __id__="486" class="kb-table-of-contents__entry" href="#best-museums-in-san-diego-for-kids">Best Museums in San Diego for Kids</a></li><li __id__="487"><a __id__="488" class="kb-table-of-contents__entry" href="#best-san-diego-beaches-for-families">Best San Diego Beaches for Families</a></li><li __id__="489"><a __id__="490" class="kb-table-of-contents__entry" href="#fun-outdoor-san-diego-kids-activities">Fun Outdoor San Diego Kids Activities</a></li><li __id__="491"><a __id__="492" class="kb-table-of-contents__entry" href="#best-san-diego-tours-for-kids-and-teens">Best San Diego Tours for Kids and Teens</a></li><li __id__="493"><a __id__="494" class="kb-table-of-contents__entry" href="#family-friendly-seasonal-activities">Family-Friendly Seasonal Activities</a></li><li __id__="495"><a __id__="496" class="kb-table-of-contents__entry" href="#things-to-do-in-san-diego-with-toddlers">Things to Do in San Diego With Toddlers</a></li><li __id__="497"><a __id__="498" class="kb-table-of-contents__entry" href="#how-to-save-money-on-your-san-diego-family-vacation">How to Save Money on Your San Diego Family Vacation</a></li><li __id__="499"><a __id__="500" class="kb-table-of-contents__entry" href="#familyfriendly-places-to-stay">Family-Friendly Places to Stay</a></li><li __id__="501"><a __id__="502" class="kb-table-of-contents__entry" href="#fa-qs-about-activities-in-san-diego-for-kids">FAQs About Activities in San Diego for Kids</a></li></ul>
+<div __id__="504" class="kt-inside-inner-col">
+
+**We can help you save on tickets, tours, and hotels. If you purchase through some of the links below, we may be compensated. Our editorial guidelines.**
+
+</div>
+<div __id__="508" class="wp-block-kadence-dynamichtml kb-dynamic-html kb-dynamic-html-id-129493_36dbab-44">
+<ul __id__="510" class="dpsp-networks-btns-wrapper dpsp-networks-btns-share dpsp-networks-btns-content dpsp-column-auto dpsp-has-button-icon-animation">
+<li __id__="511" class="dpsp-network-list-item dpsp-network-list-item-facebook">
+<a __id__="512" aria-label="Share on Facebook" class="dpsp-network-btn dpsp-facebook dpsp-no-label dpsp-first dpsp-has-label-mobile" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Flajollamom.com%2Fbest-things-to-do-in-san-diego-with-kids%2F%3Futm_source%3Dfacebook%26utm_medium%3Dsocial%26utm_campaign%3Dsocial-sharing&amp;t=55%20Best%20Things%20to%20Do%20in%20San%20Diego%20With%20Kids%3A%20Ultimate%20Guide%20to%20Fun%20Family%20Activities" title="Share on Facebook">
+</a></li>
+<li __id__="517" class="dpsp-network-list-item dpsp-network-list-item-x">
+<a __id__="518" aria-label="Share on X" class="dpsp-network-btn dpsp-x dpsp-no-label dpsp-has-label-mobile" href="https://x.com/intent/tweet?text=From%20attractions%20to%20beaches%2C%20these%20are%20the%20best%20things%20to%20do%20in%20%23SanDiego%20with%20kids%20%E2%80%94%20written%20by%20a%20local%20mom.%20%23familytravel&amp;url=https%3A%2F%2Flajollamom.com%2Fbest-things-to-do-in-san-diego-with-kids%2F%3Futm_source%3Dtwitter%26utm_medium%3Dsocial%26utm_campaign%3Dsocial-sharing&amp;via=lajollamom" title="Share on X">
+</a></li>
+<li __id__="523" class="dpsp-network-list-item dpsp-network-list-item-pinterest">
+<button __id__="524" aria-label="Save to Pinterest" class="dpsp-network-btn dpsp-pinterest dpsp-no-label dpsp-has-label-mobile" title="Save to Pinterest">
+</button></li>
+<li __id__="529" class="dpsp-network-list-item dpsp-network-list-item-linkedin">
+<a __id__="530" aria-label="Share on LinkedIn" class="dpsp-network-btn dpsp-linkedin dpsp-no-label dpsp-has-label-mobile" href="https://www.linkedin.com/shareArticle?url=https%3A%2F%2Flajollamom.com%2Fbest-things-to-do-in-san-diego-with-kids%2F%3Futm_source%3Dlinkedin%26utm_medium%3Dsocial%26utm_campaign%3Dsocial-sharing&amp;title=55%20Best%20Things%20to%20Do%20in%20San%20Diego%20With%20Kids%3A%20Ultimate%20Guide%20to%20Fun%20Family%20Activities&amp;summary=The%20most%20comprehensive%20guide%20for%20fun%20things%20to%20do%20in%20San%20Diego%20with%20kids%20by%20a%20local%20mom%20who%20specializes%20in%20helping%20plan%20San%20Diego%20family%20vacations.&amp;mini=true" title="Share on LinkedIn">
+</a></li>
+<li __id__="535" class="dpsp-network-list-item dpsp-network-list-item-threads">
+<a __id__="536" aria-label="Share on Threads" class="dpsp-network-btn dpsp-threads dpsp-no-label dpsp-has-label-mobile" href="https://www.threads.net/intent/post?text=55%20Best%20Things%20to%20Do%20in%20San%20Diego%20With%20Kids%3A%20Ultimate%20Guide%20to%20Fun%20Family%20Activities+https%3A%2F%2Flajollamom.com%2Fbest-things-to-do-in-san-diego-with-kids%2F%3Futm_source%3Dthreads%26utm_medium%3Dsocial%26utm_campaign%3Dsocial-sharing" title="Share on Threads">
+</a></li>
+<li __id__="541" class="dpsp-network-list-item dpsp-network-list-item-reddit">
+<a __id__="542" aria-label="Share on Reddit" class="dpsp-network-btn dpsp-reddit dpsp-no-label dpsp-has-label-mobile" href="https://www.reddit.com/submit?url=https%3A%2F%2Flajollamom.com%2Fbest-things-to-do-in-san-diego-with-kids%2F%3Futm_source%3Dreddit%26utm_medium%3Dsocial%26utm_campaign%3Dsocial-sharing&amp;title=55%20Best%20Things%20to%20Do%20in%20San%20Diego%20With%20Kids%3A%20Ultimate%20Guide%20to%20Fun%20Family%20Activities" title="Share on Reddit">
+</a></li>
+<li __id__="547" class="dpsp-network-list-item dpsp-network-list-item-flipboard">
+<a __id__="548" aria-label="Share on Flipboard" class="dpsp-network-btn dpsp-flipboard dpsp-no-label dpsp-has-label-mobile" href="https://share.flipboard.com/bookmarklet/popout?v=2&amp;url=https%3A%2F%2Flajollamom.com%2Fbest-things-to-do-in-san-diego-with-kids%2F%3Futm_source%3Dflipboard%26utm_medium%3Dsocial%26utm_campaign%3Dsocial-sharing&amp;title=55%20Best%20Things%20to%20Do%20in%20San%20Diego%20With%20Kids%3A%20Ultimate%20Guide%20to%20Fun%20Family%20Activities" title="Share on Flipboard">
+</a></li>
+<li __id__="553" class="dpsp-network-list-item dpsp-network-list-item-email">
+<a __id__="554" aria-label="Send over email" class="dpsp-network-btn dpsp-email dpsp-no-label dpsp-last dpsp-has-label-mobile" href="mailto:?subject=55%20Best%20Things%20to%20Do%20in%20San%20Diego%20With%20Kids%3A%20Ultimate%20Guide%20to%20Fun%20Family%20Activities&amp;body=https%3A%2F%2Flajollamom.com%2Fbest-things-to-do-in-san-diego-with-kids%2F%3Futm_source%3Demail%26utm_medium%3Dsocial%26utm_campaign%3Dsocial-sharing" title="Send over email">
+</a></li>
+</ul>
+
+
+As a San Diego local with insider tips you won’t find anywhere else, I’m here to help visitors plan unforgettable San Diego family vacations and guide residents to fresh ideas for fun things to do in San Diego with kids.
+
+
+In this guide, you’ll find activities for every age—from babies and toddlers to tweens and teens— including theme parks, museums, tours, outdoor activities, live entertainment, and free options. If something isn’t free, I’ll point you to the best ticket deals.
+
+
+<span __id__="575" class="kb-adv-text-inner">Why This List Is <mark __id__="576" class="kt-highlight">Different</mark></span>
+<ul __id__="581" class="kt-svg-icon-list">
+<li __id__="582" class="wp-block-kadence-listitem kt-svg-icon-list-item-wrap kt-svg-icon-list-item-21924_009339-95"><span __id__="586" class="kt-svg-icon-list-text">I’m a San Diego mom and a travel advisor.</span></li>
+<li __id__="587" class="wp-block-kadence-listitem kt-svg-icon-list-item-wrap kt-svg-icon-list-item-21924_16effa-42"><span __id__="591" class="kt-svg-icon-list-text">This big list of insider tips is based on feedback from over 1000 clients, local parents, and my friends.</span></li>
+<li __id__="592" class="wp-block-kadence-listitem kt-svg-icon-list-item-wrap kt-svg-icon-list-item-21924_cdf382-e2"><span __id__="596" class="kt-svg-icon-list-text">Our clients have kids of all ages. We know what’s on their itineraries, how they maximize cost, where they stay (many choose from <a __id__="597" class="1" href="https://lajollamom.com/best-kid-friendly-hotels-san-diego/">my favorite kid-friendly hotels in San Diego</a>), and what they like and don’t like.</span></li>
+<li __id__="598" class="wp-block-kadence-listitem kt-svg-icon-list-item-wrap kt-svg-icon-list-item-21924_36161d-39"><span __id__="602" class="kt-svg-icon-list-text">You can share your questions in the comments below, and I’ll answer. Or feel free to email.</span></li>
+</ul>
+
+
+
+Grab a coffee, and let’s get started!
+
+
+
+<h2 __id__="606" class="wp-block-heading">Top Things to Do in San Diego With Kids</h2>
+
+Let’s start with the fun, kid-friendly attractions that top most family sightseeing itineraries.  But, first, here’s a cheat sheet to top family activities by category.
+
+<td __id__="612">**Category**</td><td __id__="614">**Popular Spots**</td><td __id__="616">**Best For**</td><td __id__="619">**Zoos and theme parks**</td><td __id__="621">San Diego Zoo and Safari Park, LEGOLAND, SeaWorld</td><td __id__="622">Animal lovers, thrill seekers</td><td __id__="624">**Parks and nature spots**</td><td __id__="626">Torrey Pines State Reserve, San Elijo Lagoon, Misson Bay </td><td __id__="627">Nature and picnic enthusiasts, history buffs</td><td __id__="629">**Museums, cultural hubs**</td><td __id__="631">Balboa Park, New Children’s Museum, USS Midway Museum </td><td __id__="632">Science and history lovers, creative kids</td><td __id__="634">**Beaches**</td><td __id__="636">Coronado, South Mission, La Jolla Shores</td><td __id__="637">Water sports enthusiasts, lazy SoCal beach days</td><td __id__="639">**Outdoor activities **</td><td __id__="641">Surfing lessons, La Jolla seals, kayaking, hikes</td><td __id__="642">Active kids, animal lovers</td><td __id__="644">**San Diego tours**</td><td __id__="646">Old Town Trolley, Patriot Jet Boat tours, SEAL tours, harbor tours</td><td __id__="647">Sightseers, sea adventurers </td><td __id__="649">**Seasonal activities**</td><td __id__="651">Whale watching, summer concerts, flower fields, tide pools</td><td __id__="652">Holiday visitors, nature enthusiasts</td>
+<div __id__="656" class="kt-inside-inner-col">
+<h3 __id__="657" class="kt-adv-heading21924_b0e145-cd wp-block-kadence-advancedheading">Sightseeing Passes Can Help <mark __id__="658" class="kt-highlight">Save</mark> Money!</h3>
+
+
+I mention three sightseeing passes throughout this post: Go City San Diego, San Diego CityPASS, and the Balboa Park Explorer Pass. If you visit more than one of these San Diego activities for kids, one of these passes **may** be worth considering. October trips during our annual Kids Free Promotion may be an exception. **I’ll go over the passes in detail at the end. **
+
+</div>
+<h3 __id__="668" class="wp-block-heading">1. San Diego Zoo (Top Pick)</h3>
+
+**of 55**   |   **Location**: Balboa Park
+
+<img __id__="675" alt="A koala in a tree at the San Diego Zoo, the most popular San Diego attraction for kids." class="wp-image-57201" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='2800'%20height='1868'%3E%3Crect%20width='100%25'%20height='100%25'%20opacity='0'/%3E%3C/svg%3E"/><figcaption __id__="676" class="wp-element-caption">The koalas at the San Diego Zoo are popular with all ages.</figcaption>
+
+The world-famous San Diego Zoo tops my list of things to do in San Diego with kids. We’re members. It’s home to over 3700 rare and endangered animals and a beautiful display of over 700,000 exotic plants throughout its 100 acres. **Nearly every family we work with goes to the Zoo.**
+
+
+I’ve written about my favorite San Diego Zoo animals and exhibits, which include koalas, polar bears, komodo dragons, pygmy hippos, Galapagos tortoises, and Skyfari Aerial Tram. Check for giraffe feeding times as well. The Wildlife Explorers Basecamp (the renovated children’s zoo) has splash pads, climbing structures, and all sorts of weird insects and other animals.
+
+<ul __id__="681" class="wp-block-list">
+<li __id__="682">**What We Love**: I’ve been to A LOT of zoos worldwide, and this is one of the best. It’s a nonprofit with global reach so every dollar you spend with them goes toward animal care and conservation efforts. Your day will involve animals and education about what they do — a perfect combination for kids.</li>
+<li __id__="684">**Good to Know**: The terrain in some spots can be a bit hilly. I navigate it by using the Skyfari Tram and planning my day with the app.</li>
+<li __id__="686">**Tips**: We also like to go right when it opens, when the weather is cool, and when some animals eat breakfast. However, I encourage you to check out their upgraded tours that begin before the park opens, so you’ll already be inside with a head start to your favorite animals.</li>
+<li __id__="688">**Read More**: <a __id__="690" href="https://lajollamom.com/theme-parks/san-diego-zoo/">San Diego Zoo Guide</a></li>
+<li __id__="691">**We Recommend Spending**: Half to full day</li>
+<li __id__="693">**Sightseeing Pass**: CityPASS &amp; Go City San Diego</li>
+<li __id__="695">**Individual** **Tickets**: We have <a __id__="698" href="https://lajollamom.com/how-to-buy-discounted-tickets-to-the-san-diego-zoo/">tips for buying discounted San Diego Zoo tickets</a>, but you can request the BEST 1-Day price below ⬇️.</li>
+</ul>
+<div __id__="706" class="kt-inside-inner-col">
+
+Save $8
+
+</div>
+<h3 __id__="708" class="kt-adv-heading70601_3a1d2c-ca wp-block-kadence-advancedheading">1-Day Pass— Use My Exclusive <mark __id__="709" class="kt-highlight">Promo Code</mark></h3>
+<div __id__="717" class="kt-inside-inner-col">
+
+Skip the ticket line and go straight to the gate with a mobile or printed ticket. Valid for one year from the purchase date. ** **
+
+
+**Final price (after my discount): $68/ages 12+ and $58/ages 3–11**
+
+
+Use promo code **lajollamom** to save $8!
+
+<a __id__="725" class="kb-button kt-button button kb-btn70601_d8dec6-41 kt-btn-size-small kt-btn-width-type-full kb-btn-global-inherit kt-btn-has-text-true kt-btn-has-svg-false wp-block-button__link wp-block-kadence-singlebtn" href="https://tickets.lajollamom.com/attraction/single/10244/1"><span __id__="726" class="kt-btn-inner-text">SAVE NOW</span></a>
+</div>
+<div __id__="730" class="kt-inside-inner-col"><span __id__="736" class="kb-adv-text-inner">Get All San Diego Discounts by <mark __id__="737" class="kt-highlight">Email</mark></span>
+
+
+You can also receive my San Diego Zoo promo code and list of theme park, tour, and sightseeing pass discounts to be sent to you. Request by email.
+
+</div>
+<h3 __id__="777" class="wp-block-heading">2. San Diego Zoo Safari Park</h3>
+
+**of 55**   |   **Location**: Balboa Park
+
+<img __id__="784" alt="Rhinos resting in the African Plains section of San Diego Zoo Safari Park, one of the best things to do in San Diego with kids." class="" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='2800'%20height='2073'%3E%3Crect%20width='100%25'%20height='100%25'%20opacity='0'/%3E%3C/svg%3E"/><figcaption __id__="785" class="wp-element-caption">Get up close to rhinos on the Caravan Safari.</figcaption>
+
+Over 2600 animals, including giraffes, elephants, lions, and more, roam in large free-range enclosures at the San Diego Zoo Safari Park. It’s the sister park to the San Diego Zoo.
+
+
+You can tour on your own or schedule a safari (or both). Popular safaris include the free Africa Tram tour around the park and the Caravan Safari through the Asian Savannah and African Plains. On the Skyline Safari, you can also zipline over some animal enclosures (tweens and teens like this).
+
+
+We love the tigers of Tiger Trail and Walkabout Australia, where wallabies jump around you without a barrier. I also want to give a small plug for the platypus exhibit, which my family helped sponsor. The park is home to the world’s largest veterinary facility. Its Frozen Zoo is helping to revive the Northern White Rhino from extinction. And that’s not even half of what they do for the world.
+
+<ul __id__="790" class="wp-block-list">
+<li __id__="791">**What We Love**: The experience is different from San Diego Zoo. Many families visit both.</li>
+<li __id__="793">**Good to Know**: Bigger animals = bigger park, so animals wandering in the savannahs can be hard to see off in the distance without booking a safari.</li>
+<li __id__="795">**Tips**: It gets pretty hot in the summer over here. Kids can cool down in the Savannah Cool Zone splash pad. It’s also cold in winter mornings.  </li>
+<li __id__="797">**Read More**: <a __id__="799" href="https://lajollamom.com/theme-parks/san-diego-zoo-safari-park/">San Diego Zoo Safari Park Guide</a></li>
+<li __id__="800">**We Recommend Spending**: Half to full day</li>
+<li __id__="802">**Sightseeing Pass**: CityPASS &amp; Go City San Diego</li>
+<li __id__="804">**Individual** **Tickets**: We have <a __id__="807" href="https://lajollamom.com/how-to-buy-san-diego-zoo-safari-park-discount-tickets/">tips for buying discounted Safari Park tickets</a>, but you can request the BEST 1-Day price below ⬇️.</li>
+</ul>
+<div __id__="815" class="kt-inside-inner-col">
+
+Save $8
+
+</div>
+<h3 __id__="817" class="kt-adv-heading70606_ae9269-1e wp-block-kadence-advancedheading">1-Day Pass — Use My <mark __id__="818" class="kt-highlight">Promo Code</mark> For the Best Deal!</h3>
+<div __id__="826" class="kt-inside-inner-col">
+
+Skip the ticket line and go straight to the gate with a mobile or printed ticket. Valid for one year from the purchase date. ** **
+
+
+**Discounted price: $68/ages 12+ and $8/ages 3–11**
+
+
+Use promo code **lajollamom** for $8 off!
+
+<a __id__="834" class="kb-button kt-button button kb-btn70606_a36359-5e kt-btn-size-small kt-btn-width-type-full kb-btn-global-inherit kt-btn-has-text-true kt-btn-has-svg-false wp-block-button__link wp-block-kadence-singlebtn" href="https://tickets.lajollamom.com/attraction/single/10244/2"><span __id__="835" class="kt-btn-inner-text">Save on Safari Park Tickets</span></a>
+</div>
+<div __id__="839" class="kt-inside-inner-col"><span __id__="845" class="kb-adv-text-inner">Get All San Diego Discounts by <mark __id__="846" class="kt-highlight">Email</mark></span>
+
+
+You can also receive my San Diego Zoo Safari Park promo code and list of theme park, tour, and sightseeing pass discounts to be sent to you. Request by email.
+
+</div>
+<h3 __id__="885" class="wp-block-heading">3. LEGOLAND California</h3>
+
+**of 55**   |   **Location**: Balboa Park**Best for**: Kids ages 2-12 (some teens still love it)
+
+<img __id__="894" alt="Kids drive LEGO cars, one of the fun San Diego kid activities at LEGOLAND California." class="" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='2800'%20height='1867'%3E%3Crect%20width='100%25'%20height='100%25'%20opacity='0'/%3E%3C/svg%3E"/><figcaption __id__="895" class="wp-element-caption">**Volvo Driving School at LEGOLAND California.**</figcaption>
+
+LEGOLAND California is, of course, one of the most popular things to do in San Diego with kids. The resort consists of LEGOLAND California, SEA LIFE Aquarium, LEGOLAND Water Park, LEGOLAND Hotel, and LEGOLAND Castle Hotel.
+
+
+If pressed for time, LEGOLAND California theme park can be visited in a half-day. The park is best for toddlers and younger kids. Teens must be die-hard LEGO lovers to enjoy it without accompanying a younger child. I think most rides are too juvenile for them.
+
+<ul __id__="902" class="wp-block-list">
+<li __id__="903">**What We Love**: You can spend a couple of full or half-days here between the multiple park sections and attractions. The park often offers 2nd day free and other promos.</li>
+<li __id__="905">**Good to Know**: This theme park tends to tire out parents, possibly because it’s so kid-centric.</li>
+<li __id__="907">**Important**: During off-peak season, LEGOLAND California closes on some Tuesdays and Wednesdays. The water park is also seasonal. <a __id__="909" data-lasso-name="LEGOLAND California Calendar" href="https://lajollamom.com/go/legoland-california-calendar/">Check the calendar</a> before planning a visit.</li>
+<li __id__="910">**Tips**: Remember to bring LEGO Minifigures to trade with staff members. You can also buy them in the park.</li>
+<li __id__="912">**Read More**: <a __id__="914" href="https://lajollamom.com/theme-parks/legoland-california/">LEGOLAND California Guide</a></li>
+<li __id__="915">**We Recommend Spending**: Half to full day</li>
+<li __id__="917">**Sightseeing Pass**: CityPASS &amp; Go City San Diego</li>
+<li __id__="919">**Individual** **Tickets**: Where you buy varies due to the park’s dynamic pricing model. We have <a __id__="922" href="https://lajollamom.com/how-to-buy-discounted-tickets-to-legoland-california/">advice for buying discount LEGOLAND California tickets</a>. First, <a __id__="923" data-lasso-name="LEGOLAND California Tickets | Official Website" href="https://lajollamom.com/go/legoland-california-tickets-official-website/">check their online promotions</a>. Then, compare to <a __id__="924" data-lasso-name="LEGOLAND California Tickets aRes Travel" href="https://tickets.lajollamom.com/attraction/single/10244/3">our discounted prices</a> (use promo code** LEGO** on our site for savings of $2-18) </li>
+</ul>
+<h3 __id__="927" class="wp-block-heading">4. SeaWorld San Diego</h3>
+
+**of 55**  |  **Location**: Mission Bay
+
+<img __id__="933" alt="My daughter watches the Manta roller coaster hurl down a track at SeaWorld San Diego." class="" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='2800'%20height='2096'%3E%3Crect%20width='100%25'%20height='100%25'%20opacity='0'/%3E%3C/svg%3E"/><figcaption __id__="934" class="wp-element-caption">Tweens and teens love the SeaWorld San Diego roller coasters.</figcaption>
+
+SeaWorld San Diego alone draws tourists from all over the world to my city. They come to enjoy up-close animal interactions, fun rides, animal shows, and educational experiences.
+
+
+ea otters, moon jellies, and more. You can touch reef sharks and marvel at giant ones in the walk-through shark tank.
+
+
+This park seems to satisfy all ages equally, so families with toddlers and teens (and all ages in between) go here.
+
+<ul __id__="939" class="wp-block-list">
+<li __id__="940">Rescue Jr. play area entertains young kids with mild rides and lots to climb on. </li>
+<li __id__="941">The Manta roller coaster and Electric Eel roller coaster thrill tweens and teens. </li>
+<li __id__="942">Shipwreck Rapids water ride is a great way for families to cool down on a sunny day.</li>
+</ul>
+
+As a mom who has been here more times than I can count (I can see the park from my house), I can tell you most guests spend an entire day here. However, a fun half-day is doable if short on time.
+
+<ul __id__="944" class="wp-block-list">
+<li __id__="945">**What We Love**: SeaWorld San Diego uses its facilities to rehabilitate rescued local sea life.</li>
+<li __id__="947">**Good to Know**: I rate dining as just okay, but it’s improving.</li>
+<li __id__="949">**Tips**: Skip the lines with a Quick Queue Premier pass, but it doesn’t cover all rides.  </li>
+<li __id__="951">**Read More**: <a __id__="953" href="https://lajollamom.com/theme-parks/seaworld-san-diego/">SeaWorld San Diego Guide</a></li>
+<li __id__="954">**We Recommend Spending**: Half to full day</li>
+<li __id__="956">**Sightseeing Pass**: CityPASS &amp; Go City San Diego</li>
+<li __id__="958">**Individual** **Tickets**: Where you buy varies due to the park’s dynamic pricing model. We have <a __id__="961" href="https://lajollamom.com/how-to-buy-discounted-tickets-to-seaworld-san-diego/">advice for buying discount SeaWorld San Diego tickets</a>. First, <a __id__="962" data-lasso-name="Single-Park Tickets and Fun Cards | SeaWorld San Diego" href="https://lajollamom.com/go/single-park-tickets-and-fun-cards-seaworld-san-diego/">check their online promotions</a>. Then, compare <a __id__="963" data-lasso-name="SeaWorld San Diego Tickets - aRes Travel" href="https://tickets.lajollamom.com/attraction/single/10244/4">our discounted prices</a> (use promo code** WINTER** on our site for a few extra dollars off).</li>
+</ul>
+<div __id__="974" class="kt-infobox-textcontent">
+If you’re a local, get an annual pass. Then, go a few hours before the park closes when the lines are shorter. My daughter and her friends do this successfully.
+</div>
+<h3 __id__="977" class="wp-block-heading">5. Sesame Place San Diego </h3>
+
+**of 55** | **Location**: Chula Vista
+
+<img __id__="983" alt="Elmo and Cookie monster walk with two girls through Sesame Place San Diego." class="wp-image-82871" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='1620'%20height='1080'%3E%3Crect%20width='100%25'%20height='100%25'%20opacity='0'/%3E%3C/svg%3E"/>
+
+Sesame Place San Diego is the only theme park on the West Coast based entirely on **Sesame Stree**t. It replaced Aquatica San Diego water park. Here, you’ll find loads of water attractions and slides, seven themed dry rides, and an interactive musical play area.
+
+
+The park also features an interactive **Sesame Street Neighborhood** complete with the iconic 123 Stoop, a live character show, a daily parade, photo opportunities, and everyone’s favorite characters.
+
+<ul __id__="988" class="wp-block-list">
+<li __id__="989">**What We Love**: It’s our biggest water park and a great way to cool off, especially in the inland heat.</li>
+<li __id__="991">**Good to Know**: It’s open seasonally and a bit away from the main sights. </li>
+<li __id__="993">**Tips**: It can get really hot here. To ensure you have shade, you may want to rent a shaded cabana or lounge chair.</li>
+<li __id__="995">**Read More**: <a __id__="997" href="https://lajollamom.com/sesame-place-san-diego/">Sesame Street Place San Diego Guide</a></li>
+<li __id__="998">**We Recommend Spending**: Half to full day</li>
+<li __id__="1000">**Sightseeing Pass**: None at this time</li>
+<li __id__="1002">**Individual** **Tickets**: Usually less when <a __id__="1005" data-lasso-name="Sesame Place San Diego Tickets" href="https://lajollamom.com/go/sesame-place-san-diego-tickets/">bought through SeaWorld</a> but you can compare to <a __id__="1006" data-lasso-name="Sesame Place San Diego Tickets - aRes Travel" href="https://tickets.lajollamom.com/attraction/single/10244/1337">our tickets</a>.</li>
+</ul>
+<h3 __id__="1007" class="wp-block-heading">6. Belmont Park</h3>
+
+**of 55** | **Location**: Mission Beach**Best for**: Ages 5+
+
+<img __id__="1015" alt="Belmont Park ticket booth with the Giant Dipper roller coaster in the background." class="wp-image-57045" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='2800'%20height='2100'%3E%3Crect%20width='100%25'%20height='100%25'%20opacity='0'/%3E%3C/svg%3E"/><figcaption __id__="1016" class="wp-element-caption">Our fun beachfront amusement park in Mission Beach</figcaption>
+
+Break from the beach for a few hours to pop into San Diego’s seaside amusement park. You must have tickets for the games and rides at Belmont Park San Diego, but walking around is free.
+
+
+We’re talking about the historic Giant Dipper roller coaster, an arcade, carnival rides, giant scoops of ice cream, a zip line, laser tag, and miniature golf. With all this, how can Belmont Park not be one of the most fun things to do in San Diego with kids? It’s also on my list of the best things to do in San Diego with teens.
+
+
+It’s home to a few decent restaurants like Cannonball and Beach House. The latter is a family-friendly (unless there is a concert) beach bar on the sand.
+
+<ul __id__="1022" class="wp-block-list">
+<li __id__="1023">**What We Love**: Free entry and fun food near the beach.</li>
+<li __id__="1025">**Good to Know**: I don’t suggest letting kids hang out here by themselves at night. There’s been some crime in the dark surrounding areas. The daytime is totally fine. If you live in San Diego, consider an annual pass, which will pay for itself after a few visits. </li>
+<li __id__="1027">**Tips**: Don’t pay for rides a la carte! The cost of rides and activities can add up quickly. If you want to pick up bike rentals or skateboards to enjoy the Mission Beach boardwalk, you can grab them at the park.</li>
+<li __id__="1029">**Read More**: <a __id__="1031" href="https://lajollamom.com/things-to-do-belmont-park/">Fun Things to Do at Belmont Park</a></li>
+<li __id__="1032">**We Recommend Spending**: An hour or two (longer with a meal)</li>
+<li __id__="1034">**Sightseeing Pass**: Go City San Diego (includes the Ride &amp; Play Pass)</li>
+<li __id__="1036">**Tickets** **for rides and activities**: Get a <a __id__="1039" href="https://www.belmontpark.com/tickets-reservation">Ride &amp; Play Pass online</a> before you go. It’s cheaper than at the booth.</li>
+</ul>
+<h3 __id__="1041" class="wp-block-heading">7. Balboa Park</h3>
+
+**of 55** | **Location**: Balboa Park
+
+<img __id__="1047" alt="The Botanical Building at Balboa Park with wildflowers booming in front." class="wp-image-56209" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='2800'%20height='1868'%3E%3Crect%20width='100%25'%20height='100%25'%20opacity='0'/%3E%3C/svg%3E"/><figcaption __id__="1048" class="wp-element-caption">Touring the Botanical Building is among the free kid-friendly things to do in San Diego.</figcaption>
+
+The nation’s largest urban cultural park is home to 17 museums, gorgeous gardens, historic buildings, the San Diego Zoo, restaurants, and performing arts venues. It is indeed one of the most fun places in San Diego for families because there is something for everyone to enjoy.
+
+
+You can enter Balboa Park for free, but most museums require a paid ticket. I’ve enumerated our favorite family museums below in 9-13.
+
+<ul __id__="1052" class="wp-block-list">
+<li __id__="1053">**What We Love**: It never gets old because museum exhibits change. It’s a big park with tons to do.</li>
+<li __id__="1055">**Good to Know**: If you plan to visit multiple museums, purchase a Balboa Park Explorer Pass or the Go San Diego pass. Both sightseeing passes include multiple museums for a flat fee.</li>
+<li __id__="1057">**Tips**: Panama 66 and the Tea Pavilion at the <a __id__="1059" href="https://lajollamom.com/japanese-friendship-garden-san-diego/">Japanese Friendship Garde</a> are our favorite al fresco, counter-order restaurants. Kids also like the colored courtyard tiles in the Spanish Village Art Center, which I think is an often-overlooked park gem. </li>
+<li __id__="1060">**Read More**: <a __id__="1062" href="https://lajollamom.com/san-diego/balboa-park/">Balboa Park Guide</a></li>
+<li __id__="1063">**We Recommend Spending**: Half to full day</li>
+<li __id__="1065">**Sightseeing Pass**: Balboa Park Explorer Pass (all museums but Comic-Con) &amp; Go City San Diego (select museums)</li>
+<li __id__="1067">**Cost**: FREE to enter the outdoor areas and some museums like Timken Art Museum.</li>
+</ul>
+<h3 __id__="1070" class="wp-block-heading">8. Old Town San Diego</h3>
+
+**of 55** | **Location**: Old Town
+
+<img __id__="1076" alt="Skeleton artisan crafts in the outdoor shopping area in Old Town San Diego, one of the free things to do with kids in San Diego." class="" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='2800'%20height='1854'%3E%3Crect%20width='100%25'%20height='100%25'%20opacity='0'/%3E%3C/svg%3E"/><figcaption __id__="1077" class="wp-element-caption">Old Town San Diego shops have crafts, candy, and souvenirs.</figcaption>
+
+As California’s birthplace, Old Town San Diego is a fun half-day visit in San Diego with children. Kids tend to like The Whaley House, one of the coolest haunted houses in the country. Walking through the graves at El Campo Santo Cemetery in the middle of town is also interesting.
+
+
+If that sounds too creepy, don’t worry. You can enjoy our sunshine in Old Town State Historic Park in between popping into the free museums that showcase what life was like in early California. Above the park, you’ll find the Junipero Serra Museum, which showcases Kumeyaay Indian, Spanish, and Mexican exhibits of local history starting in the 1700s.
+
+
+Pick up a festive souvenir from one of the many shops. Yes, most restaurants here serve good Mexican food and giant margaritas for parents on their patios. Old Town San Diego often has mariachi performances, people dressed in period costumes, live music, and entertainment for free family fun in San Diego.
+
+<ul __id__="1082" class="wp-block-list">
+<li __id__="1083">**What We Love**: Warm, fresh tortillas from the tortilla ladies, walking around the park on a sunny day, and free entry to the small museums.</li>
+<li __id__="1085">**Good to Know**: It can get busy on weekends and peak summer days. This means parking may be hard to find.</li>
+<li __id__="1087">**Tips**: Check the <a __id__="1089" href="https://www.oldtownsandiego.org/events/">event calendar</a> to see when any live performances or special events are scheduled. When we go, we arrive a little bit before 10 a.m. (when most of the museums and shops open) to secure a parking spot.</li>
+<li __id__="1090">**Read More**: <a __id__="1092" href="https://lajollamom.com/old-town-san-diego/">Guide to Old Town San Diego – Restaurants, Shopping and More</a></li>
+<li __id__="1093">**We Recommend Spending**: An hour or two plus lunch or dinner</li>
+<li __id__="1095">**Sightseeing Pass**: Go City San Diego includes Whaley House and Old Town Trolley Tours pass.</li>
+<li __id__="1097">**Individual** **Tickets**: Most of the museums in the state park are free. Whaley House requires admission.</li>
+</ul>
+<h2 __id__="1102" class="wp-block-heading">Best Museums in San Diego for Kids</h2>
+
+I am a huge fan of San Diego children’s museums because they all offer so much more than the exhibits you see.
+
+
+Some have libraries and summer camps. There are opportunities for kids to volunteer and online resources for classrooms. Look out for printables to color and crafts to make at home and videos for eduatinment and at-home science projects. How fun!
+
+<h3 __id__="1106" class="wp-block-heading">9. Fleet Science Center</h3>
+
+**of 55**** | Location: **Balboa Park
+
+<img __id__="1114" alt="A child plays with an exhibit at Fleet Science Center." class="wp-image-36738" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='2500'%20height='1667'%3E%3Crect%20width='100%25'%20height='100%25'%20opacity='0'/%3E%3C/svg%3E"/>
+
+The whole family will love exploring the 100 hands-on exhibits scattered throughout the eight galleries at Fleet Science Center. You’ll learn how gravity works, build stuff, watch movies in the world’s first dome IMAX theatre, and then some. 
+
+<ul __id__="1116" class="wp-block-list">
+<li __id__="1117">**What We Love**: Toddlers and even babies can get in on the “do touch” fun in the special **Kid City section for ages 5 and under**.</li>
+<li __id__="1120">**Good to Know**: This is a great gift shop with unique gifts, such as science projects and edutainment. It also has a good cafe with kid-friendly food.</li>
+<li __id__="1122">**Tips**: Check out their youth programming, especially if you are a local. There are many fun learning opportunities for kids, like science clubs and workshops.</li>
+<li __id__="1124">**Read More**: <a __id__="1126" href="https://lajollamom.com/fleet-science-center-san-diego/">Fleet Science Center Guide</a></li>
+<li __id__="1127">**We Recommend Spending**: An hour or two</li>
+<li __id__="1129">**Sightseeing Pass**: Balboa Park Explorer Pass &amp; Go City San Diego</li>
+<li __id__="1131">**Individual** **Tickets**: <a __id__="1134" href="https://www.fleetscience.org/">Buy Direct</a> | <a __id__="1135" href="https://tickets.lajollamom.com/attraction/single/10244/79">Our Discount</a> (same as in-person price but $2 less than online)</li>
+</ul>
+<h3 __id__="1136" class="wp-block-heading">10. San Diego Natural History Museum (theNat)</h3>
+
+**of 55** | **Location**: Balboa Park
+
+<img __id__="1142" alt="Kids participate in a scavenger hunt inside theNAT, fun when in San Diego with kids." class="" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='2000'%20height='1529'%3E%3Crect%20width='100%25'%20height='100%25'%20opacity='0'/%3E%3C/svg%3E"/><figcaption __id__="1143" class="wp-element-caption">There are two scavenger hunts to try inside theNAT.</figcaption>
+
+Located across the courtyard from the Fleet Science Center, the San Diego Natural History Museum houses fossils, scavenger hunts, and exhibits on local geology, ecosystems, and history.
+
+
+**Kids under age 5 will love The Backyard play area**. Parents can watch them explore with a latte from The Flying Squirrel Cafe next door. I love this museum, and it’s been a favorite of my daughters for as long as I can remember.
+
+<ul __id__="1147" class="wp-block-list">
+<li __id__="1148">**What We Love**: This is one of the best places for the whole family to learn about our binational region’s biodiversity, from Southern California to Baja California.</li>
+<li __id__="1150">**Good to Know**: Awesome store onsite for unique kids’ gifts.</li>
+<li __id__="1152">**Tips**: Don’t forget to check movie times in the <a __id__="1154" href="https://www.sdnhm.org/visit/giant-screen-theater/">Giant Theater</a>.</li>
+<li __id__="1155">**Read More**: <a __id__="1157" href="https://lajollamom.com/san-diego-natural-history-museum/">Local Kids’ Guide to San Diego Natural History Museum</a></li>
+<li __id__="1158">**We Recommend Spending**: An hour or two  </li>
+<li __id__="1160">**Sightseeing Pass**: Balboa Park Explorer Pass &amp; Go City San Diego</li>
+<li __id__="1162">**Individual** **Tickets**: <a __id__="1165" href="https://www.sdnhm.org/visit/">Buy Direct</a> </li>
+</ul>
+<h3 __id__="1167" class="wp-block-heading">11. San Diego Model Railroad Museum</h3>
+
+**of 55** | **Location**: Balboa Park**Best for**: Train enthusiasts
+
+
+The San Diego Model Railroad Museum is North America’s largest model railroad museum and a toy train enthusiast’s dream. Inside, you’ll find four enormous scale and model railroad track layouts and rotating exhibits.
+
+<ul __id__="1176" class="wp-block-list">
+<li __id__="1177">**What We Love**: The detail on the train models and scenery is staggering. Visitors can admire and tinker with toy trains here, too.</li>
+<li __id__="1179">**Good to Know**: It’s not a terribly big museum.</li>
+<li __id__="1181">**We Recommend Spending**: An hour or less</li>
+<li __id__="1183">**Sightseeing Pass**: Go City San Diego</li>
+<li __id__="1185">**Individual** **Tickets**: <a __id__="1188" href="https://www.sdmrm.org/">Buy Direct</a> — Kids ages 12 and under are FREE with a paid legal guardian.</li>
+</ul>
+<h3 __id__="1189" class="wp-block-heading">12. San Diego Air and Space Museum</h3>
+
+**of 55** | **Location**: Balboa Park
+
+
+Go to the San Diego Air and Space Museum to learn about the history of flight, from early balloon ascents to space travel. Over 50 aircraft hang from the rafters. The galleries showcase the Wright brothers, the Golden Age of Flight, World Wars I and II, the Jet Age, and women in flight.
+
+<ul __id__="1195" class="wp-block-list">
+<li __id__="1196">**What We Love**: They have offsite facilities that also restore vintage aircraft! </li>
+<li __id__="1198">**Good to Know**: The Art Deco building is really neat. It’s one of the last remaining Panama-California Exposition buildings constructed for Ford Motor Company. The style is 1930s **Streamline Moderne**.</li>
+<li __id__="1201">**Tips**: You can grab a burger in their grill which offers outdoor seating.</li>
+<li __id__="1203">**Read More**: <a __id__="1205" href="https://lajollamom.com/san-diego-air-and-space-museum/">San Diego Air and Space Museum Guide</a></li>
+<li __id__="1206">**We Recommend Spending**: An hour or two </li>
+<li __id__="1208">**Sightseeing Pass**: Go City San Diego &amp; Balboa Park Explorer Pass</li>
+<li __id__="1210">**Individual** **Tickets**: <a __id__="1213" href="https://sandiegoairandspace.org/visit/visit-the-museum">Buy Direct</a></li>
+</ul>
+<h3 __id__="1214" class="wp-block-heading">13. Comic-Con Museum</h3>
+
+**of 55** | **Location**: Balboa Park**Best for**: Tweens and teens (unless there’s an exhibit your younger kids would love.)
+
+
+The Comic-Con Museum is a new pop culture museum in Balboa Park. The vast majority of its exhibits rotate so you’ll want to check online before you go to see if anything appeals. During my last visit, I found the activities more suitable for older kids. However, there was a hands-on drawing lab that I believe grade schoolers would enjoy.
+
+<ul __id__="1222" class="wp-block-list">
+<li __id__="1223">**What We Love**: It’s new, high-tech, and very well done.</li>
+<li __id__="1225">**Good to Know**: Kids interested in art should go and take advantage of available extra programming and Makerspaces.</li>
+<li __id__="1227">**Tips**: Tickets are expensive so check the exhibits before you buy tickets. It’s currently closed on Wednesdays.</li>
+<li __id__="1229">**Read More**: <a __id__="1231" href="https://lajollamom.com/comic-con-museum/">Comic-Con Museum Guide</a></li>
+<li __id__="1232">**We Recommend Spending**: An hour or two </li>
+<li __id__="1234">**Individual** **Tickets**: <a __id__="1237" href="https://www.comic-con.org/">Buy Direct</a> (Does not participate in any sightseeing passes)</li>
+</ul>
+<h3 __id__="1239" class="wp-block-heading">14. San Diego Botanic Garden</h3>
+
+**of 55** | **Location**: Encinitas**Best for**: I think toddlers, preschoolers, and maybe grade schoolers will enjoy it the most. It’s a great place to push a baby around in a stroller for exercise.
+
+<img __id__="1247" alt="Children climb up the treehouse at San Diego Botanic Garden." class="wp-image-84109" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='3024'%20height='4032'%3E%3Crect%20width='100%25'%20height='100%25'%20opacity='0'/%3E%3C/svg%3E"/><figcaption __id__="1248" class="wp-element-caption">Kids climbing up the treehouse during a recent visit</figcaption>
+
+If you’re looking for outdoor activities for kids in San Diego and garden inspiration, the San Diego Botanic Garden is your place. Take a leisurely stroll through 29 stunning gardens, each with its own unique theme. Explore everything from fire safety to olive trees to plants native to the Canary Islands during your visit.
+
+
+Kids will love the Hamilton Children’s Garden’s fun treehouse, grass maze, and special kids’ activities. You can schedule a visit to align with tours, such as bird watching or walks for specific age groups.
+
+<ul __id__="1251" class="wp-block-list">
+<li __id__="1252">**What We Love**: It’s pleasant for parents. I’ve gone for exercise, time in the sunshine, and plant inspiration by myself even.</li>
+<li __id__="1254">**Good to Know**: They go all out during the holidays with their Lightscape displays — local families love this, too.</li>
+<li __id__="1256">**Tips**: You need a timed ticket. They also have wellness activities for adults like yoga.</li>
+<li __id__="1258">**Read More**: <a __id__="1260" href="https://lajollamom.com/san-diego-botanic-garden-encinitas/">Things to Do at San Diego Botanic Garden</a></li>
+<li __id__="1261">**We Recommend Spending**: A few hours, especially if you’re walking or letting the kids play </li>
+<li __id__="1263">**Individual** **Tickets**: <a __id__="1266" href="https://sdbg.org/">Buy Direct</a> </li>
+</ul>
+<h3 __id__="1267" class="wp-block-heading">15. Birch Aquarium at Scripps</h3>
+
+**of 55** | **Location**: La Jolla**Best for**: All ages (toddlers, preschoolers, and grade-schoolers will enjoy it the most)
+
+<img __id__="1275" alt="Young girls stand in front of the Kelp Forest tank at Birch Aquarium at Scripps, a fun San Diego with toddler and elementary school kids activities." class="" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='2500'%20height='1908'%3E%3Crect%20width='100%25'%20height='100%25'%20opacity='0'/%3E%3C/svg%3E"/><figcaption __id__="1276" class="wp-element-caption">The Kelp Forest tank showcases sea life that lives off the coast of San Diego.</figcaption>
+
+Birch Aquarium at Scripps is one of the best things to do in San Diego with kids, especially if they’re marine life lovers.
+
+
+Enter and walk to the right to see the 60 habitats of fishes and invertebrates from the Pacific Northwest’s cold waters to the tropical waters of Mexico and beyond. On the other side of the aquarium, kids can play with hands-on educational exhibits that teach conservation values.
+
+
+But the Little Blue Penguins exhibit is a highlight. At under a foot tall, these are the world’s smallest penguins, and you can only see them in the Western U.S. here. A human-made tide pool area on the back patio called Tide Pool Plaza boasts panoramic Pacific Ocean views over La Jolla Shores Beach. It’s an excellent place for a family photo. Here, docents help visitors gently touch starfish and anemones while answering questions.
+
+<ul __id__="1280" class="wp-block-list">
+<li __id__="1281">**What We Love**: It’s the public exploration center for the prestigious Scripps Institution of Oceanography.</li>
+<li __id__="1283">**Good to Know**: You only need a few hours maximum here. Parking is free but the lot can fill up.</li>
+<li __id__="1285">**Tips**: The aquarium has a cafe powered by The French Gourmet, a popular local spot. They also have a fun gift shop, awesome summer camps, and offsite activities like pier walks and tide pool tours.</li>
+<li __id__="1287">**Read More**: <a __id__="1289" href="https://lajollamom.com/guide-to-birch-aquarium/">Birch Aquarium Guide</a></li>
+<li __id__="1290">**We Recommend Spending**: A few hours</li>
+<li __id__="1292">**Sightseeing Pass**: CityPASS &amp; Go City San Diego</li>
+<li __id__="1294">**Individual** **Tickets**: <a __id__="1297" href="https://aquarium.ucsd.edu/">Direct online</a> or at the booth</li>
+</ul>
+<h3 __id__="1299" class="wp-block-heading">16. Uss Midway Museum</h3>
+
+**of 55** | **Location**: Downtown
+
+
+One of America’s longest-serving aircraft carriers is now a popular maritime museum. Go to see 60 awesome exhibits and 29 restored aircraft. Kids love learning about life at sea, touring the engine room and galley, and trying flight simulators.
+
+
+Some of the USS Midway Museum docents lived on board the ship. It’s one of my favorite places to recommend to everyone planning a trip to San Diego because there isn’t another museum like it. Be sure to take the audio tour.
+
+<ul __id__="1306" class="wp-block-list">
+<li __id__="1307">**What We Love**: It’s the only museum of its kind, and the docents tell awesome stories.</li>
+<li __id__="1309">**Good to Know**: The flight simulators cost extra but are super cool. Height restrictions apply.</li>
+<li __id__="1311">**Tips**: Get the Junior Pilot Program details from the Information booth so kids can earn pilot wings.</li>
+<li __id__="1313">**Read More**: <a __id__="1315" href="https://lajollamom.com/uss-midway-museum-san-diego/">Tips for Visiting the USS Midway Museum</a></li>
+<li __id__="1316">**We Recommend Spending**: A few hours</li>
+<li __id__="1318">**Sightseeing Pass**: CityPASS &amp; Go City San Diego</li>
+<li __id__="1320">**Individual** **Tickets**: <a __id__="1323" href="https://www.midway.org/visit/buy-tickets">Direct</a> | <a __id__="1324" href="https://tickets.lajollamom.com/attraction/single/10244/1832">Our Discount </a></li>
+</ul>
+<h3 __id__="1325" class="wp-block-heading">17. Maritime Museum of San Diego</h3>
+
+**of 55** | **Location**: Downtown**Best for**: Preschoolers and above
+
+<img __id__="1333" alt="Star of India ship at the Maritime Museum of San Diego in downtown." class="wp-image-56926" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='2800'%20height='1868'%3E%3Crect%20width='100%25'%20height='100%25'%20opacity='0'/%3E%3C/svg%3E"/><figcaption __id__="1334" class="wp-element-caption">The **Star of India** docked right on the edge of the (free) Embarcadero.</figcaption>
+
+This San Diego museum preserves one of the country’s largest collections of historic sailing vessels. Visitors may climb aboard to explore the ships, some occasionally still sail (check the website for tours on the bay).
+
+<ul __id__="1337" class="wp-block-list">
+<li __id__="1338">**What We Love**: Docents who are often onboard and tell stories of the ships’ history. The Star of India (pictured above) is the world’s oldest active sailing ship.</li>
+<li __id__="1340">**Good to Know**: It’s maybe an hour’s visit.</li>
+<li __id__="1342">**Tips**: The Maritime Museum of San Diego, the USS Midway Museum, and Waterfront Park are all neighbors on the Embarcadero, making it easy to combine a visit. You can also grab a taco at Carnitas Snack Shack here.</li>
+<li __id__="1344">**Read More**: <a __id__="1346" href="https://sdmaritime.org/">Maritime Museum of San Diego Guide</a> </li>
+<li __id__="1347">**We Recommend Spending**: A few hours</li>
+<li __id__="1349">**Sightseeing Pass**: CityPASS &amp; Go City San Diego</li>
+<li __id__="1351">**Individual** **Tickets**: <a __id__="1354" data-lasso-name="Maritime Museum of San Diego - Trusted Tours" href="https://lajollamom.com/go/maritime-museum-of-san-diego/">Buy Direct</a> </li>
+</ul>
+<h3 __id__="1355" class="wp-block-heading">18. The New Children’s Museum</h3>
+
+**of 55** | **Location**: Downtown San Diego**Best for:** Ages 0-10
+
+
+The New Children’s Museum’s goal is for children of all ages to experience the arts meaningfully. Their motto is “think, play, create.” That’s exactly what kids do there through arts and crafts, hands-on exhibits like the Sketch Aquarium, and performing arts.
+
+
+Looking for things to do in San Diego with babies? Babies under 12 months visit this museum for free. They love the colors and shapes and watching other kids in motion.
+
+<ul __id__="1364" class="wp-block-list">
+<li __id__="1365">**What We Love**: It’s one of the San Diego attractions for kids that will spark their love of learning early. </li>
+<li __id__="1367">**Good to Know**: Beansprouts Cafe offers a clean, diverse menu that has won awards for being allergy-friendly.</li>
+<li __id__="1369">**Tips**: It’s closed on Tuesdays</li>
+<li __id__="1371">**We Recommend Spending**: A few hours</li>
+<li __id__="1373">**Sightseeing Pass**: Go City San Diego</li>
+<li __id__="1375">**Individual** **Tickets**: <a __id__="1378" href="https://tickets.lajollamom.com/attraction/single/10244/1866">Our Discount</a> (saves $5)</li>
+</ul>
+<h3 __id__="1380" class="wp-block-heading">19. San Diego Children’s Discovery Museum</h3>
+
+**of 55** | **Location**: Escondido**Best for:** Ages 0-10
+
+
+Stop by the San Diego Children’s Discovery Museum if you are in the area. It’s entirely dedicated to learning through play throughout 6000 square feet of indoor space and even more outside, where chicken coops, worm farms, and other investigative stations exist.
+
+<ul __id__="1388" class="wp-block-list">
+<li __id__="1389">**What We Love**: It’s a pretty big place with great programming and hands-on exhibits. Themes of water and energy conservation are present throughout the facility.</li>
+<li __id__="1391">**Good to Know**: It’s very close to San Diego Safari Park, so you could visit both on the same (albeit long) day.</li>
+<li __id__="1393">**We Recommend Spending**: A few hours</li>
+<li __id__="1395">**Sightseeing Pass**: Go City San Diego</li>
+<li __id__="1397">**Tickets**: <a __id__="1399" href="https://www.sdcdm.org/">Online through SDCDM</a> </li>
+</ul>
+<h3 __id__="1400" class="wp-block-heading">20. Museum of Making Music</h3>
+
+**of 55** | **Location**: Carlsbad**Best for**: Any kids interested in music
+
+
+This is a fun San Diego museum for children or adults interested in music or the history of music. But let me tell you why you must go when the kids are young.
+
+
+Kids don’t always know what instrument they’d like to learn how to play. Sometimes, they need to choose one for a school music class. At other times, parents encourage learning an instrument to broaden their minds. You can actually learn about instruments and play some here.
+
+<ul __id__="1409" class="wp-block-list">
+<li __id__="1410">**What We Love**: A big highlight is the instrument room, where you can pick up and play hundreds of instruments. It’s fun for the whole family and gives kids a chance to experience what playing an electric guitar, trumpet, or flute might be like.</li>
+<li __id__="1412">**Read More**: <a __id__="1414" href="https://lajollamom.com/museum-of-making-music/">Museum of Making Music Guide</a></li>
+<li __id__="1415">**We Recommend Spending**: A few hours</li>
+<li __id__="1417">**Sightseeing Pass**: Go City San Diego</li>
+<li __id__="1419">**Individual** **Tickets**: <a __id__="1422" href="https://www.museumofmakingmusic.org/visit">Direct</a> | <a __id__="1423" href="https://tickets.lajollamom.com/attraction/single/10244/187">Our Discount</a> </li>
+</ul>
+<h3 __id__="1424" class="wp-block-heading">21. Living Coast Discovery Center</h3>
+
+**of 55** | **Location**: Chula Vista**Best for**: Toddlers, Preschoolers, Grade Schoolers – also a nice place to walk around with babies (in a carrier)
+
+<img __id__="1432" alt="Kids pet rays at the Living Coast Discovery Center in San Diego" class="wp-image-63526" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='2800'%20height='1967'%3E%3Crect%20width='100%25'%20height='100%25'%20opacity='0'/%3E%3C/svg%3E"/><figcaption __id__="1433" class="wp-element-caption">A photo from a school field trip we took</figcaption>
+
+Those interested in California’s coastal flora and fauna should plan a visit to The Living Coast Discovery Center, about 15 minutes south of downtown. It’s a popular location for school field trips (typically also a less busy spot than many other popular San Diego animal attractions).
+
+<ul __id__="1437" class="wp-block-list">
+<li __id__="1438">**What We Love**: To enhance your day there, you can add experiences like bat ray feedings and reptile meet-and-greets. </li>
+<li __id__="1440">**Good to Know**: It’s really not that far from Downtown, maybe 15 minutes south.</li>
+<li __id__="1442">**Tips**: Be sure to look at their events calendar. Guests can participate in bird walks, composting classes, and much more family fun in San Diego.</li>
+<li __id__="1444">**We Recommend Spending**: A few hours</li>
+<li __id__="1446">**Sightseeing Pass**: Go City San Diego</li>
+<li __id__="1448">**Individual** **Tickets**: <a __id__="1451" href="https://www.thelivingcoast.org/visit/admissions-tickets/">Buy Direct</a> </li>
+</ul>
+<h2 __id__="1454" class="wp-block-heading">Best San Diego Beaches for Families</h2>
+<img __id__="1456" alt="People swim and sunbathe at the beach on a sunny day, one of the most popular things to do in San Diego with kids." class="" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='2800'%20height='1575'%3E%3Crect%20width='100%25'%20height='100%25'%20opacity='0'/%3E%3C/svg%3E"/><figcaption __id__="1457" class="wp-element-caption">So pretty and fun, year-round.</figcaption>
+
+Our beautiful San Diego beaches top most family sightseeing itineraries and **they are free to use after you secure street parking**.
+
+
+Things to do in San Diego include going to the beach, whether you’re a resident or a tourist, during any season. We have 70 miles of stunning coastline, and each San Diego beach and beach town has its own characteristics.
+
+
+There is likely a family-friendly beach near where you are staying in San Diego, but here are my top picks for families.
+
+<ul __id__="1465" class="wp-block-list">
+<li __id__="1466">**Tips**: Ocean water is tested up and down the coast. When bacteria levels are deemed high, the ocean closes for swimming. You can check <a __id__="1468" href="https://sdbeachinfo.com/">sdbeachinfo.com</a> to see if the family beach you’d like to go to is open for swimming. The beach itself is always open.</li>
+<li __id__="1469">**Read More**: <a __id__="1471" href="https://lajollamom.com/best-san-diego-beach-hotels/">**Best Beach Hotels in San Diego**</a></li>
+<li __id__="1473">**We Recommend Spending**: A few hours to a full day!</li>
+<li __id__="1475">**Cost**: FREE, though some beaches have paid parking lots</li>
+</ul>
+<h3 __id__="1478" class="wp-block-heading">22. Coronado Central Beach</h3>
+
+**of 55** | **Location**: Coronado Island
+
+
+This gorgeous beach is in front of the Hotel del Coronado though it extends quite a distance past the luxury hotel. The water is usually pretty calm here, and the wide flat sandy beach is dreamy to chill out on. You can walk up to eat at The Del and rent chairs and umbrellas from their Del Beach area, even if you’re not an overnight guest.
+
+
+Coronado Central Beach ranks highly on national travel publications, including **Travel + Leisure**. The north end is dog-friendly and suitable for surfing when waves cooperate.
+
+
+****See also: Detailed Guide to Coronado Beaches****
+
+<h3 __id__="1491" class="wp-block-heading">23. La Jolla Shores Beach</h3>
+
+**of 55** | **Location**: La Jolla
+
+
+This family-friendly beach is one of our favorites in town because it suits people of all ages who crave ocean activities. The beach is flat, sandy, and an especially great place for kids.
+
+
+Lifeguards patrol the area, visitors may use the handful of fire pits (first come, first served), and the bathrooms are reasonably nice. The Kellogg Park playground and grassy area to run around are steps from the sand, too.
+
+
+Walk easily to Avenida de la Playa, the main street in the La Jolla Shores neighborhood, for snacks (grab a sandwich at The Cheese Shop) or essentials like forgotten sunscreen from the handful of cute boutiques. The parking lot is reasonably big but go early in the summer to avoid parking issues.
+
+
+We list several popular things to do with kids at La Jolla Shores Beach under outdoor activities below because it’s an excellent spot for water sports like snorkeling and learning how to surf.
+
+<h3 __id__="1502" class="wp-block-heading">25. Moonlight Beach</h3>
+
+**of 55** | **Location**: Encinitas
+
+
+Further north awaits Moonlight Beach. North San Diego County hotel concierges send guests here, even if there’s a closer beach to their property. This is because it has the most family-friendly amenities of beaches in the area. Guests’ needs are well handled with picnic tables, fire rings, lifeguards, restrooms, beach volleyball courts, a snack bar, and equipment rentals.
+
+
+<h3 __id__="1510" class="wp-block-heading">24. Del Mar Beaches</h3>
+
+**of 55** | **Location**: Del Mar
+
+
+The Del Mar beach between 15th Street and 29th Street is very popular, especially during the summer (when parking in this residential neighborhood is difficult). Walk from some of the most popular restaurants in Del Mar, L’Auberge Del Mar Hotel, and a few smaller inns.
+
+
+Another fun stretch of Del Mar beach is Torrey Pines State Beach, near the famous state reserve. The state park system administers it, so you must pay at a kiosk to park.
+
+
+The most family-friendly part is located closest to Torrey Pines Road. Here, you’ll find bathrooms, showers, and lifeguards. Kids like to play in the little area where the shallow lagoon water trickles into the Pacific Ocean.
+
+<h3 __id__="1520" class="wp-block-heading">26. Mission Bay Beaches</h3>
+
+**of 55** | **Location**: Mission Bay
+
+
+The largest human-made aquatic park in America is Mission Bay, and it’s heaven for water sports enthusiasts and family adventure. Rent boats, kayaks, stand-up paddleboards, aqua cycles, jet skis, and more from vendors in front of the Mission Bay hotels.
+
+
+Bay beaches appeal to young families because there are no waves compared to the ocean beach. Older kids enjoy the water activities here, but you can grab a bike rental and hit the flat, easy, paved path around the bay.
+
+
+The sand is soft, and the water is calm, though murky in spots. Mission Bay’s best beaches are accessible from various places and resorts. Sail Bay Beach, in front of Fanuel Park in Pacific Beach, is a favorite.
+
+
+****See also: 8 Best Mission Beach and Mission Bay Hotels in San Diego****
+
+<ul __id__="1533" class="wp-block-list">
+<li __id__="1534">**Tips**: Near Mission Bay, you’ll find South Mission Beach. There are nets if you have older kids or teens who like to play beach volleyball. The only thing to note is that these sand courts are busy and competitive, so it may take some time to jump in.</li>
+</ul>
+<h2 __id__="1538" class="wp-block-heading">Fun Outdoor San Diego Kids Activities</h2>
+
+The good news is that the whole family can enjoy these activities for kids in San Diego County at any time of the year.
+
+<h3 __id__="1540" class="wp-block-heading">27. Kayak the Sea Caves</h3>
+
+**of 55** | **Location**: La Jolla Shores Beach (free to go with your own gear, or you can rent it nearby)**Ages**: Tweens and teens
+
+
+Rent a double kayak, bring your own, or join a tour. Kayaks launch easily from this beach, and many, many people use them to explore the San Diego-La Jolla Underwater Park. While paddling, you can see bright orange Garibaldi fish and leopard sharks swimming below the surface. Our friendly sea lions are always around for entertainment, too.
+
+
+Most people kayak toward the La Jolla sea caves. All but one are only visible from the ocean, and it’s a marine life rich area. Some tours will take you through Clam’s Cave, where the barks of sea lions are almost deafening (but funny), though this is not something you should try on your own. I recommend a sea cave kayak tour with Everyday California.
+
+<ul __id__="1552" class="wp-block-list">
+<li __id__="1553">**What We Love**: It’s really good exercise and a lovely way to spend a day on the water. </li>
+<li __id__="1555">**Good to Know**: You do want to be in decent upper body shape to keep up with a group tour (or at least make sure your partner is if in a tandem kayak).</li>
+<li __id__="1557">**Tips**: I like wearing leggings that are okay to get wet. You will get a little wet. I haven’t seen anyone on a tour tip over, but it probably happens.</li>
+<li __id__="1559">**We Recommend Spending**: A few hours</li>
+<li __id__="1561">**Sightseeing Pass**: Go City San Diego has kayak rentals in La Jolla, Coronado, and Mission Bay included</li>
+<li __id__="1563">**Tours**: We have a discount at Everyday California (<a __id__="1565" data-lasso-name="Everyday California" href="https://lajollamom.com/go/everyday-california/">use promo code LJMOM20</a> for 20% off), but every vendor in the area is good.</li>
+</ul>
+<h3 __id__="1566" class="wp-block-heading">28. Seaport Village</h3>
+
+**of 55** | **Location**: Downtown San Diego (free to enter)
+
+<img __id__="1572" alt="View of the Seaport Village shops and restaurants from the water for family fun in San Diego." class="" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='2500'%20height='1666'%3E%3Crect%20width='100%25'%20height='100%25'%20opacity='0'/%3E%3C/svg%3E"/><figcaption __id__="1573" class="wp-element-caption">A great place to walk along the water and shop in downtown.</figcaption>
+
+Yes, it’s a touristy spot, but Seaport Village is a fun bayside entertainment area for local and visiting families. We’re talking about a fudge store, an awesome kite store (and a nearby grassy area to fly one), roaming entertainment, ocean views, and dining at over 50 restaurants and specialty shops.
+
+<ul __id__="1576" class="wp-block-list">
+<li __id__="1577">**What We Love**: It’s within walking distance of many <a __id__="1579" href="https://lajollamom.com/best-downtown-san-diego-hotels/">hotels in downtown San Diego</a>. And the historic carousel isn’t huge, but younger kids think it’s fun.</li>
+<li __id__="1580">**Good to Know**: It’s a little touristy but getting better.</li>
+<li __id__="1582">**Tips**: Malibu Farm is probably the best place to eat there.</li>
+<li __id__="1584">**We Recommend Spending**: A few hours, including a meal.</li>
+</ul>
+<h3 __id__="1587" class="wp-block-heading">29. Learn to Surf</h3>
+
+**of 55** | **Location**: Various**Best for**: Ages 5+ (check age requirement with your surfing school of choice)
+
+
+One of the coolest things to do in San Diego with kids is to get them up on a surfboard. Kids as young as five can take surfing lessons. All ages can learn to hang ten on our famous waves. It’s never too late to learn.
+
+
+A great way to book this quintessential Southern California experience is through private lessons, group lessons, or even a half-day summer camp that you can book by the day or week.
+
+
+I recommend Surf Diva at La Jolla Shores or San Diego Surfing School in Pacific Beach, though there are accredited surf schools up and down the coast. You can also find options in Mission Beach, Del Mar, and Carlsbad.
+
+<h3 __id__="1598" class="wp-block-heading">30. Children’s Pool Seals and La Jolla Cove Sea Lions</h3>
+
+**of 55** | **Location**: La Jolla (free to enter)
+
+<img __id__="1604" alt="Children's Pool seals rest on the sand at Golden Hour, one of the most fun and free things to do in San Diego with kids." class="" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='2500'%20height='1719'%3E%3Crect%20width='100%25'%20height='100%25'%20opacity='0'/%3E%3C/svg%3E"/><figcaption __id__="1605" class="wp-element-caption">California harbor seals sunbathe at golden hour at Children’s Pool Beach.</figcaption>
+
+One of the many free things to do in La Jolla is to visit the seals and sea lions. They’re cute, noisy, and perhaps a bit stinky — but so adorable.
+
+
+**Harbor seals** hang out at the Children’s Pool, a small stretch of beach protected by a partial seawall initially intended as a swimming area for kids. Well, the seals took it over.
+
+
+The beach is closed to the public so seals can have their pups here between December 15 and May 15. During peak tourist season, they tend to leave the beach in the early morning, fish all day, and return in the evening. It is technically okay to swim at the Children’s Pool when the beach is open to the public, but the water is not of the highest quality.
+
+
+Walk north along the boardwalk from here to the Cave Store along Coast Blvd. You’ll also see our **California sea lions** around La Jolla Cove.
+
+
+Because these two pinniped spots are near each other, this is a kid-pleaser because one or both groups are likely to be around. I never get tired of seeing them, either.
+
+<ul __id__="1616" class="wp-block-list">
+<li __id__="1617">**Tips**: Please **stay 50 feet away** from the seals and sea lions. I promise you’ll be able to see them from a distance, and they are just as cute! Also, We have plenty of casual, inexpensive, kid-friendly places to eat near La Jolla Cove that are outstanding (but also designer shops, art galleries, and fine dining if that suits you better). Delight your taste buds with an ice cream cone or grab a coffee. Refer to my lists of <a __id__="1620" href="https://lajollamom.com/things-to-do-in-la-jolla/">things to do in La Jolla</a> and the <a __id__="1621" href="https://lajollamom.com/best-la-jolla-restaurants/">best La Jolla restaurants</a> for delicious food.</li>
+<li __id__="1622">**Read More**: The BEST <a __id__="1624" href="https://lajollamom.com/la-jolla-seals/">Guide to Visiting the La Jolla Seals and Sea Lions</a></li>
+<li __id__="1625">**Cost**: FREE, unless you park in a paid parking lot</li>
+</ul>
+<h3 __id__="1628" class="wp-block-heading">31. Cabrillo National Monument</h3>
+
+**of 55** | **Location**: Point Loma
+
+<img __id__="1634" alt="View over the monument to the bay and Coronado bridge." class="" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='2800'%20height='2057'%3E%3Crect%20width='100%25'%20height='100%25'%20opacity='0'/%3E%3C/svg%3E"/><figcaption __id__="1635" class="wp-element-caption">A great place to photograph water views.</figcaption>
+
+Cabrillo National Monument, San Diego’s only National Park, commemorates the 1542 landing of Spanish explorer Juan Rodriguez Cabrillo on the West Coast via the San Diego Bay. This historic event is celebrated as the discovery of California.
+
+
+Other outdoor family activities in San Diego include lovely walks on the Bayside Trail and fantastic tide pools (the best viewing is November through March when low tides happen during the day). You can also walk into the Old Point Loma Lighthouse to see its frozen-in-time interior, with furnishings that date back to 1855.
+
+<ul __id__="1639" class="wp-block-list">
+<li __id__="1640">**What We Love**: A half-day visit here usually starts with a photo op at Juan Rodriguez Cabrillo’s statue with the panoramic view of the bay and downtown behind you. </li>
+<li __id__="1642">**Tips**: Kids can earn a Junior Ranger badge. Pick up the details at the Visitor Center.  </li>
+<li __id__="1644">**We Recommend Spending**: A few hours.</li>
+<li __id__="1646">**Cost**: You pay by vehicle, which for the average car is $20</li>
+</ul>
+<h3 __id__="1648" class="wp-block-heading">32. Torrey Pines State Natural Reserve</h3>
+
+**of 55** | **Location**: La Jolla
+
+
+Torrey Pines State Natural Reserve is home to the rare Torrey Pine tree, some of the best San Diego ocean views, and eight miles of hiking trails—many of which are suitable for children.
+
+
+The scenic 3/4-mile-long Beach Trail in the Upper Reserve boasts lovely views and stairs down to the beach. I don’t recommend heading down to the beach with young kids because it’s a steep climb back up.
+
+
+Take advantage of the free public guided walks for families and small groups on weekends and holidays to spot local flora and fauna.
+
+<ul __id__="1657" class="wp-block-list">
+<li __id__="1658">**What We Love**: I recommend the Guy Fleming Trail, a 2/3-mile-long mild loop hike suitable for all ages, complete with panoramic Pacific Ocean views and the best show of wildflowers and native plants. </li>
+<li __id__="1660">**Good to Know**: Torrey Pines State Beach is below the park, so adding some fun in the sand before or after your visit is easy.</li>
+<li __id__="1662">**Tips**: Leave your stroller at home. Some trails are wheelchair accessible, but carrying young kids in a baby carrier or backpack is easier.</li>
+<li __id__="1664">**We Recommend Spending**: A few hours</li>
+<li __id__="1666">**Cost**: $10-25 per vehicle</li>
+</ul>
+<h3 __id__="1669" class="wp-block-heading">33. Petco Park Baseball Game and Tour</h3>
+
+**of 55** | **Location**: Downtown
+
+
+Even if the San Diego Padres aren’t playing, you can take a behind-the-scenes tour of Petco Park year-round. The state-of-the-art, open-air ballpark boasts views of downtown, the Gaslamp Quarter, and beyond.
+
+
+If the team is playing, definitely grab tickets for a game. A day game is one of the popular family things to do in San Diego during the summer.
+
+<ul __id__="1677" class="wp-block-list">
+<li __id__="1678">**What We Love**: You can take a Daily Tour, a Pregame Tour, or a VIP Tour.</li>
+<li __id__="1680">**Good to Know**: Petco Park boasts some of the best sightlines in Major League Baseball.</li>
+<li __id__="1682">**Cost**: $38 for the Daily tour and much more for the other options. Kids under 36″ are free on the Daily Tour.</li>
+</ul>
+<h3 __id__="1684" class="wp-block-heading">34. Waterfront Park</h3>
+
+**of 55** | **Location**: Downtown (free to enter)**Best for**: Toddlers, grade schoolers, or picnics with a baby
+
+
+Families love this big waterfront park (hence the name) with its interactive water fountains (yes, they can play in them) and playground equipment — especially on hot summer days. Its large grassy area is an excellent place for picnics and games and for little ones to run around. They even show outdoor movies here in the summer.
+
+
+The park’s views over San Diego Bay are also spectacular. It’s located across from the Maritime Museum of San Diego and next door to the Wyndham San Diego Bayfront.
+
+
+<h3 __id__="1694" class="wp-block-heading">35. Falconry Lessons</h3>
+
+**of 55** | **Location**: La Jolla, Alpine, Ramona**Best for**: Grade Schoolers, tweens and teens
+
+
+If you’d like to learn falconry or see raptors in action up close, you have a couple of great options.
+
+
+Total Raptor eXperience offers falconry experiences at Torrey Pines Gliderport in La Jolla. Participants interact with and learn to fly a raptor. All ages are welcome in the introductory class.
+
+
+We enjoyed a falconry lesson with Sky Falconry at the Torrey Pines Gliderport a few years ago. They now only offer these lessons at their beautiful Alpine ranch. If you’re looking for things to do in San Diego with kids involving animal interaction, I would highly recommend them.
+
+
+These lessons bond people with raptors and educate them about the human-related threats (climate change, pollution, etc.) these majestic creatures face that I still think about years later.
+
+<h3 __id__="1708" class="wp-block-heading">36. Electric Bike Tours</h3>
+
+**of 55** | **Location**: La Jolla, Pacific Beach, or Downtown**Best for**: Teens
+
+
+Fun things to do in San Diego with teens include electric bike tours. Riders usually must be 13 or older, but you can pedal when you like and rely on the motor to get you up steeper hills. Tour La Jolla beaches like La Jolla Cove, in addition to scenic hilltops, downtown sights, and more.
+
+
+Or, rent one of these cool bikes for a few hours to ride on your own. Some bike shops offer self-guided ebike tours you can navigate as a family. Book eBike tours.
+
+
+<h3 __id__="1719" class="wp-block-heading">37. Queen Calafia’s Magic Circle</h3>
+
+**of 55** | **Location**: Escondido (free to enter)**Best for:** Toddlers and grade schoolers
+
+
+A somewhat hidden gem in North San Diego County, Queen Califia’s Magic Circle is the only American sculpture garden by French artist Niki de Saint Phalle, famous for her colorful mosaics.
+
+
+This display includes nine large sculptures, a circular “snake wall” (400 feet long with varying heights), a maze entryway, and some bench seating. You’ll find this touchable art inside Kit Carson Park.
+
+<h3 __id__="1729" class="wp-block-heading">38. The Stuart Collection at UC San Diego</h3>
+
+**of 55** | La Jolla (free to view)**Best for**: Grade schoolers, tweens and teens
+
+
+A different striking art installation is woven throughout the UC San Diego campus. The Stuart Collection features 20 rather large pieces of public art ranging from an actual house hanging off the side of the Engineering Building (**Fallen Star** by Doh Ho Suh) to the **Sun God** by Niki de Saint Phalle.
+
+
+Download the map and use your creativity to make exploring the collection a fun scavenger hunt for kids to find these hidden gems (some are not so hidden). Let the pieces be fun to look out for when touring the campus with a potential student.
+
+
+<h3 __id__="1742" class="wp-block-heading">39. San Elijo Lagoon</h3>
+
+**of 55** | **Location**: Cardiff (free to enter)
+
+
+The nearly 1000-acre San Elijo Lagoon is one of San Diego’s most diverse coastal wetlands. See if you can spot some of the over 1000 species of birds, fish, reptiles, and mammals that call this area home.
+
+
+Before visiting, check their website for special programming (and trail closures if it’s just rained) that the whole family will love. Hiking here is one of the fun things to do in San Diego for kids outside because the hiking trails suit young children.
+
+<h3 __id__="1750" class="wp-block-heading">40. Junior Golf</h3>
+
+**of 55** | **Location**: La Jolla, La Costa, Carlsbad**Best for**: Ages 5-12
+
+
+If your child has ever wanted to try golf or needs to polish his or her skills, San Diego is the perfect place. Check out the outstanding junior golf academies at Torrey Pines Golf Course, Omni La Costa, Aviara Golf Academy (near Park Hyatt Aviara and Four Seasons Aviara), and elsewhere.
+
+
+When staying at Fairmont Grand Del Mar, children 12 and under receive complimentary tee times and club rentals when accompanied by a paying adult.
+
+<h3 __id__="1763" class="wp-block-heading">41. Hotel Pool Day Pass</h3>
+
+**of 55** | **Location**: Hotels across San Diego County**Best for**: All ages
+
+
+Families who need a change of scenery now have the option through ResortPass to book a day at one of our fantastic local hotel pools. Options include Hyatt Regency Mission Bay (water slides!), Loews Coronado Bay Resort, San Diego Mission Bay Resort, Estancia La Jolla, and many more.
+
+
+**See also: ****The Best San Diego Hotel Pools**
+
+
+<h3 __id__="1783" class="wp-block-heading">42. Skate Parks</h3>
+
+**of 55** | **Location**: Various (free to enter)**Best for**: Tweens and teens
+
+
+Some of the world’s most famous skateboarders, including Tony Hawk, have called San Diego home. We have a variety of skate parks scattered across the county that cater to various levels. They are free to use. Try:
+
+<ul __id__="1792" class="wp-block-list">
+<li __id__="1793">Linda Vista Skate Park (the second-largest in California)</li>
+<li __id__="1794">Carlsbad Skate Park (good for beginners)</li>
+<li __id__="1795">Washington Street Skate Park (good for experts)</li>
+</ul>
+<h3 __id__="1796" class="wp-block-heading">43. San Diego Missions</h3>
+
+**of 55** |** Location**: San Diego (Grantville neighborhood) and Oceanside**Best for**: California 4th graders working on their mission projects!
+
+
+A popular reason for a San Diego family vacation is to learn about California’s history, especially when kids who live in the state must prepare for their 4th grade Mission project.
+
+
+Mission San Diego de Alcala was the first of the 21 California Missions. Its original location was in Old Town San Diego, but due to infertile land, it was moved six miles east into Mission Valley around 1774. You can also visit Mission San Luis Rey in Oceanside, the largest of the California Missions. Both are open to the public daily.
+
+<h3 __id__="1805" class="wp-block-heading">44. Sandcastle Classes</h3>
+
+**of 55** | **Location**: Del Mar and Coronado**Best for**: Ages 5+ (It’s really best for kids over 9 who have the patience and drive for a project like this, though younger kids have participated.)
+
+
+This came on my radar recently as a fantastic idea, especially since families are looking for more outdoor activities. Bond together over a sandcastle-building class! You’ll be completely blown away by the professional quality sandcastle your group will build with some instruction and tools.
+
+
+Book in Del Mar through San Diego Sand Castles. The famous Sandcastle Man, who often leaves his works of art in front of Hotel del Coronado, also offers lessons.
+
+
+
+<h2 __id__="1818" class="wp-block-heading">Best San Diego Tours for Kids and Teens</h2>
+
+If you’re wondering what to do in San Diego with kids regarding sightseeing tours, rest assured that these will not be boring.
+
+<h3 __id__="1820" class="wp-block-heading">45. San Diego Seal Tours</h3>
+
+**of 55** | **Location**: Embarcadero or Seaport Village (Downtown)**Best for**: All ages
+
+<img __id__="1828" alt="A San Diego Seal Tours boat boards families at Seaport Village." class="" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='2800'%20height='1981'%3E%3Crect%20width='100%25'%20height='100%25'%20opacity='0'/%3E%3C/svg%3E"/><figcaption __id__="1829" class="wp-element-caption">Drive right from land to water on the bus boat.</figcaption>
+
+San Diego Seal Tours are 90-minute, fully narrated tours on an open-air amphibious vehicle that first drives by scenic downtown spots on land. Kids will love that the vehicle then “drives” into the San Diego harbor for skyline views and (hopefully) seal sightings.
+
+<ul __id__="1831" class="wp-block-list">
+<li __id__="1832">**What We Love**: Pick up and drop off in popular tourist areas.</li>
+<li __id__="1834">**Good to Know**: The narrators are funny.</li>
+<li __id__="1836">**Tips**: Consider layers it can get breezy on the ocean and also as you’re driving around town.</li>
+<li __id__="1838">**We Recommend Spending**: A few hours</li>
+<li __id__="1840">**Individual** **Tickets**: Choose a date and time at the <a __id__="1843" data-lasso-name="Seal Tours Embarcadero - Trusted Tours" href="https://lajollamom.com/go/seal-tours-embarcadero/">Embarcadero</a> or <a __id__="1844" data-lasso-name="Seal Tours Seaport Village - Trusted Tours" href="https://lajollamom.com/go/seal-tours-seaport-village/">Seaport Village</a> departure points.</li>
+</ul>
+<h3 __id__="1845" class="wp-block-heading">46. Speed Boat Adventures</h3>
+
+**of 55** | **Location**: Harbor Island (Downtown)**Best for**: Ages 5+ (need to be 18+ to drive)
+
+
+Even if you’ve never driven a boat, you can drive these. Speed Boat Adventures boats are 13′ mini speed boats with quiet, eco-friendly motors that carry up to three people (small children sit in the middle).
+
+<ul __id__="1853" class="wp-block-list">
+<li __id__="1854">**What We Love**: Boats have a two-way communicator, so you can hear narration from the guide. </li>
+<li __id__="1856">**Good to Know**: It’s a fabulous way to sightsee from San Diego harbor. They also offer sunset tours.</li>
+<li __id__="1858">**Sightseeing Pass**: Go City San Diego</li>
+<li __id__="1860">**Individual** **Tickets**: <a __id__="1863" data-lasso-name="Speedboat Adventures" href="https://fareharbor.com/embeds/book/sandiegospeedboatadventures/items/2710/?asn=fhdn&amp;asn-ref=lajollamom&amp;full-items=yes&amp;flow=no&amp;branding=yes&amp;bookable-only=yes&amp;ref=lajollamom&amp;back=BACKLINK">Direct</a> </li>
+</ul>
+<h3 __id__="1865" class="wp-block-heading">47. Old Town Trolley Tours</h3>
+
+**of 55** | **Location**: Various stops from La Jolla to Downtown
+
+<img __id__="1871" alt="A green and orange Old Town Trolley car drives through Balboa Park." class="wp-image-57053" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='1200'%20height='630'%3E%3Crect%20width='100%25'%20height='100%25'%20opacity='0'/%3E%3C/svg%3E"/><figcaption __id__="1872" class="wp-element-caption">Old Town Trolley tours help families go carless.</figcaption>
+
+The orange and green open-air Old Town Trolley Tours cars allow guests to hop on and off at various stops around town.
+
+<ul __id__="1874" class="wp-block-list">
+<li __id__="1875">**What We Love**: This fun service can eliminate the need for a <a __id__="1877" href="https://lajollamom.com/getting-around-san-diego/">rental car in San Diego</a>.</li>
+<li __id__="1878">**Good to Know**: The standard hop-on, hop-off tour circles downtown Balboa Park, Old Town, and Coronado Island neighborhoods. They also have a haunted night tour.</li>
+<li __id__="1880">**Tips**: Check the trolley’s interactive map for information about stops, tourist attractions, places to eat in San Diego near trolley stops, and more. Ensure you board the right trolley tour, as not all go as far north as La Jolla Cove.</li>
+<li __id__="1882">**Sightseeing Pass**: CityPASS &amp; Go City San Diego</li>
+<li __id__="1884">**Individual** **Tickets**: <a __id__="1887" data-lasso-name="Old Town Trolley Tickets" href="https://lajollamom.com/go/old-town-trolley-tickets/">Direct</a> | Our Discount (BEST – see below ⬇️ )</li>
+</ul>
+<div __id__="1895" class="kt-inside-inner-col">
+
+Save $6-14
+
+</div>
+<h3 __id__="1897" class="kt-adv-heading94317_c902c4-16 wp-block-kadence-advancedheading">Exclusive La Jolla Mom <mark __id__="1898" class="kt-highlight">Discount</mark></h3>
+<div __id__="1906" class="kt-inside-inner-col">
+
+Use promo code **FALL** to save up to $6-14 on Old Town Trolley Tours.
+
+<a __id__="1910" class="kb-button kt-button button kb-btn94317_7f5f17-4a kt-btn-size-small kt-btn-width-type-auto kb-btn-global-inherit kt-btn-has-text-true kt-btn-has-svg-false wp-block-button__link wp-block-kadence-singlebtn" href="https://tickets.lajollamom.com/attraction/single/10244/6"><span __id__="1911" class="kt-btn-inner-text">SAVE NOW</span></a>
+</div>
+<h3 __id__="1912" class="wp-block-heading">48. Patriot Jet Boat (Summer and Weekends Year-Round)</h3>
+
+**of 55** | **Location**: Downtown San Diego**Best for**: Tweens and teens or daredevil younger kids (must be 48″ tall to ride)
+
+
+If you need fun San Diego family activities to entertain teens and tweens, look no further than the Patriot Jet Boat! It’s a 30-minute tour of San Diego Bay on a speedboat that reaches speeds of up to 50 mph. They’ll love the twists and turns and the blaring rock music.
+
+<ul __id__="1920" class="wp-block-list">
+<li __id__="1921">**What We Love**: It’s like a thrill ride on the water. But, you can see some sights and enjoy our sunshine in a short amount of time.</li>
+<li __id__="1923">**Good to Know**: You may (ok, will) get wet!</li>
+<li __id__="1925">**Sightseeing Pass**: Go City San Diego</li>
+<li __id__="1927">**Individual** **Tickets**: <a __id__="1930" data-lasso-name="Patriot Jet Boat - Fareharbor" href="https://fareharbor.com/embeds/book/flagshipsd/items/60605/?asn=fhdn&amp;asn-ref=lajollamom&amp;full-items=yes&amp;flow=no&amp;branding=yes&amp;bookable-only=yes&amp;ref=lajollamom&amp;back=BACKLINK">Buy Direct</a> </li>
+</ul>
+<h2 __id__="1933" class="wp-block-heading">Family-Friendly Seasonal Activities</h2>
+
+Some fun family activities and tourist attractions are best enjoyed during certain times of the year.
+
+<h3 __id__="1936" class="wp-block-heading">49. Winter Tide Pooling</h3>
+
+**of 55** | **Location**: Various **Best for**: All ages (can be slippery for young kids, so be mindful of where you walk)
+
+<img __id__="1944" alt="People look at tide pools at Cabrillo National Monument, one of the fun San Diego kid activities in winter. " class="" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='2500'%20height='1668'%3E%3Crect%20width='100%25'%20height='100%25'%20opacity='0'/%3E%3C/svg%3E"/><figcaption __id__="1945" class="wp-element-caption">Cabrillo National Monument is a great place for tide pools.</figcaption>
+
+Tide pooling season begins in November and extends roughly in March when tides are low during the day. These low tides reveal sea creatures galore, including sea anemones, sea cucumbers, hermit crabs, octopuses, sea stars, sea slugs, and more living in our tide pools.
+
+
+Birch Aquarium leads tide pool tours near Scripps Pier at La Jolla Shores Beach during select low tide dates. Other great locations include the Cabrillo National Monument, Shell Beach La Jolla tide pools, Tourmaline Surfing Park in Pacific Beach, in front of the Hotel del Coronado, and more.
+
+
+****See also: Top 8 Places to Go Tide Pooling in San Diego County****
+
+<h3 __id__="1954" class="wp-block-heading">50. Snorkel or Swim With Leopard Sharks (Summer)</h3>
+
+**of 55** | **Location**: La Jolla Shores Beach (free to go with your own gear)**Best for**: Strong swimmers
+
+
+While this doesn’t sound like an activity for a list of best things to do in San Diego with kids, we residents send our offspring into the water with the leopard sharks. It’s fun!
+
+
+La Jolla Shores Beach is home to the largest aggregation of leopard sharks in the world. They start to arrive in June, but the numbers peak around August and September. You’ll see them even in knee-deep water, mostly while snorkeling (swim slowly to avoid scaring them).
+
+<ul __id__="1964" class="wp-block-list">
+<li __id__="1965">**What We Love**: Where else in the world can you do this?</li>
+<li __id__="1967">**Good to Know**: They don’t bite.</li>
+<li __id__="1969">**Tips**: You’ll see them even in knee-deep water, mostly while snorkeling (swim slowly to avoid scaring them).</li>
+</ul>
+<h3 __id__="1972" class="wp-block-heading">51. Whale Watching Tours</h3>
+
+**of 55** | **Location**: Cruises typically depart from Downtown San Diego, Mission Bay, or Oceanside**Best for**: All ages
+
+
+Whale watching in San Diego is viable for about nine months of the year. The types of whales seen on these tours depend on the season. Roughly 20,000 gray whales make the 10,000-mile migration from Alaska to the warm waters of Mexico annually to give birth. Gray whale season is roughly between mid-December and April.
+
+
+Blue whales are among the largest creatures on earth and are spotted between mid-June and September. Various local companies offer whale watching tours, including some that depart from downtown, Mission Bay, and Oceanside in North San Diego County.
+
+<ul __id__="1982" class="wp-block-list">
+<li __id__="1983">**What We Love**: A lot of companies offer a sighting guarantee.</li>
+<li __id__="1985">**Good to Know**: Your chances of seeing gray whales from land are better earlier in the winter season. This is when they swim closer to shore on their way to Mexico. They swim further away from shore when they head back north with their calves. Torrey Pines State Park and Cabrillo National Monument are great places to try.</li>
+<li __id__="1987">**Tips**: Sunscreen and hats are very necessary year-round.</li>
+<li __id__="1989">**Sightseeing Pass**: Go City San Diego</li>
+<li __id__="1991">**Individual** **Tickets**: <a __id__="1994" data-lasso-name="San Diego Whale Watching Tours - Viator" href="https://lajollamom.com/go/san-diego-whale-watching-tours-viator/">Browse whale watching tours</a> by local companies like Flagship Cruises and Events and San Diego Whale Watch.</li>
+</ul>
+<h3 __id__="1996" class="wp-block-heading">52. Summer Concerts at Rady Shell</h3>
+
+**of 55** | **Location**: Downtown**Best for**: All ages, depending on the concert theme
+
+
+While you should check the San Diego Symphony calendar year-round, their outdoor summer concert series is one of the fantastic seasonal things to do in San Diego with kids.
+
+
+Whether you picnic on the lawn and let the kids run around or order a bottle of champagne to a reserved table, you’ll listen to fantastic live music themed to the event.
+
+<ul __id__="2006" class="wp-block-list">
+<li __id__="2007">**What We Love**: Concerts are sometimes themed to popular movies and television shows at the Rady’s Shell. I see Star Wars and Disney on tap for summer 2024.</li>
+<li __id__="2009">**Good to know**: Locals should look into season passes.</li>
+<li __id__="2011">**Tips**: Bring glow sticks for the kids.</li>
+<li __id__="2013">**Individual** **Tickets**: <a __id__="2016" href="https://www.sandiegosymphony.org/tickets-events/ticket-office/">Buy online</a>.</li>
+</ul>
+<h3 __id__="2017" class="wp-block-heading">53. Carlsbad Flower Fields</h3>
+
+**of 55** | **Location**: Carlsbad**Best for**: All ages
+
+
+Every spring, a 50-acre Carlsbad hillside turns into a rainbow of color as thousands of ranunculus flowers bloom against an ocean backdrop. The Flower Fields at Carlsbad Ranch is a family-friendly San Diego attraction open to the public for about 6-8 weeks, with hayrides and other special events. It’s a tradition going over 60 years strong.
+
+<ul __id__="2026" class="wp-block-list">
+<li __id__="2027">**What We Love**: It’s way more than just flowers.</li>
+<li __id__="2029">**Good to Know**: You can sometimes pick blueberries, too.</li>
+<li __id__="2031">**Tips**: If your family trip coincides with the Flower Fields being open, bring your camera to take stunning holiday card photos.</li>
+<li __id__="2033">**Individual** **Tickets**: <a __id__="2036" href="https://www.theflowerfields.com/">Direct</a></li>
+</ul>
+<h3 __id__="2037" class="wp-block-heading">54. Free Outdoor Summer Concerts</h3>
+
+**of 55** | **Location**: All over San Diego**Best for**: All ages
+
+
+Free outdoor summer concerts pop up around San Diego County throughout the summer. Bring a blanket, a picnic, and listen to live music under the stars between roughly Memorial Day and Labor Day. Some of the many calendars to check out include:
+
+<ul __id__="2045" class="wp-block-list">
+<li __id__="2046"><a __id__="2047" href="https://coronadoconcert.com/">Coronado Promenade Summer Concert Series</a></li>
+<li __id__="2048">Balboa Park Twilight in the Park</li>
+<li __id__="2049"><a __id__="2050" href="https://www.delmarfoundation.org/programs/twilight/">Del Mar Summer Twilight Concerts</a></li>
+<li __id__="2051">TGIF Concerts in the Park (Carlsbad)</li>
+</ul>
+<h3 __id__="2052" class="wp-block-heading">55. Carlsbad Strawberry Company</h3>
+
+**of 55** | **Location**: Carlsbad**Best for**: All ages
+
+
+Bring the kids to Carlsbad Strawberry Company for a fun u-pick strawberry experience. Strawberries are usually ready between the end of January and July. Between the end of September and the first week of November, it’s pumpkin patch season, which includes other fun activities like a corn maze.
+
+<ul __id__="2060" class="wp-block-list">
+<li __id__="2061">**Prices**: <a __id__="2063" href="https://www.carlsbadstrawberrycompany.com/">Pay by the bucket!</a></li>
+</ul>
+<h2 __id__="2066" class="wp-block-heading">Things to Do in San Diego With Toddlers</h2>
+
+If you’re not traveling with a toddler, jump to saving money in San Diego with kids.
+
+<img __id__="2070" alt="A child climbs a small ladder in an exhibit at The New Children's Museum, a very popular San Diego with toddler attraction." class="" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='2500'%20height='1667'%3E%3Crect%20width='100%25'%20height='100%25'%20opacity='0'/%3E%3C/svg%3E"/><figcaption __id__="2071" class="wp-element-caption">Photo courtesy of The New Children’s Museum — popular when in San Diego with kids.</figcaption>
+
+Families email me quite a bit for recommendations for the best things to do in San Diego with toddlers. So, I’ve created a shortlist of the above ideas to address this age group.
+
+
+First, note that ages two and under receive free admission to various major San Diego attractions for kids on this list. Taking a San Diego family vacation before kids require a child’s ticket (the same goes for Disneyland) is a great way to save money.
+
+
+Residents in San Diego with toddlers take them to **SeaWorld San Diego** to visit the new Rescue Jr. section (formerly Sesame Street Bay of Play). Tame amusement park rides focus on conservation and animal rescue. There’s also a climbing structure and splash pad (bring a bathing suit). After spending time in this colorful, kid-friendly land, you can visit the turtles, penguins, and other park residents.
+
+
+We also now have **Sesame Place** **San Diego**, which is entirely dedicated to the popular show and cast of characters — fantastic for visiting San Diego with kids in this age group. It’s a seasonal water park with character greetings, parades, water slides, and rides appropriate for kids of all ages.
+
+
+The **New Children’s Museum’s** mission is to encourage young children to think, play, and create. Toddlers and elementary school children interact with exhibits, make crafts, listen to stories, and more.
+
+
+Pushing a stroller around the** San Diego Zoo **is great exercise and a fun day out of the house. The Wildlife Explorers Basecamp (the new Children’s Zoo) has fantastic animal exhibits, hands-on learning, splash pads, and play structures. It’s almost like you want to go there last. Otherwise, you may get stuck in this part of the zoo because kids love it so much!
+
+
+**Balboa Park** is actually one of the fantastic toddler activities in San Diego. You can walk the trails and gardens and stop in a few museums. **San Diego Natural History Museum** and **Fleet Science Center** have play spaces for kids under 5.
+
+
+All ages love the **La Jolla seals and sea lions** at Children’s Pool Beach and La Jolla Cove. As soon as you see that your baby or toddler reacts to animals, they’ll be sure to smile at these loud, active residents.
+
+
+**Birch Aquarium at Scripps **is another favorite of residents in San Diego with toddlers. Arrive when it opens to grab a parking space. Then, spend a few hours looking at fish, playing with hands-on exhibits, and seeing the Little Blue Penguins.
+
+
+When your kids are interested in LEGOs, you can take them to **LEGOLAND** **California**. Usually, this hits around age 2. There are tame family rides they will enjoy, too.
+
+
+Bring a carrier and consider a walk along some of our **mild hiking trails** with the whole family. There’s a one-mile loop at San Elijo Lagoon, easy trails throughout Cabrillo National Monument in Point Loma, or views at Torrey Pines State Natural Reserve, which offers eight hiking trails.
+
+
+
+<h2 __id__="2098" class="wp-block-heading">How to Save Money on Your San Diego Family Vacation</h2>
+
+With a little planning, your San Diego trip doesn’t have to break the bank.
+
+<h3 __id__="2100" class="wp-block-heading">Consider Sightseeing Passes</h3>
+
+You’ve seen me mention sightseeing passes a bunch already in this post. There are two main ones that people buy, and it takes a little number crunching to figure out which one will be best for your family trip.
+
+<h4 __id__="2102" class="wp-block-heading">Go City San Diego</h4>
+
+If you plan on visiting two or more of our attractions, consider purchasing the Go City San Diego sightseeing pass. Most ticketed tours, museums, and amusement parks on this list are included on one or both Go San Diego passes. You can choose a comprehensive All-Inclusive pass, which saves up to 50% off of 45+ attractions, or the Explorer Pass, which lets you visit 2, 3, 4, 5, or 7 included attractions you don’t have to preselect.
+
+
+<div __id__="2107" class="kt-inside-inner-col">
+<div __id__="2111" class="kt-inside-inner-col">
+
+Save 5%
+
+</div>
+<h3 __id__="2113" class="kt-adv-heading60270_1b4b3c-3d wp-block-kadence-advancedheading">Go City San Diego – <mark __id__="2114" class="kt-highlight">Exclusive Discount!</mark></h3>
+<div __id__="2122" class="kt-inside-inner-col">
+
+Use promo code **GOSDO5LJM** to apply **an extra 5% off **ALL Go San Diego sightseeing passes when you buy through Go City! This discount stacks on top of sale rates! ** **
+
+
+<a __id__="2131" class="wp-block-button__link wp-element-button" href="https://lajollamom.com/go/go-city-san-diego/">Save now</a>
+</div>
+
+
+**(Pass has limited value for families at many attractions during Kids Free October in San Diego — we recommend individual tickets during this timeframe instead.)**
+
+</div>
+<h4 __id__="2134" class="wp-block-heading">San Diego CityPASS</h4>
+
+There is also the more limited San Diego CityPASS that is valuable if you visit LEGOLAND California, SeaWorld San Diego, or both. I don’t think this pass is cost-effective if you are not visiting one of these two parks. It also includes three of the following attractions that you can choose as you sightsee:
+
+<ul __id__="2137" class="wp-block-list">
+<li __id__="2138">San Diego Zoo OR Safari Park</li>
+<li __id__="2139">USS Midway Museum</li>
+<li __id__="2140">City Cruises (they have whale watching and harbor cruises)</li>
+<li __id__="2141">Birch Aquarium at Scripps</li>
+<li __id__="2142">Old Town Trolley Tours</li>
+<li __id__="2143">Maritime Museum of San Diego</li>
+</ul>
+<h4 __id__="2144" class="wp-block-heading">Balboa Park Explorer Pass</h4>
+
+Balboa Park museums, except the Comic-Con Museum, are included on this pass. I have the annual pass version which I highly suggest for San Diego residents because it starts at $99 for the year. It doesn’t include the San Diego Zoo or any performing arts venues. You can buy a pass for the whole park or a select number of museums.
+
+
+I would say that most tourists purchase Go San Diego just because they’re sightseeing outside of Balboa Park, too.
+
+
+<h3 __id__="2148" class="wp-block-heading">Visit in October When Kids Are Free!</h3>
+
+If you’re visiting in October, Kids Free San Diego offers free admission, meals, and hotel stays at over 100 participating restaurants, hotels, and San Diego attractions for kids.
+
+
+It’s a great time of year to experience all the cool stuff to do in San Diego for kids without going over budget. Adults will need to buy a qualifying ticket (which you can at a discount through me when the time comes) to take advantage of this promotion which is easy to do. There are some age and other restrictions to be aware of.
+
+
+The exact details are typically released in August of that year, so you only have a few months’ notice. However, the promotions at the big theme parks are generally the same every year.
+
+
+**See also: San Diego Discounts: Experience the City for Less**
+
+
+<h2 __id__="2158" class="wp-block-heading">Family-Friendly Places to Stay</h2>
+
+We have a lot of family hotels in San Diego to choose from in all price ranges. Here are five kid-friendly hotels and resorts that I like in each price range.
+
+
+
+<h3 __id__="2165" class="wp-block-heading">Budget</h3>
+<ul __id__="2166" class="wp-block-list">
+<li __id__="2167">Bahia Resort</li>
+<li __id__="2168">Hilton Garden Inn Carlsbad Beach</li>
+<li __id__="2169">Homewood Suites San Diego Downtown/Bayside</li>
+<li __id__="2170">The Dana Mission Bay</li>
+<li __id__="2171">Staybridge Suites Carlsbad-San Diego</li>
+</ul>
+<h3 __id__="2174" class="wp-block-heading">Moderate</h3>
+<ul __id__="2175" class="wp-block-list">
+<li __id__="2176">Hyatt Regency Mission Bay</li>
+<li __id__="2177">San Diego Mission Bay Resort</li>
+<li __id__="2178">La Jolla Beach and Tennis Club</li>
+<li __id__="2179">The Seabird Resort</li>
+<li __id__="2180">Coronado Island Marriott</li>
+</ul>
+<h3 __id__="2183" class="wp-block-heading">Luxury</h3>
+<ul __id__="2184" class="wp-block-list">
+<li __id__="2185">Park Hyatt Aviara</li>
+<li __id__="2186">Fairmont Grand Del Mar</li>
+<li __id__="2187">Four Seasons Aviara</li>
+<li __id__="2188">Hotel del Coronado (all three sections)</li>
+<li __id__="2189">Rancho Valencia</li>
+</ul>
+<h2 __id__="2191" class="wp-block-heading">FAQs About Activities in San Diego for Kids</h2>
+
+These are the most frequently asked questions about things to do in San Diego with kids that I receive from readers.
+
+
+
+
+<h3 __id__="2196" class="rank-math-question">What is there to do in San Diego with a baby?</h3>
+<div __id__="2197" class="rank-math-answer">
+
+Mild hikes are popular with families visiting with babies. We have fantastic beachfront parks, like Ellen Browning Scripps Park in La Jolla where you can lay out a blanket and let them roll around or sit in shade or sun for bird watching or a peek at the seals.
+
+
+Dip their toes in the ocean at one of our family-friendly beaches and get them up close with fish at Birch Aquarium or even bigger animals at the San Diego Zoo. Check my list of best San Diego hotel pools for one to swish around with them at the end of the day.
+
+
+If your baby naps well in the car, drive parts of our famous 59-mile scenic drive to explore the greater San Diego area. While he or she sleeps, you can listen to tunes and sightsee. Plan at least three hours to make the loop or split it into multiple days.
+
+</div>
+<h3 __id__="2208" class="rank-math-question">What is there to do with a 1-year-old in San Diego?</h3>
+<div __id__="2209" class="rank-math-answer">
+
+A fun activity for one-year-olds is to take a walk around Balboa Park. Stop into the Backyard play space at the San Diego Natural History Museum for ages 0-5. Kid City inside Fleet Science Center also has a soft play area for this age.
+
+
+Admission to these museums for this age group is free, and they are right next to each other. This age group also gets a kick out of the La Jolla Cove sea lions and the beach.
+
+</div>
+<h3 __id__="2215" class="rank-math-question">What can a 2-year-old do in San Diego?</h3>
+<div __id__="2216" class="rank-math-answer">
+
+One of the best places to take a 2-year-old is Birch Aquarium at Scripps. This age group loves looking at the fish, touching sea creatures in the tide pools, and playing with hands-on exhibits in a safe, contained space.
+
+
+Rescue Jr. play area at SeaWorld San Diego is also a favorite of local 2-year-olds. At the age of 2, my daughter also loved the San Diego Zoo, as there are plenty of animals to see up close.
+
+</div>
+<h3 __id__="2222" class="rank-math-question">What is fun for teenagers to do in San Diego?</h3>
+<div __id__="2223" class="rank-math-answer">
+
+Aside from touring our fantastic colleges, we have plenty of fun activities for older kids. SeaWorld San Diego is home to a few roller coasters that teens love, and they can learn how to shred some waves or showcase mad skills at a skate park.
+
+
+There’s no lack of selfie spots. We have murals, cute cafes, and decorative desserts (from decadent donuts to massive ice cream cones) perfect for their Instagram feeds. Read the full list of things to do in San Diego with teens and tweens.
+
+</div>
+<h3 __id__="2231" class="rank-math-question">What is free for kids in San Diego?</h3>
+<div __id__="2232" class="rank-math-answer">
+
+Luckily, some of the best things to do in San Diego with kids are free. Kids ages two and under get in free to theme parks like the San Diego Zoo and LEGOLAND California. Top ideas for free family fun in San Diego include:
+
+
+San Diego beaches (of course).Waterfront Park in downtown San Diego with its play structures and water play fountain.A visit to the La Jolla seals and La Jolla Cove sea lions.Family-friendly hiking trails.Exploring Old Town San Diego’s historic buildings and park.
+
+
+Kids eat free restaurant promotions, though as these change, you should check before you go. And don’t forget about Kids Free San Diego in October, where kids enter various attractions for free.
+
+</div>
+<h3 __id__="2244" class="rank-math-question">What can a family in San Diego do at night?</h3>
+<div __id__="2245" class="rank-math-answer">
+
+San Diego kids’ activities at night vary by season, but there are always fun things to do for the entire family. Check event calendars at local museums and attractions. Suggestions include:
+
+
+Evening Padres baseball games at PETCO Park.Belmont Park (usually open until 8 p.m.).Evening Old Town Trolley Tours that drive by haunted sights or holiday lights.Evening bay dinner cruises.Beach bonfires or s’more roasting (the latter you can do at Hotel del Coronado).Family-friendly plays at local theaters such as The Old Globe (see **The Grinch** during the holidays), Prado Theatre, and San Diego Civic Theater.Summer concert at the Rady Shell
+
+</div>
+<h3 __id__="2256" class="rank-math-question">What do you do with kids in San Diego when it rains?</h3>
+<div __id__="2257" class="rank-math-answer">
+
+A rainy day is perfect for exploring one of our many kid-friendly San Diego museums. Balboa Park is my top pick because its museums are close together, which means that with an Explorer or Go San Diego pass, you can bounce between them at leisure without worrying about paying admission each time. Plus, you’re only walking short distances between many of them.
+
+</div>
+<h3 __id__="2263" class="rank-math-question">Do you have a list of activities in La Jolla for kids?</h3>
+<div __id__="2264" class="rank-math-answer">
+
+My seaside community of La Jolla offers kids fantastic opportunities to unplug in the outdoors, be it a day at La Jolla Shores Beach, kayaking past our sea caves, or just gawking at our resident seals at the Children’s Pool and sea lions at La Jolla Cove.
+
+
+Dr. Seuss lived in La Jolla, and the wind-blown trees thought to have inspired the truffula trees in The Lorax are located in Ellen Browning Scripps Park. We have playgrounds and parks, Birch Aquarium, and family-friendly restaurants. Please read my full rundown of things to do in La Jolla with kids.
+
+</div>
+<h3 __id__="2269" class="rank-math-question">Should I stay in Downtown San Diego with kids?</h3>
+<div __id__="2270" class="rank-math-answer">
+
+One question I receive quite a bit, since there are no big resorts in downtown San Diego is whether it’s a fun place to stay with children.
+
+
+It can be if you don’t mind a boutique or business hotel. Some of the most fun things to do in San Diego with kids are downtown, like the USS Midway Museum and New Children’s Museum. San Diego Zoo is about 10 minutes away by car.
+
+</div>
+
+
+
+
+
+If your favorite things to do in San Diego with kids are missing from this list please let me know! If you have made it this far, thank you for reading and supporting our small business. I love this city and hope you do, too!
+
+
+
+</div>
+<a __id__="2279" class="kb-advanced-image-link" href="https://lajollamom.com/author/katie-dillon/"><img __id__="2280" alt="" class="kb-img wp-image-128302" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='150'%20height='150'%3E%3Crect%20width='100%25'%20height='100%25'%20opacity='0'/%3E%3C/svg%3E"/></a>
+<a __id__="2283" class="kb-advanced-heading-link kt-adv-heading-link129493_f4b252-86 hls-none" href="https://lajollamom.com/author/katie-dillon/">
+Katie Dillon
+</a>
+<div __id__="2285" class="wp-block-kadence-dynamichtml kb-dynamic-html kb-dynamic-html-id-129493_44451b-c1 kb-dynamic-html-link-style-underline">Katie Dillon is the managing editor of La Jolla Mom and a travel advisor. She helps readers plan San Diego vacations through her hotel expertise (that stems from living in a Four Seasons hotel), local connections, and content. Readers have access to her exclusive discounts on theme park tickets (like Disneyland and San Diego Zoo) and luxury hotels perks.
+
+She shares insider tips for visiting major cities worldwide like Hong Kong, London, Paris, and Shanghai that her family has either lived in or visits regularly (or both).
+
+Katie graduated from UC San Diego and is also a Disney Travel Agent.</div>
+<a __id__="2288" aria-label="Author's Facebook page" class="kt-svg-icon-link" href="https://www.facebook.com/LaJollaMom/"><title __id__="2291">Author’s facebook link</title></a>
+<a __id__="2294" aria-label="Author's Instagram page" class="kt-svg-icon-link" href="https://www.instagram.com/lajollamom/"><title __id__="2297">Author’s Instagram link</title></a>
+<a __id__="2302" aria-label="Author's Pinterest page" class="kt-svg-icon-link" href="https://www.pinterest.com/lajollamom/"><title __id__="2305">Author’s Pinterest link</title></a>
+<a __id__="2308" aria-label="Author's YouTube page" class="kt-svg-icon-link" href="https://www.youtube.com/c/Lajollamom/"><title __id__="2311">Author’s YouTube link</title></a>
+<a __id__="2315" aria-label="Author's LinkedIn page" class="kt-svg-icon-link" href="https://www.linkedin.com/in/lajollamom/"><title __id__="2318">Author’s Linkedin link</title></a>
+<a __id__="2321" aria-label="Author's X - formerly twitter page" class="kt-svg-icon-link" href="https://twitter.com/lajollamom"><title __id__="2324">Author’s twitter/x link</title></a>
+</div>
+<div __id__="2329" class="kt-inside-inner-col"><span __id__="2334" class="kb-adv-text-inner">Planning a trip to San Diego? <mark __id__="2335" class="kt-highlight">Start here!</mark></span>
+
+And, don’t forget to save money on sightseeing with my discount tickets or a Go San Diego Card.
+
+
+
+
+<h4 __id__="2345" class="kt-adv-heading75022_dffd4d-ae wp-block-kadence-advancedheading">Things to Do</h4>
+<ul __id__="2350" class="kt-svg-icon-list">
+<li __id__="2351" class="wp-block-kadence-listitem kt-svg-icon-list-item-wrap kt-svg-icon-list-item-75022_1cea09-0f"><a __id__="2356" class="1" href="https://lajollamom.com/san-diego-tourist-attractions/">Top Attractions</a></li>
+<li __id__="2357" class="wp-block-kadence-listitem kt-svg-icon-list-item-wrap kt-svg-icon-list-item-75022_7ad93f-16"><a __id__="2362" class="1" href="https://lajollamom.com/best-things-to-do-in-san-diego-with-kids/">San Diego with Kids</a></li>
+<li __id__="2363" class="wp-block-kadence-listitem kt-svg-icon-list-item-wrap kt-svg-icon-list-item-75022_90e07d-5b"><a __id__="2368" class="1" href="https://lajollamom.com/dog-friendly-beaches-san-diego/">Best Beaches</a></li>
+<li __id__="2369" class="wp-block-kadence-listitem kt-svg-icon-list-item-wrap kt-svg-icon-list-item-75022_8d8570-c1"><a __id__="2374" class="1" href="https://lajollamom.com/best-san-diego-tours/">Sightseeing Tours</a></li>
+<li __id__="2375" class="wp-block-kadence-listitem kt-svg-icon-list-item-wrap kt-svg-icon-list-item-75022_59d565-c8"><a __id__="2380" class="1" href="https://lajollamom.com/the-best-museums-in-san-diego-for-kids/">Best Museums</a></li>
+</ul>
+<h4 __id__="2385" class="kt-adv-heading75022_68b00d-07 wp-block-kadence-advancedheading">Hotels</h4>
+<ul __id__="2390" class="kt-svg-icon-list">
+<li __id__="2391" class="wp-block-kadence-listitem kt-svg-icon-list-item-wrap kt-svg-icon-list-item-75022_244e48-fd"><a __id__="2396" class="1" href="https://lajollamom.com/best-kid-friendly-hotels-san-diego/">Kid-Friendly Hotels in San Diego</a></li>
+<li __id__="2397" class="wp-block-kadence-listitem kt-svg-icon-list-item-wrap kt-svg-icon-list-item-75022_8c9908-e8"><a __id__="2402" class="1" href="https://lajollamom.com/best-san-diego-beach-hotels/">Beachfront San Diego Hotels</a></li>
+<li __id__="2403" class="wp-block-kadence-listitem kt-svg-icon-list-item-wrap kt-svg-icon-list-item-75022_9e2c8e-b4"><a __id__="2408" class="1" href="https://lajollamom.com/best-la-jolla-hotels/">Best La Jolla Hotels</a></li>
+<li __id__="2409" class="wp-block-kadence-listitem kt-svg-icon-list-item-wrap kt-svg-icon-list-item-75022_b19743-f5"><a __id__="2414" class="1" href="https://lajollamom.com/best-coronado-island-hotels/">Coronado Hotels</a></li>
+<li __id__="2415" class="wp-block-kadence-listitem kt-svg-icon-list-item-wrap kt-svg-icon-list-item-75022_63eeb4-cd"><a __id__="2420" class="1" href="https://lajollamom.com/hotel-del-coronado/">Hotel del Coronado Guide</a></li>
+</ul>
+<h4 __id__="2427" class="kt-adv-heading75022_0a8303-e5 wp-block-kadence-advancedheading">Before You Go</h4>
+<ul __id__="2432" class="kt-svg-icon-list">
+<li __id__="2433" class="wp-block-kadence-listitem kt-svg-icon-list-item-wrap kt-svg-icon-list-item-75022_c4bb17-a9"><a __id__="2438" class="1" href="https://lajollamom.com/best-time-to-visit-san-diego/">Best Time to Visit San Diego</a></li>
+<li __id__="2439" class="wp-block-kadence-listitem kt-svg-icon-list-item-wrap kt-svg-icon-list-item-75022_a2d714-03"><a __id__="2444" class="1" href="https://lajollamom.com/what-to-pack-for-san-diego/">What to Pack for San Diego</a></li>
+<li __id__="2445" class="wp-block-kadence-listitem kt-svg-icon-list-item-wrap kt-svg-icon-list-item-75022_493984-29"><span __id__="2449" class="kt-svg-icon-list-text"><a __id__="2450" class="1" href="https://lajollamom.com/san-diego-neighborhoods/">Where to Stay in San Diego</a> (Neighborhoods)</span></li>
+<li __id__="2451" class="wp-block-kadence-listitem kt-svg-icon-list-item-wrap kt-svg-icon-list-item-75022_880419-e9"><a __id__="2456" class="1" href="https://lajollamom.com/san-diego-discounts/">How to Save Money in San Diego</a></li>
+</ul>
+</div>
+</main>
+<div __id__="2458" class="sidebar-inner-wrap">
+<div __id__="2462" class="kt-inside-inner-col">
+<img __id__="2465" alt="" class="kb-img wp-image-86082" src="https://lajollamom.com/wp-content/w3-webp/uploads/2022/06/katie-dillon-la-jolla-mom-luxury-travel-scaled-crop.jpgw3.webp"/>
+<h3 __id__="2466" class="kt-adv-heading134339_d97de8-63 wp-block-kadence-advancedheading">About La Jolla Mom</h3>
+
+Hi, I’m Katie, a travel advisor and founder of lajollamom.com. We are your trusted source for advice on San Diego hotels and things to do, VIP perks at luxury hotels worldwide, and discounted theme park tickets. We can help you spend less and upgrade your trip. **About us →**
+
+</div>
+<img __id__="2477" alt="A roller coaster on the track at Knotts Berry Farm." class="kb-img wp-image-131512" src="https://lajollamom.com/wp-content/w3-webp/uploads/2024/08/knotts-berry-farm-discount-tickets-150x150.jpgw3.webp"/>
+<a __id__="2479" href="/san-diego-resources/">Save on Theme Park Tickets</a>
+<img __id__="2486" alt="Red and white striped lounge chairs on the beach in front of Hotel Del Coronado." class="kb-img wp-image-129410" src="https://lajollamom.com/wp-content/uploads/2024/08/hotel-del-coronado-resources-1.webp"/>
+<a __id__="2488" href="/book-san-diego-luxury-hotels/">Book Luxury Hotels with Perks</a>
+<img __id__="2495" alt="father and daughter jump into a pool at Fairmont Grand Del Mar" class="kb-img wp-image-130002" src="https://lajollamom.com/wp-content/uploads/2024/08/fairmont-grand-del-mar-family-hotel-scaled-scaled-1.webp"/>
+<a __id__="2497" href="/san-diego-family-vacation/">Plan Your San Diego Vacation</a>
+<img __id__="2504" alt="Cover photo of the San Diego Gold List eBook." class="kb-img wp-image-131067" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='1200'%20height='1549'%3E%3Crect%20width='100%25'%20height='100%25'%20opacity='0'/%3E%3C/svg%3E"/>
+<a __id__="2506" href="/free-san-diego-book/">Join Our Newsletter</a>
+</div>
+</div>
+<h2 __id__="2512" class="kt-adv-heading135168_562bba-47 wp-block-kadence-advancedheading">Related Articles</h2>
+<div __id__="2513" class="yarpp yarpp-related yarpp-related-shortcode yarpp-template-thumbnails">
+<a __id__="2516" class="yarpp-thumbnail" href="https://lajollamom.com/san-diego-with-kids-summer/" title="Summer in San Diego: 31 Things to Do with Your Kids">
+<img __id__="2517" alt="A little girl walks into the ocean on a San Diego Beach" class="attachment-mv_create_4x3_medium_res size-mv_create_4x3_medium_res wp-post-image" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='1300'%20height='868'%3E%3Crect%20width='100%25'%20height='100%25'%20opacity='0'/%3E%3C/svg%3E"/><span __id__="2518" class="yarpp-thumbnail-title">Summer in San Diego: 31 Things to Do with Your Kids</span></a>
+<a __id__="2519" class="yarpp-thumbnail" href="https://lajollamom.com/la-jolla-underwater-park/" title="La Jolla Underwater Park: Water Sports and Sea Life Galore">
+<img __id__="2520" alt="When in San Diego, you must explore La Jolla's Underwater Park ecological reserve. Here's why." class="attachment-mv_create_4x3_medium_res size-mv_create_4x3_medium_res wp-post-image" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='1300'%20height='975'%3E%3Crect%20width='100%25'%20height='100%25'%20opacity='0'/%3E%3C/svg%3E"/><span __id__="2521" class="yarpp-thumbnail-title">La Jolla Underwater Park: Water Sports and Sea Life Galore</span></a>
+<a __id__="2522" class="yarpp-thumbnail" href="https://lajollamom.com/best-la-jolla-beaches/" title="10 Best Beaches in La Jolla, California: A Local’s Guide">
+<img __id__="2523" alt="Best beaches in La Jolla" class="attachment-mv_create_4x3_medium_res size-mv_create_4x3_medium_res wp-post-image" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='1300'%20height='866'%3E%3Crect%20width='100%25'%20height='100%25'%20opacity='0'/%3E%3C/svg%3E"/><span __id__="2524" class="yarpp-thumbnail-title">10 Best Beaches in La Jolla, California: A Local’s Guide</span></a>
+<a __id__="2525" class="yarpp-thumbnail" href="https://lajollamom.com/best-coronado-beach/" title="Detailed Guide to the Best Beaches in Coronado Island, San Diego">
+<img __id__="2526" alt="Find which Coronado beach is best for your visit to San Diego." class="attachment-mv_create_4x3_medium_res size-mv_create_4x3_medium_res wp-post-image" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='2800'%20height='2046'%3E%3Crect%20width='100%25'%20height='100%25'%20opacity='0'/%3E%3C/svg%3E"/><span __id__="2527" class="yarpp-thumbnail-title">Detailed Guide to the Best Beaches in Coronado Island, San Diego</span></a>
+</div>
+<div __id__="2528" class="kb-row-layout-wrap kb-row-layout-id135168_5f0d30-6a alignnone wp-block-kadence-rowlayout">
+<div __id__="2533" class="comment-respond wp-block-post-comments-form has-text-color has-theme-palette-4-color">
+<h3 __id__="2534" class="comment-reply-title">Leave a Reply </h3><form __id__="2537" class="comment-form">
+Your email address will not be published. Required fields are marked *
+
+Comment *
+<div __id__="2546" class="comment-input-wrap no-url-field">
+Name *
+
+
+Email *
+
+
+
+
+
+ </div></form>
+
+This site uses Akismet to reduce spam. Learn how your comment data is processed.
+
+<h3 __id__="2568" class="wp-block-comments-title has-background has-theme-palette-8-background-color">14 responses</h3>
+<ol __id__="2569" class="wp-block-comment-template"><li __id__="2570" class="comment even thread-even depth-1">
+<div __id__="2573" class="wp-block-comment-author-name">Debbie</div>
+<div __id__="2575" class="wp-block-comment-content">
+I completely adore San Diego! I wish I had a summerhouse at Mission beach! xx
+
+</div>
+<a __id__="2578" aria-label="Reply to Debbie" class="comment-reply-link" href="#comment-156062">Reply</a>
+</li><li __id__="2579" class="comment odd alt thread-odd thread-alt depth-1">
+<div __id__="2582" class="wp-block-comment-author-name">Karla</div>
+<div __id__="2584" class="wp-block-comment-content">
+Thanks for the tips! We’re making our first family trip to the area this fall with our 6 year old for 3.5 days.  LegoLand and the zoo were on our list as well as a beach visit – appreciate the beach info – is there one in particular you’d recommend?
+
+</div>
+<a __id__="2587" aria-label="Reply to Karla" class="comment-reply-link" href="#comment-642325">Reply</a>
+</li><li __id__="2588" class="comment even thread-even depth-1">
+<div __id__="2591" class="wp-block-comment-author-name">el</div>
+<div __id__="2593" class="wp-block-comment-content">
+How could you put SeaWorld on that list? This place is disgusting! Teaching your kids that it’s ok to lock up large marine mamals in tiny pools and train them circus shows is OK certainly should not be part of anyones education program.
+
+
+All other spots are great, agreed.
+
+</div>
+<a __id__="2597" aria-label="Reply to el" class="comment-reply-link" href="#comment-643459">Reply</a>
+<ol __id__="2598"><li __id__="2599" class="comment byuser comment-author-katie-dillon bypostauthor odd alt depth-2">
+<div __id__="2602" class="wp-block-comment-author-name">La Jolla Mom</div>
+<div __id__="2604" class="wp-block-comment-content">
+Hi! Regardless of how anyone feels about SeaWorld, there are visitors to San Diego and residents who love it. As someone who writes about San Diego attractions on this site and for other major publications, it would be negligent and unprofessional for me to ignore its existence. People can make their own decisions whether or not they’d like to visit SeaWorld. I do appreciate your comment as it’s a good discussion to have!
+
+</div>
+<a __id__="2607" aria-label="Reply to La Jolla Mom" class="comment-reply-link" href="#comment-643460">Reply</a>
+</li></ol></li><li __id__="2608" class="comment even thread-odd thread-alt depth-1">
+<div __id__="2611" class="wp-block-comment-author-name">Amanda Keeley-Thurman</div>
+<div __id__="2613" class="wp-block-comment-content">
+Old Town and Seaport Village are two of our favorite spots. The kids have to ride the historic carousal at Seaport Village every time.
+
+</div>
+<a __id__="2616" aria-label="Reply to Amanda Keeley-Thurman" class="comment-reply-link" href="#comment-660096">Reply</a>
+<ol __id__="2617"><li __id__="2618" class="comment byuser comment-author-katie-dillon bypostauthor odd alt depth-2">
+<div __id__="2621" class="wp-block-comment-author-name">La Jolla Mom</div>
+<div __id__="2623" class="wp-block-comment-content">
+So glad to hear it. Great choices by them for sure!
+
+</div>
+<a __id__="2626" aria-label="Reply to La Jolla Mom" class="comment-reply-link" href="#comment-660949">Reply</a>
+</li></ol></li><li __id__="2627" class="comment even thread-even depth-1">
+<div __id__="2630" class="wp-block-comment-author-name">Kara</div>
+<div __id__="2632" class="wp-block-comment-content">
+I personally love Seaworld and their love for marine life and continuing educating kids about marine life. There are so many memories as a child going there and seeing animals. Any type of zoological life is wonderful education for kids and helps educate them about these animals.
+
+</div>
+<a __id__="2635" aria-label="Reply to Kara" class="comment-reply-link" href="#comment-662339">Reply</a>
+</li><li __id__="2636" class="comment odd alt thread-odd thread-alt depth-1">
+<div __id__="2639" class="wp-block-comment-author-name">Tank Anant</div>
+<div __id__="2641" class="wp-block-comment-content">
+thanks for your guide
+
+</div>
+<a __id__="2644" aria-label="Reply to Tank Anant" class="comment-reply-link" href="#comment-665000">Reply</a>
+</li><li __id__="2645" class="comment even thread-even depth-1">
+<div __id__="2648" class="wp-block-comment-author-name">Brianne</div>
+<div __id__="2650" class="wp-block-comment-content">
+Thanks for the list! My mom’s visiting so I like to have all options on the table.
+
+</div>
+<a __id__="2653" aria-label="Reply to Brianne" class="comment-reply-link" href="#comment-670875">Reply</a>
+</li><li __id__="2654" class="comment odd alt thread-odd thread-alt depth-1">
+<div __id__="2657" class="wp-block-comment-author-name">Ashley Thomas</div>
+<div __id__="2659" class="wp-block-comment-content">
+Looking at a trip in June with our 11 and 8 year olds! Thinking zoo and balboa park attractions/museums.
+Any other suggestions?
+We are looking at staying at Paradise Point Resort
+Thank you for any input!
+
+</div>
+<a __id__="2665" aria-label="Reply to Ashley Thomas" class="comment-reply-link" href="#comment-688081">Reply</a>
+</li><li __id__="2666" class="comment even thread-even depth-1">
+<div __id__="2669" class="wp-block-comment-author-name">Almira</div>
+<div __id__="2671" class="wp-block-comment-content">
+Hello,
+I have A Japanese little girl (8yrs old)who’s visiting me first week of Aug. I live in Escondido and she’s only here from 4-7 August. I want to make the best of her visit. Her mother and I were like sisters when I lived in Japan- she passed 4 years ago. So the girl is like my niece. I was thinking to capture the most for the time while she’s here:
+1st Day:
+safari park – Escondido (don’t know how long it will take but maybe 3 hours?)
+And Carlsbad seashores.
+
+
+2nd Day: LEGO land
+
+
+3rd Day: SeaWorld and San Diego Children’s museum if we have time.
+
+
+Let me know if this is a good start. I have no small children and not familiar with the area yet.
+
+
+Thanks,
+
+</div>
+<a __id__="2682" aria-label="Reply to Almira" class="comment-reply-link" href="#comment-696990">Reply</a>
+</li><li __id__="2683" class="comment odd alt thread-odd thread-alt depth-1">
+<div __id__="2686" class="wp-block-comment-author-name">Clair Saunders</div>
+<div __id__="2688" class="wp-block-comment-content">
+This is amazing thank you! Just starting to think and plan our first ever trip to the USA and the plan was to do 3 nights San Diego then drive up coast for 18 nights. Your page is making me think 3 nights won’t be enough!! We might have to do a week! 😄
+
+</div>
+<a __id__="2691" aria-label="Reply to Clair Saunders" class="comment-reply-link" href="#comment-726431">Reply</a>
+</li><li __id__="2692" class="comment even thread-even depth-1">
+<div __id__="2695" class="wp-block-comment-author-name">Mattie</div>
+<div __id__="2697" class="wp-block-comment-content">
+Seriously incredible list of fun things to do! Thank you so much for all the time you spent on this!
+Mattie from Mattie-Taylor.com
+
+</div>
+<a __id__="2701" aria-label="Reply to Mattie" class="comment-reply-link" href="#comment-736100">Reply</a>
+</li><li __id__="2702" class="comment odd alt thread-odd thread-alt depth-1">
+<div __id__="2705" class="wp-block-comment-author-name">Madeleine</div>
+<div __id__="2707" class="wp-block-comment-content">
+Such a helpful article for our upcoming family trip to San Diego- thank you!!
+
+</div>
+<a __id__="2710" aria-label="Reply to Madeleine" class="comment-reply-link" href="#comment-736245">Reply</a>
+</li></ol>
+</div>
+</div>
+<a __id__="2716" aria-label="La Jolla Mom member page on San Diego Tourism" class="kb-advanced-image-link" href="https://www.sandiego.org/members/book-your-trip/la-jolla-mom.aspx"><img __id__="2717" alt="san diego tourism authority logo" class="kb-img wp-image-59820" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='236'%20height='212'%3E%3Crect%20width='100%25'%20height='100%25'%20opacity='0'/%3E%3C/svg%3E"/></a>
+<a __id__="2719" aria-label="Katie Dillon on Virtuoso.com" class="kb-advanced-image-link" href="https://www.virtuoso.com/advisor/katiedillon/travel/advisors/15469322/katie-dillon"><img __id__="2720" alt="Virtuoso member logo" class="kb-img wp-image-112588" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='1000'%20height='555'%3E%3Crect%20width='100%25'%20height='100%25'%20opacity='0'/%3E%3C/svg%3E"/></a>
+<img __id__="2723" alt="ASTA logo" class="kb-img wp-image-59814" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='2128'%20height='927'%3E%3Crect%20width='100%25'%20height='100%25'%20opacity='0'/%3E%3C/svg%3E"/>
+<a __id__="2725" aria-label="Explanation of Four Seasons Preferred Partner" class="kb-advanced-image-link" href="https://lajollamom.com/four-seasons-preferred-partner/"><img __id__="2726" alt="Four Seasons Preferred Partner logo" class="kb-img wp-image-59935" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='832'%20height='536'%3E%3Crect%20width='100%25'%20height='100%25'%20opacity='0'/%3E%3C/svg%3E"/></a>
+<img __id__="2729" alt="Virtuoso family celebration logo" class="kb-img wp-image-112586" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='1954'%20height='754'%3E%3Crect%20width='100%25'%20height='100%25'%20opacity='0'/%3E%3C/svg%3E"/>
+<img __id__="2732" alt="Endorsed by Forbes Travel Guide logo" class="kb-img wp-image-144053" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='2400'%20height='1307'%3E%3Crect%20width='100%25'%20height='100%25'%20opacity='0'/%3E%3C/svg%3E"/>
+<img __id__="2739" alt="" class="kb-img wp-image-131067" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='1200'%20height='1549'%3E%3Crect%20width='100%25'%20height='100%25'%20opacity='0'/%3E%3C/svg%3E"/>
+<div __id__="2741" class="kt-inside-inner-col">
+<h2 __id__="2742" class="kt-adv-heading132089_c4695d-9f wp-block-kadence-advancedheading">Ready for Your San Diego Adventure with <mark __id__="2743" class="kt-highlight">Our Tips?</mark></h2>
+
+We’re passionate travellers and La Jolla residents on a mission to simplify your travel planning with expert tips and insider knowledge so you can make the most of your San Diego visit. **We’ll email you once monthly with San Diego best travel tips and special promotions.**
+
+
+
+<label __id__="2753" class="kb-adv-form-label">Email<span __id__="2754" class="kb-adv-form-required">*</span></label><input __id__="2755" class="kb-field kb-email-field" data-label="Email" name="field38d331-32" type="email"/><span __id__="2756" class="kb-form-aria-describe screen-reader-text">Email field</span>
+<input __id__="2760" class="kb-field kb-accept-field kb-checkbox-field" data-label="" name="field0419dd-bc" type="checkbox"/><label __id__="2761">I accept the <a __id__="2762" href="https://lajollamom.com/privacy-policy/">La Jolla Mom Privacy Policy</a><span __id__="2763" class="kb-adv-form-required">*</span></label>
+<button __id__="2768" class="kb-button kt-button button kb-adv-form-submit-button kb-btne7efd9-88 kt-btn-size-standard kt-btn-width-type-full kb-btn-global-inherit kt-btn-has-text-true kt-btn-has-svg-false wp-block-button__link" type="submit"><span __id__="2769" class="kt-btn-inner-text">Get the Book</span></button>
+<input __id__="2770" name="_kb_adv_form_post_id" type="hidden"/><input __id__="2771" name="action" type="hidden"/><input __id__="2772" name="_kb_adv_form_id" type="hidden"/></div>
+<img __id__="2786" alt="" class="kb-img wp-image-132054" src="https://lajollamom.com/wp-content/w3-webp/uploads/2024/08/la-jolla-mom-logo.pngw3.webp"/>
+<div __id__="2788" class="kt-inside-inner-col">
+
+INDEPENDENT AFFILIATE, CADENCE TRAVEL
+
+
+CST# 2011220-40
+
+</div>
+<a __id__="2793" aria-label="La Jolla Mom Facebook link" class="kt-svg-icon-link" href="https://www.facebook.com/LaJollaMom/"><title __id__="2796">La Jolla Mom Facebook link</title></a>
+<a __id__="2799" aria-label="La Jolla Mom Instagram link" class="kt-svg-icon-link" href="https://www.instagram.com/lajollamom/"><title __id__="2802">La Jolla Mom Instagram link</title></a>
+<a __id__="2807" aria-label="La Jolla Mom Pinterest link" class="kt-svg-icon-link" href="https://www.pinterest.com/lajollamom/"><title __id__="2810">La Jolla Mom Pinterest link</title></a>
+<a __id__="2813" aria-label="La Jolla Mom YouTube link" class="kt-svg-icon-link" href="https://www.youtube.com/c/Lajollamom"><title __id__="2816">La Jolla Mom YouTube link</title></a>
+<a __id__="2820" aria-label="La Jolla Mom LinkedIn link" class="kt-svg-icon-link" href="https://www.linkedin.com/in/lajollamom/"><title __id__="2823">La Jolla Mom LinkedIn link</title></a>
+<a __id__="2826" aria-label="La Jolla Mom Twitter (X) link" class="kt-svg-icon-link" href="https://twitter.com/lajollamom"><title __id__="2829">La Jolla Mom Twitter (X) link</title></a>
+<a __id__="2832" aria-label="La Jolla Mom TikTok link" class="kt-svg-icon-link" href="https://www.tiktok.com/@lajollamom"><title __id__="2835">La Jolla Mom TikTok link</title></a>
+<a __id__="2838" aria-label="La Jolla Mom Facebook group link: San Diego: Where to Eat, Play and Stay" class="kt-svg-icon-link" href="https://www.facebook.com/groups/SanDiegoTravel"><title __id__="2841">La Jolla Mom Facebook group link: San Diego: Where to Eat, Play and Stay</title></a>
+<a __id__="2844" aria-label="Katie Dillon Reddit profile link " class="kt-svg-icon-link" href="https://www.reddit.com/user/lajollamom/"><title __id__="2847">Katie Dillon Reddit profile link </title></a>
+<div __id__="2852" class="kt-inside-inner-col">
+
+San Diego
+
+
+La Jolla Travel Guide
+
+
+Coronado Travel Guide
+
+
+Hotel Reviews
+
+
+Event Calendar
+
+
+
+
+</div>
+<div __id__="2864" class="kt-inside-inner-col">
+
+TICKETS
+
+
+San Diego Zoo
+
+
+LEGOLAND California
+
+
+Universal Studios Hollywood
+
+
+Disneyland
+
+
+All Discount Theme Park Tickets
+
+</div>
+<div __id__="2877" class="kt-inside-inner-col">
+
+About
+
+
+Our Services
+
+
+Editorial Guidelines
+
+
+Contact Us
+
+
+FAQs
+
+
+Travel Tips
+
+</div>
+<div __id__="2890" class="kt-inside-inner-col">
+
+Request HOTEL Rates
+
+
+Other Luxury Hotels
+
+
+San Diego Hotels
+
+
+TOOLS
+
+
+Hotel Booking Tool
+
+
+Travel Insurance Quotes
+
+</div>
+<div __id__="2906" class="kt-inside-inner-col">
+
+© 2025 La Jolla Living, LLC. All Rights Reserved.
+
+
+Privacy Policy ・ Terms of Service ・ Disclaimer ・ Site Map ・ Site Credit
+
+</div>
+</div>
+<button __id__="2926" aria-label="Scroll to top" class="kadence-scroll-to-top scroll-up-wrap scroll-ignore scroll-up-side-right scroll-up-style-filled vs-lg-true vs-md-true vs-sm-false" href="#wrapper"></button>
+<button __id__="2935" aria-label="Close menu" class="menu-toggle-close drawer-toggle">
+</button>
+<div __id__="2938" class="drawer-content mobile-drawer-content content-align-left content-valign-top">
+<div __id__="2939" class="site-header-item site-header-focus-item site-header-item-mobile-navigation mobile-navigation-layout-stretch-false">
+<ul __id__="2942" class="menu has-collapse-sub-nav"><li __id__="2943" class="sd-submenu menu-item menu-item-type-taxonomy menu-item-object-category current-post-ancestor current-menu-parent current-post-parent menu-item-has-children menu-item-139602"><a __id__="2945" href="https://lajollamom.com/san-diego/">San Diego</a><button __id__="2946" class="drawer-sub-toggle"><span __id__="2947" class="screen-reader-text">Toggle child menu</span></button>
+<ul __id__="2952" class="sub-menu">
+<li __id__="2953" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139604"><a __id__="2954" href="https://lajollamom.com/san-diego/san-diego-hotels/">San Diego Hotels</a></li>
+<li __id__="2955" class="menu-item menu-item-type-taxonomy menu-item-object-category current-post-ancestor current-menu-parent current-post-parent menu-item-139603"><a __id__="2956" href="https://lajollamom.com/san-diego/things-to-do/">Things to Do</a></li>
+<li __id__="2957" class="ljm-menu-divider-desktop menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139622"><a __id__="2958" href="https://lajollamom.com/san-diego/restaurants/">Where to Eat</a></li>
+<li __id__="2959" class="ljm-menu-divider menu-item menu-item-type-post_type menu-item-object-page menu-item-139640"><a __id__="2960" href="https://lajollamom.com/san-diego-family-vacation/">Family Vacations</a></li>
+<li __id__="2961" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139618"><a __id__="2962" href="https://lajollamom.com/san-diego/la-jolla/">La Jolla</a></li>
+<li __id__="2963" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139614"><a __id__="2964" href="https://lajollamom.com/san-diego/coronado/">Coronado Island</a></li>
+<li __id__="2965" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139612"><a __id__="2966" href="https://lajollamom.com/san-diego/balboa-park/">Balboa Park</a></li>
+<li __id__="2967" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139616"><a __id__="2968" href="https://lajollamom.com/san-diego/downtown/">Downtown San Diego</a></li>
+<li __id__="2969" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139619"><a __id__="2970" href="https://lajollamom.com/san-diego/mission-beach-mission-bay/">Mission Beach &amp; Mission Bay</a></li>
+<li __id__="2971" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139621"><a __id__="2972" href="https://lajollamom.com/san-diego/pacific-beach/">Pacific Beach</a></li>
+<li __id__="2973" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139615"><a __id__="2974" href="https://lajollamom.com/san-diego/del-mar/">Del Mar</a></li>
+<li __id__="2975" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139617"><a __id__="2976" href="https://lajollamom.com/san-diego/encinitas/">Encinitas</a></li>
+<li __id__="2977" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139613"><a __id__="2978" href="https://lajollamom.com/san-diego/carlsbad/">Carlsbad</a></li>
+<li __id__="2979" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139620"><a __id__="2980" href="https://lajollamom.com/san-diego/oceanside/">Oceanside</a></li>
+</ul>
+</li>
+<li __id__="2981" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-has-children menu-item-139607"><a __id__="2983" href="https://lajollamom.com/hotels/">Hotel Reviews</a><button __id__="2984" class="drawer-sub-toggle"><span __id__="2985" class="screen-reader-text">Toggle child menu</span></button>
+<ul __id__="2990" class="sub-menu">
+<li __id__="2991" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-141808"><a __id__="2992" href="https://lajollamom.com/hotel-booking-tool/" title="Add Our VIP Benefits to Your Reservation">Hotel Booking Tool</a></li>
+</ul>
+</li>
+<li __id__="2993" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-has-children menu-item-139623"><a __id__="2995" href="https://lajollamom.com/theme-parks/">Theme Parks</a><button __id__="2996" class="drawer-sub-toggle"><span __id__="2997" class="screen-reader-text">Toggle child menu</span></button>
+<ul __id__="3002" class="sub-menu">
+<li __id__="3003" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139626"><a __id__="3004" href="https://lajollamom.com/theme-parks/san-diego-zoo/">San Diego Zoo</a></li>
+<li __id__="3005" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139627"><a __id__="3006" href="https://lajollamom.com/theme-parks/san-diego-zoo-safari-park/">San Diego Zoo Safari Park</a></li>
+<li __id__="3007" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139625"><a __id__="3008" href="https://lajollamom.com/theme-parks/legoland-california/">LEGOLAND California</a></li>
+<li __id__="3009" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139628"><a __id__="3010" href="https://lajollamom.com/theme-parks/seaworld-san-diego/">SeaWorld San Diego Guide</a></li>
+<li __id__="3011" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139624"><a __id__="3012" href="https://lajollamom.com/theme-parks/disneyland-resort/">Disneyland Resort</a></li>
+<li __id__="3013" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139629"><a __id__="3014" href="https://lajollamom.com/theme-parks/universal-studios-hollywood/">Universal Studios Hollywood</a></li>
+</ul>
+</li>
+<li __id__="3015" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-has-children menu-item-139605"><a __id__="3017" href="https://lajollamom.com/destinations/">Destinations</a><button __id__="3018" class="drawer-sub-toggle"><span __id__="3019" class="screen-reader-text">Toggle child menu</span></button>
+<ul __id__="3024" class="sub-menu">
+<li __id__="3025" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-has-children menu-item-139630"><a __id__="3027" href="https://lajollamom.com/destinations/asia/">Asia</a><button __id__="3028" class="drawer-sub-toggle"><span __id__="3029" class="screen-reader-text">Toggle child menu</span></button>
+<ul __id__="3034" class="sub-menu">
+<li __id__="3035" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-141623"><a __id__="3036" href="https://lajollamom.com/destinations/asia/hong-kong/">Hong Kong</a></li>
+<li __id__="3037" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-141625"><a __id__="3038" href="https://lajollamom.com/destinations/asia/singapore/">Singapore</a></li>
+<li __id__="3039" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-141624"><a __id__="3040" href="https://lajollamom.com/destinations/asia/japan/">Japan</a></li>
+<li __id__="3041" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-141622"><a __id__="3042" href="https://lajollamom.com/destinations/asia/china/">China</a></li>
+</ul>
+</li>
+<li __id__="3043" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-has-children menu-item-139606"><a __id__="3045" href="https://lajollamom.com/destinations/united-states/">United States</a><button __id__="3046" class="drawer-sub-toggle"><span __id__="3047" class="screen-reader-text">Toggle child menu</span></button>
+<ul __id__="3052" class="sub-menu">
+<li __id__="3053" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-141626"><a __id__="3054" href="https://lajollamom.com/destinations/united-states/california/">California</a></li>
+<li __id__="3055" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-141628"><a __id__="3056" href="https://lajollamom.com/destinations/united-states/hawaii/">Hawaii</a></li>
+<li __id__="3057" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-141627"><a __id__="3058" href="https://lajollamom.com/destinations/united-states/florida/">Florida</a></li>
+<li __id__="3059" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-141629"><a __id__="3060" href="https://lajollamom.com/destinations/united-states/new-york-city/">New York City</a></li>
+</ul>
+</li>
+<li __id__="3061" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139609"><a __id__="3062" href="https://lajollamom.com/destinations/europe/">Europe</a></li>
+<li __id__="3063" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-139610"><a __id__="3064" href="https://lajollamom.com/destinations/mexico-caribbean/">Mexico and Caribbean</a></li>
+</ul>
+</li>
+<li __id__="3065" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-139632"><a __id__="3066" href="https://lajollamom.com/resources/">Resources &amp; Discounts</a></li>
+<li __id__="3067" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-139635"><a __id__="3069" href="https://lajollamom.com/about/">About</a><button __id__="3070" class="drawer-sub-toggle"><span __id__="3071" class="screen-reader-text">Toggle child menu</span></button>
+<ul __id__="3076" class="sub-menu">
+<li __id__="3077" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-139633"><a __id__="3078" href="https://lajollamom.com/our-services/">Our Services</a></li>
+<li __id__="3079" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-139637"><a __id__="3080" href="https://lajollamom.com/newsletter/">Newsletter</a></li>
+<li __id__="3081" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-139631"><a __id__="3082" href="https://lajollamom.com/help/">Help &amp; FAQs</a></li>
+<li __id__="3083" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-139634"><a __id__="3084" href="https://lajollamom.com/contact/">Contact</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<span __id__="3089" class="screen-reader-text">Search for:</span>
+<input __id__="3090" class="search-field" name="s" type="search"/>
+<input __id__="3091" class="search-submit" type="submit"/>
+</div>
+</div></body>
+</HTMLContent>
+
+<Instructions>
+
+Your output starts with natural language based Thought, and then comes with an XML-formatted StructuredResponse.
+Carefully examine if Title and Media HTML elements exist and should be included in a Response's SourceElements and the corresponding Answer generation.
+When providing multiple recommendations/options to the user, separate them into individual responses.
+
+```
+Thought: [
+ When answering the initial query,
+  - Step 1. Identify high-level answers to the user ask.
+    For each answer, you need to analyze the source HTML element structure to correctly identify SourceElements for each Answer, before actually composing your answers in the StructuredResponse
+  - Step 2. identify one or more Content HTML elements by their __id__ attributes, where you make your answer based on the contents of these elements.
+  - Step 3. for each HTML element within -20 to +20 range of the Content HTML elements' __id__ attributes, check if each of them could be the Title or Media HTML elements associated with the Content HTML elements.
+  - NOTE the Title/Content/Media HTML elements in one Response must be different HTML element, and they cannot have the same __id__ attributes.
+]
+<StructuredResponse>
+ <InstantResponse>
+  <Response>
+   <Index>1</Index>
+   <SourceElements>
+    <Title>
+     [
+      optional; MUST BE the title HTML element's __id__ attribute (integer), if such a title element exists;
+      this element is typically before the Content, and can be a sibling element of the Content HTML elements, and visually mixed or very close to the Content HTML elements (with close __id__ integers);
+      example HTML tags are <h1>, <h2>, <h3>, etc.;
+      if your answer has a title, then more carefully check if a Title HTML element exists
+     ]
+    </Title>
+    <Content>[MUST BE one or more HTML elements' __id__ attributes (integers) where you make your answer based on the contents of these elements]</Content>
+    <Media>
+     [
+      optional; MUST BE one or more media HTML elements' __id__ attributes (integers) associated with above content, if available; they can be HTML elements for images, videos or other media types;
+      the media HTML elements might be siblings or children of the Content HTML elements, and visually mixed or very close to the Content HTML elements (with close __id__ integers);
+      example HTML tags are <img>, <video>, <audio>, <embed>, <object>, <iframe>, etc.
+     ]
+    </Media>
+   </SourceElements>
+   <Answer>
+    [
+     write your response in HTML format to answer the user ask, based on the above SourceElements;
+     include the media HTML elements when necessary to help you present your answer to the user;
+     consider Context, Conversation and Requirement when generating your answer
+    ]
+   </Answer>
+  </Response>
+  <Response>
+   <Index>2</Index>
+   ...
+  </Response>
+ </InstantResponse>
+ <TaskStatus>[
+  - 'Completed' always after you make the answer
+ ]
+</StructuredResponse>
+```
+
+In SourceElements, the Title/Media elements must be mixed with or surrounding the Content elements, and they have close __id__ attributes.
+You must always try your best to find the potential Title and Media element associated with each Content Element. List the surrounding HTML of the Content element and perform detailed analysis.
+<Example>
+For example, given
+<!-- Other elements -->
+<nav __id__="100">...</nav>
+<!-- More elements -->
+<div __id__="150">
+  <!-- Some unrelated elements -->
+  <h2 __id__="155">Understanding Espresso Machines</h2>
+  <!-- Some unrelated elements -->
+  <div __id__="158">Advertisement Banner</div>
+  <p __id__="159">Espresso machines come in various types, including manual, semi-automatic, and fully automatic...</p>
+  <!-- Some more elements -->
+  <div __id__="163">Related Articles</div>
+  <!-- Some elements for related articles -->
+  <img __id__="170" src="espresso-machine.jpg" alt="Different types of espresso machines">
+</div>
+
+Thought:
+For Understanding Espresso Machines:
+Content Element ID: 159
+Content HTML: <p __id__="159">Espresso machines come in ... </p>
+Range Check: 139 to 158 (down to -20 __id__)
+- 139: ...
+- 150: the parent element of Content Element
+- 155: <h2 __id__="155"> ... </h2> an element with h2 tag and hence likely to be a Title element; its text "Understanding Espresso Machines" semantically matches the text content of the Content element <p __id__="159">Espresso machines come in ... </p>.
+- 156: ...
+...
+- 158: the element text states it is an advertisement banner, semantically not related to the Content element
+...
+Range Check: 160 to 179 (up to +20 in __id__),
+...
+- 170: the element <img __id__="170" src="espresso-machine.jpg" alt="Different types of espresso machines"> is an image element whose "alt" is consistent with the text content of the Content element <p __id__="159">Espresso machines come in ... </p>; then this is one Media element for the Content element.
+- 171: ...
+...
+
+As a result, we have
+<SourceElements>
+<Title>155</Title>
+<Content>159</Content>
+<Media>170</Media>
+</SourceElements>
+
+</Example>
+
+</Instructions>
+
+<Context>
+ <UserProfile>
+  {"Name": {"FirstName": "Erica", "LastName": "Yuan"}, "Family": [{"Relation": "Son", "Age": 9, "FirstName": "Lincoln", "LastName": "Yuan"}], "PhoneNumber": "215-925-9368", "Location": "Bellevue, Washington, USA", "ZipCode": "98004"}
+ </UserProfile>
+<CurrentDateAndTime>
+ 2025-02-22 07:03:17
+</CurrentDateAndTime>
+
+</Context>
+
+<Conversation>
+<User>Compile a detailed summary of the main family-friendly attractions in San Diego, including key information about visit duration, age recommendations, costs, and practical tips for families. Focus on organizing information by attraction type and highlighting essential details for family planning.</User>
+</Conversation>
+
+<Requirement>
+Specific attraction details needed including opening hours, visit duration, child-friendliness level, and admission costs for family planning
+</Requirement>
+
+NOTES:
+- Carefully examine if Title and Media HTML elements exist and should be included in a Response's SourceElements and the corresponding Answer generation.
+- You must always try your best to find the potential Title and Media element associated with each Content Element.
+  Always check -20 to +20 __id__ range around content elements. Look specifically for heading tags (h1-h6) for titles.
+  Look for media tags (img, video, etc.). Verify semantic relationships between these elements. Include all related elements when they exist.
+  Title/Content/Media HTML elements in one Response must be different HTML element, and they cannot have the same __id__ attributes.
+- HTML in each Answer must be well-formated and syntactically correct, and each tag must be either self-closing (e.g., "<br />"), or has paired closing tag (e.g., "<li> ... </li>"); also escape remember to special characters (e.g., "&amp;" for "&").
+- DO NOT include likely dynamic information from the HTML content (prices, open hours, etc.) if the  HTML content is not from an authoritative source (the official site, or major search engines Google, Bing, etc.); DO NOT add likely dynamic information from your pre-trained knowledge.
+- Respect the Requirement.
+
+Now begin your Thought:
+
+
+
+Thought: Let me analyze the content to provide a comprehensive summary of family-friendly attractions in San Diego:
+
+1. For the main overview and introduction:
+Content Element: 375 (h1 title about things to do with kids in San Diego)
+Checking range 355-395:
+- 375: Main title element
+- 382: Contains introduction content
+- 385: Image showing author credentials
+This forms the first response section.
+
+2. For Theme Parks and Major Attractions:
+Content Elements: 1306-1375 (covering major attractions)
+Checking range 1286-1395:
+- 1299: Title element for USS Midway Museum
+- Multiple content paragraphs with detailed information
+- 1333: Image showing Maritime Museum
+This forms second response section.
+
+3. For Museums and Educational Attractions:
+Content Elements: 1102-1451
+Checking range 1082-1471:
+- 1102: Title element for museums section
+- Multiple content descriptions
+- 1432: Image showing kids at Living Coast Discovery Center
+This forms third response section.
+
+4. For Beaches and Outdoor Activities:
+Content Elements: 1454-1538
+Checking range 1434-1558:
+- 1454: Title element for beaches section
+- 1456: Beach image
+- Detailed beach descriptions
+This forms fourth response section.
+
+Let me structure these into organized responses:
+
+<StructuredResponse>
+<InstantResponse>
+<Response>
+<Index>1</Index>
+<SourceElements>
+<Title>375</Title>
+<Content>382</Content>
+<Media>385</Media>
+</SourceElements>
+<Answer>
+<h2>San Diego Family Attractions Overview</h2>
+<p>San Diego offers an extensive range of family-friendly attractions suitable for all ages. The city features world-class theme parks, museums, beaches, and outdoor activities that can keep families entertained for days or weeks. Here's a comprehensive guide to help you plan your family visit.</p>
+<p><strong>Key Planning Tips:</strong></p>
+<ul>
+<li>Consider purchasing sightseeing passes for multiple attraction visits</li>
+<li>October is "Kids Free" month at many attractions</li>
+<li>Most attractions are accessible year-round due to San Diego's mild climate</li>
+<li>Many venues offer both indoor and outdoor activities</li>
+</ul>
+</Answer>
+</Response>
+
+<Response>
+<Index>2</Index>
+<SourceElements>
+<Title>668</Title>
+<Content>675, 681, 688, 691, 693</Content>
+<Media>675</Media>
+</SourceElements>
+<Answer>
+<h3>Major Theme Parks &amp; Attractions</h3>
+
+<div class="attraction-card">
+<h4>San Diego Zoo</h4>
+<ul>
+<li><strong>Best For:</strong> All ages</li>
+<li><strong>Recommended Time:</strong> Half to full day</li>
+<li><strong>Highlights:</strong> Wildlife Explorers Basecamp, Skyfari Aerial Tram, koalas, pandas</li>
+<li><strong>Tips:</strong>
+  <ul>
+    <li>Visit early morning when animals are most active</li>
+    <li>Use the Skyfari Tram to navigate hilly terrain</li>
+    <li>Download the park app for easy navigation</li>
+  </ul>
+</li>
+</ul>
+</div>
+
+<div class="attraction-card">
+<h4>LEGOLAND California</h4>
+<ul>
+<li><strong>Best For:</strong> Ages 2-12</li>
+<li><strong>Recommended Time:</strong> Full day</li>
+<li><strong>Features:</strong> Theme park, water park, SEA LIFE Aquarium</li>
+<li><strong>Tips:</strong>
+  <ul>
+    <li>Check calendar for seasonal closures</li>
+    <li>Bring LEGO Minifigures for trading</li>
+    <li>Consider multi-day tickets for full experience</li>
+  </ul>
+</li>
+</ul>
+</div>
+</Answer>
+</Response>
+
+<Response>
+<Index>3</Index>
+<SourceElements>
+<Title>1102</Title>
+<Content>1116, 1117, 1120, 1122, 1124, 1127, 1129, 1131</Content>
+<Media>1432</Media>
+</SourceElements>
+<Answer>
+<h3>Family-Friendly Museums</h3>
+
+<div class="museum-card">
+<h4>Fleet Science Center</h4>
+<ul>
+<li><strong>Best For:</strong> All ages, special area for under 5</li>
+<li><strong>Recommended Time:</strong> 2-3 hours</li>
+<li><strong>Highlights:</strong>
+  <ul>
+    <li>100+ hands-on exhibits</li>
+    <li>Kid City for ages 5 and under</li>
+    <li>IMAX theater</li>
+  </ul>
+</li>
+<li><strong>Tips:</strong> Check for special youth programming and workshops</li>
+</ul>
+</div>
+
+<div class="museum-card">
+<h4>New Children's Museum</h4>
+<ul>
+<li><strong>Best For:</strong> Ages 0-10</li>
+<li><strong>Recommended Time:</strong> 2-3 hours</li>
+<li><strong>Features:</strong> Interactive art installations, creative workshops</li>
+<li><strong>Special Note:</strong> Babies under 12 months visit free</li>
+</ul>
+</div>
+</Answer>
+</Response>
+
+<Response>
+<Index>4</Index>
+<SourceElements>
+<Title>1454</Title>
+<Content>1465, 1469, 1473, 1475</Content>
+<Media>1456</Media>
+</SourceElements>
+<Answer>
+<h3>Beaches &amp; Outdoor Activities</h3>
+
+<div class="beach-info">
+<h4>Popular Family Beaches</h4>
+<ul>
+<li><strong>La Jolla Shores Beach</strong>
+  <ul>
+    <li>Gentle waves, wide sandy beach</li>
+    <li>Nearby playground and picnic areas</li>
+    <li>Free parking available</li>
+  </ul>
+</li>
+<li><strong>Coronado Central Beach</strong>
+  <ul>
+    <li>Calm waters, perfect for young children</li>
+    <li>Beautiful setting near Hotel del Coronado</li>
+    <li>Facilities and rentals available</li>
+  </ul>
+</li>
+</ul>
+
+<p><strong>General Beach Tips:</strong></p>
+<ul>
+<li>All beaches are free to access</li>
+<li>Visit early morning for best parking</li>
+<li>Check water conditions at sdbeachinfo.com</li>
+<li>Bring sun protection and water</li>
+</ul>
+</div>
+</Answer>
+</Response>
+</InstantResponse>
+<TaskStatus>Completed</TaskStatus>
+</StructuredResponse>

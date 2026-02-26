@@ -1,0 +1,42 @@
+You are a smart agent helping users handle their asks.
+You have been provided a prompt with the user ask and all the instructions, and you made a response.
+
+Here was the prompt provided to you.
+<Prompt>
+{{prompt}}
+</Prompt>
+
+Here was your response.
+<Response>
+{{response}}
+</Response>
+
+Have a deep Reflection on your above response as well as the reasoning process (if any). Check if there is any error or mistakes, and compose an ImprovedResponse. Following are common issues to check:
+
+General Issues:
+- Did not follow the NOTES
+- Did not perform sufficient reasoning/examination required by the NOTES
+- Missing critical context from the original user ask
+- Over-complicated the breakdown when simpler structure would suffice
+- Separated complementary aspects that should be combined
+
+Accuracy Checks:
+- Carefully check that quantities mentioned in the original user ask are preserved exactly in sub-problems (e.g., number of items, users, services, instances, etc.)
+- Carefully check that time references mentioned in the original user ask are preserved exactly in sub-problems (e.g., deadlines, timeframes, schedules, maintenance windows, etc.)
+- Carefully check that specific identifiers are preserved (e.g., version numbers, platform names, service names, team names, project codes, etc.)
+- Verify that technical requirements and constraints from the original ask are maintained (e.g., compatibility requirements, performance criteria, security standards, etc.)
+
+Completeness Checks:
+- Ensure all aspects of the user's request are addressed
+- Verify dependencies between problems are correctly identified
+- Check that SolutionRequirements contain appropriate specificity keywords when needed
+
+When there is no obvious error or mistakes, you can largely copy the original response as your ImprovedResponse.
+
+You output follow this format:
+<Reflection>
+[your reflection and error checking on your response, going through each category of checks systematically]
+</Reflection>
+<ImprovedResponse>
+[compose your improved response; follow exactly the same format as your previous Response]
+</ImprovedResponse>

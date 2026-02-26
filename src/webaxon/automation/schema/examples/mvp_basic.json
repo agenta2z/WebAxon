@@ -1,0 +1,43 @@
+{
+  "version": "1.0",
+  "id": "mvp_basic_test",
+  "description": "Basic MVP test demonstrating different target strategies",
+  "actions": [
+    {
+      "id": "visit_page",
+      "type": "visit_url",
+      "target": "https://example.com"
+    },
+    {
+      "id": "click_by_id",
+      "type": "click",
+      "target": {
+        "strategy": "id",
+        "value": "submit-button"
+      }
+    },
+    {
+      "id": "input_by_xpath",
+      "type": "input_text",
+      "target": {
+        "strategy": "xpath",
+        "value": "//input[@id='username']"
+      },
+      "args": {
+        "text": "test_user"
+      }
+    },
+    {
+      "id": "click_with_default_strategy",
+      "type": "click",
+      "target": "login-button"
+    },
+    {
+      "id": "wait_a_moment",
+      "type": "wait",
+      "args": {
+        "seconds": 1
+      }
+    }
+  ]
+}
