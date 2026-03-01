@@ -8,26 +8,26 @@ from functools import partial
 from pathlib import Path
 from typing import Callable, List, Dict, Any, Optional
 
-from science_modeling_tools.agents.agent_response import AgentResponseFormat
-from science_modeling_tools.knowledge import KnowledgeBase, KnowledgeDataLoader, KnowledgeProvider
-from science_modeling_tools.knowledge.stores.metadata.keyvalue_adapter import KeyValueMetadataStore
-from science_modeling_tools.knowledge.stores.pieces.retrieval_adapter import RetrievalKnowledgePieceStore
-from science_modeling_tools.knowledge.stores.graph.graph_adapter import GraphServiceEntityGraphStore
+from agent_foundation.agents.agent_response import AgentResponseFormat
+from agent_foundation.knowledge import KnowledgeBase, KnowledgeDataLoader, KnowledgeProvider
+from agent_foundation.knowledge.stores.metadata.keyvalue_adapter import KeyValueMetadataStore
+from agent_foundation.knowledge.stores.pieces.retrieval_adapter import RetrievalKnowledgePieceStore
+from agent_foundation.knowledge.stores.graph.graph_adapter import GraphServiceEntityGraphStore
 from rich_python_utils.service_utils.keyvalue_service.file_keyvalue_service import FileKeyValueService
 from rich_python_utils.service_utils.retrieval_service.file_retrieval_service import FileRetrievalService
 from rich_python_utils.service_utils.graph_service.file_graph_service import FileGraphService
-from science_modeling_tools.agents.prompt_based_agents.prompt_based_action_agent import PromptBasedActionAgent
-from science_modeling_tools.agents.prompt_based_agents.prompt_based_planning_agent import PromptBasedActionPlanningAgent
-from science_modeling_tools.agents.prompt_based_agents.prompt_based_response_agent import PromptBasedResponseActionAgent
-from science_modeling_tools.agents.prompt_based_agents.prompt_based_summary_agent import PromptBasedSummaryActionAgent
-from science_modeling_tools.common.inferencers.agentic_inferencers.common import ReflectionStyles, ResponseSelectors
-from science_modeling_tools.common.inferencers.agentic_inferencers.reflective_inferencer import ReflectiveInferencer
-from science_modeling_tools.common.inferencers.api_inferencers.claude_api_inferencer import ClaudeApiInferencer
-from science_modeling_tools.common.inferencers.mock_inferencers import MockClarificationInferencer
-from science_modeling_tools.ui.input_modes import (
+from agent_foundation.agents.prompt_based_agents.prompt_based_action_agent import PromptBasedActionAgent
+from agent_foundation.agents.prompt_based_agents.prompt_based_planning_agent import PromptBasedActionPlanningAgent
+from agent_foundation.agents.prompt_based_agents.prompt_based_response_agent import PromptBasedResponseActionAgent
+from agent_foundation.agents.prompt_based_agents.prompt_based_summary_agent import PromptBasedSummaryActionAgent
+from agent_foundation.common.inferencers.agentic_inferencers.common import ReflectionStyles, ResponseSelectors
+from agent_foundation.common.inferencers.agentic_inferencers.reflective_inferencer import ReflectiveInferencer
+from agent_foundation.common.inferencers.api_inferencers.claude_api_inferencer import ClaudeApiInferencer
+from agent_foundation.common.inferencers.mock_inferencers import MockClarificationInferencer
+from agent_foundation.ui.input_modes import (
     InputModeConfig, ChoiceOption, single_choice, multiple_choices,
 )
-from science_modeling_tools.ui.queue_interactive import QueueInteractive
+from agent_foundation.ui.queue_interactive import QueueInteractive
 from rich_python_utils.string_utils.formatting.common import KeyValueStringFormat
 from rich_python_utils.string_utils.formatting.handlebars_format import format_template as handlebars_template_format
 from rich_python_utils.string_utils.formatting.template_manager import TemplateManager
@@ -41,7 +41,7 @@ from webaxon.automation.backends.config import BrowserConfig, UndetectedChromeCo
 from webaxon.automation.web_driver import WebDriver
 
 try:
-    from science_modeling_tools.common.inferencers.api_inferencers.ag.ag_claude_api_inferencer import \
+    from agent_foundation.common.inferencers.api_inferencers.ag.ag_claude_api_inferencer import \
         AgClaudeApiInferencer
 except ImportError:
     AgClaudeApiInferencer = None
@@ -591,7 +591,7 @@ class AgentFactory:
         Raises:
             ValueError: If LLM fails to produce valid structured JSON.
         """
-        from science_modeling_tools.knowledge.ingestion_cli import KnowledgeIngestionCLI
+        from agent_foundation.knowledge.ingestion_cli import KnowledgeIngestionCLI
 
         self.ensure_knowledge_provider()
 
@@ -618,7 +618,66 @@ class AgentFactory:
         self._detect_and_set_active_entity_id(self._provider.kb)
 
         return counts
-    
+
+    def _ensure_ingestion_inferencer(self) -> None:
+        """Lazily create the ClaudeApiInferencer if not already set.
+
+        Follows the same pattern as ingest_knowledge().
+        """
+        if self._ingestion_inferencer is None:
+            self._ingestion_inferencer = ClaudeApiInferencer(
+                max_retry=3,
+                default_inference_args=DEFAULT_AGENT_REASONER_ARGS,
+                logger=logging.getLogger(__name__).info,
+                debug_mode=True,
+            )
+
+    def _make_llm_fn(self) -> Callable[[str], str]:
+        """Create an LLM callable from the ingestion inferencer.
+
+        Handles InferencerResponse duck-typing via select_response().
+        KnowledgeUpdater expects Callable[[str], str] and calls
+        json.loads(response) directly, so the wrapper MUST extract the string.
+        """
+        self._ensure_ingestion_inferencer()
+
+        def llm_fn(prompt: str) -> str:
+            response = self._ingestion_inferencer(prompt)
+            if hasattr(response, "select_response"):
+                return response.select_response().response
+            return str(response)
+
+        return llm_fn
+
+    def get_document_ingester(self):
+        """Return a DocumentIngester with the LLM inferencer."""
+        from agent_foundation.knowledge.ingestion.document_ingester import DocumentIngester
+
+        self.ensure_knowledge_provider()
+        return DocumentIngester(inferencer=self._make_llm_fn())
+
+    def get_knowledge_updater(self):
+        """Return a KnowledgeUpdater with piece_store and LLM function."""
+        from agent_foundation.knowledge.ingestion.knowledge_updater import KnowledgeUpdater
+
+        self.ensure_knowledge_provider()
+        return KnowledgeUpdater(
+            piece_store=self._provider.kb.piece_store,
+            llm_fn=self._make_llm_fn(),
+        )
+
+    def get_knowledge_deleter(self):
+        """Return a KnowledgeDeleter with piece_store."""
+        from agent_foundation.knowledge.ingestion.knowledge_deleter import KnowledgeDeleter
+
+        self.ensure_knowledge_provider()
+        return KnowledgeDeleter(piece_store=self._provider.kb.piece_store)
+
+    def get_knowledge_base(self):
+        """Return the KB instance, ensuring provider is initialized."""
+        self.ensure_knowledge_provider()
+        return self._provider.kb
+
     def _load_user_profile(self) -> Optional[Dict[str, Any]]:
         """Load user profile configuration.
         

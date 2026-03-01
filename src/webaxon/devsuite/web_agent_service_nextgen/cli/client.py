@@ -11,9 +11,18 @@ from typing import Any, Optional
 from rich_python_utils.datetime_utils.common import timestamp
 from rich_python_utils.service_utils.queue_service.storage_based_queue_service import StorageBasedQueueService
 
-from science_modeling_tools.ui.input_modes import InputMode, InputModeConfig
+from agent_foundation.ui.input_modes import InputMode, InputModeConfig
 
 from webaxon.devsuite.common import get_queue_service
+from webaxon.devsuite.web_agent_service_nextgen.cli.kb_arg_parser import (
+    parse_kb_add, parse_kb_update, parse_kb_del, parse_kb_get, parse_kb_list, parse_kb_restore,
+    parse_kb_review_spaces,
+)
+from webaxon.devsuite.web_agent_service_nextgen.cli.kb_formatters import (
+    format_ingestion_result, format_update_results, format_delete_candidates,
+    format_delete_results, format_search_results, format_list_results, format_restore_result,
+    format_review_spaces_results,
+)
 from webaxon.devsuite.constants import (
     INPUT_QUEUE_ID,
     RESPONSE_QUEUE_ID,
@@ -137,6 +146,262 @@ class CLIClient:
         elif resp.get("success"):
             counts = resp.get("counts", {})
             print(f"[OK] Knowledge ingested — {counts}")
+        else:
+            print(f"[FAIL] {resp.get('message', 'unknown error')}")
+
+    # ------------------------------------------------------------------
+    # KB commands
+    # ------------------------------------------------------------------
+
+    def kb_add(self, args: str) -> None:
+        """Parse free text, send kb_add message, display ingestion counts."""
+        try:
+            parsed = parse_kb_add(args)
+        except ValueError as e:
+            print(str(e))
+            return
+
+        msg = {
+            "type": "kb_add",
+            "message": {"text": parsed["text"], "spaces": parsed["spaces"]},
+            "timestamp": timestamp(),
+        }
+        self._send_control(msg)
+
+        resp = self._wait_for_control_response("kb_add_response", timeout=120.0)
+        if resp is None:
+            print("[TIMEOUT] No response for kb-add (LLM ingestion may still be running).")
+        elif resp.get("success"):
+            print(f"[OK] {format_ingestion_result(resp['counts'])}")
+        else:
+            print(f"[FAIL] {resp.get('message', 'unknown error')}")
+
+    def kb_update(self, args: str) -> None:
+        """Parse description, send kb_update message, display update results."""
+        try:
+            parsed = parse_kb_update(args)
+        except ValueError as e:
+            print(str(e))
+            return
+
+        msg = {
+            "type": "kb_update",
+            "message": {"text": parsed["text"]},
+            "timestamp": timestamp(),
+        }
+        self._send_control(msg)
+
+        resp = self._wait_for_control_response("kb_update_response", timeout=120.0)
+        if resp is None:
+            print("[TIMEOUT] No response for kb-update (LLM processing may still be running).")
+        elif resp.get("success"):
+            results = resp.get("results", [])
+            if results:
+                print(f"[OK] {format_update_results(results)}")
+            else:
+                print("[OK] No matching knowledge found")
+        else:
+            print(f"[FAIL] {resp.get('message', 'unknown error')}")
+
+    def kb_del(self, args: str) -> None:
+        """Handle two-phase deletion: search → show candidates → confirm → delete.
+        Also handles --id direct deletion."""
+        try:
+            parsed = parse_kb_del(args)
+        except ValueError as e:
+            print(str(e))
+            return
+
+        if parsed["mode"] == "direct":
+            msg = {
+                "type": "kb_del",
+                "message": {
+                    "phase": "direct",
+                    "piece_id": parsed["piece_id"],
+                    "hard": parsed["hard"],
+                },
+                "timestamp": timestamp(),
+            }
+            self._send_control(msg)
+
+            resp = self._wait_for_control_response("kb_del_response", timeout=10.0)
+            if resp is None:
+                print("[TIMEOUT] No response for kb-del.")
+            elif resp.get("success"):
+                print(f"[OK] {resp.get('message', 'Deleted')}")
+            else:
+                print(f"[FAIL] {resp.get('message', 'unknown error')}")
+            return
+
+        # Query mode: two-phase search + confirm
+        query = parsed["query"]
+        msg = {
+            "type": "kb_del",
+            "message": {"phase": "search", "query": query},
+            "timestamp": timestamp(),
+        }
+        self._send_control(msg)
+
+        resp = self._wait_for_control_response("kb_del_response", timeout=10.0)
+        if resp is None:
+            print("[TIMEOUT] No response for kb-del search.")
+            return
+
+        candidates = resp.get("candidates", [])
+        if not candidates:
+            print("[OK] No matching pieces found")
+            return
+
+        print(format_delete_candidates(candidates))
+        try:
+            choice = input("Enter piece numbers to delete (comma-separated), 'all', or 'cancel': ").strip()
+        except EOFError:
+            choice = "cancel"
+
+        if choice.lower() == "cancel":
+            print("Cancelled")
+            return
+
+        if choice.lower() == "all":
+            selected_ids = [c["piece_id"] for c in candidates]
+        else:
+            try:
+                indices = [int(x.strip()) for x in choice.split(",")]
+                selected_ids = [candidates[i - 1]["piece_id"] for i in indices]
+            except (ValueError, IndexError):
+                print("[ERROR] Invalid selection")
+                return
+
+        confirm_msg = {
+            "type": "kb_del",
+            "message": {
+                "phase": "confirm",
+                "query": query,
+                "piece_ids": selected_ids,
+            },
+            "timestamp": timestamp(),
+        }
+        self._send_control(confirm_msg)
+
+        resp = self._wait_for_control_response("kb_del_response", timeout=10.0)
+        if resp is None:
+            print("[TIMEOUT] No response for kb-del confirm.")
+        elif resp.get("success"):
+            print(f"[OK] {format_delete_results(resp.get('results', []))}")
+        else:
+            print(f"[FAIL] {resp.get('message', 'unknown error')}")
+
+    def kb_get(self, args: str) -> None:
+        """Parse query+flags, send kb_get message, display search results."""
+        try:
+            parsed = parse_kb_get(args)
+        except ValueError as e:
+            print(str(e))
+            return
+
+        msg = {
+            "type": "kb_get",
+            "message": {
+                "query": parsed["query"],
+                "domain": parsed["domain"],
+                "limit": parsed["limit"],
+                "entity_id": parsed["entity_id"],
+                "tags": parsed["tags"],
+                "spaces": parsed["spaces"],
+            },
+            "timestamp": timestamp(),
+        }
+        self._send_control(msg)
+
+        resp = self._wait_for_control_response("kb_get_response", timeout=10.0)
+        if resp is None:
+            print("[TIMEOUT] No response for kb-get.")
+        elif resp.get("success"):
+            print(format_search_results(resp.get("results", [])))
+        else:
+            print(f"[FAIL] {resp.get('message', 'unknown error')}")
+
+    def kb_list(self, args: str) -> None:
+        """Parse flags, send kb_list message, display piece list."""
+        try:
+            parsed = parse_kb_list(args)
+        except ValueError as e:
+            print(str(e))
+            return
+
+        msg = {
+            "type": "kb_list",
+            "message": {
+                "entity_id": parsed["entity_id"],
+                "domain": parsed["domain"],
+                "spaces": parsed["spaces"],
+            },
+            "timestamp": timestamp(),
+        }
+        self._send_control(msg)
+
+        resp = self._wait_for_control_response("kb_list_response", timeout=10.0)
+        if resp is None:
+            print("[TIMEOUT] No response for kb-list.")
+        elif resp.get("success"):
+            results = resp.get("results", [])
+            if results:
+                print(format_list_results(results))
+            else:
+                print("No knowledge pieces found.")
+        else:
+            print(f"[FAIL] {resp.get('message', 'unknown error')}")
+
+    def kb_restore(self, args: str) -> None:
+        """Parse piece_id, send kb_restore message, display restore result."""
+        try:
+            parsed = parse_kb_restore(args)
+        except ValueError as e:
+            print(str(e))
+            return
+
+        msg = {
+            "type": "kb_restore",
+            "message": {"piece_id": parsed["piece_id"]},
+            "timestamp": timestamp(),
+        }
+        self._send_control(msg)
+
+        resp = self._wait_for_control_response("kb_restore_response", timeout=10.0)
+        if resp is None:
+            print("[TIMEOUT] No response for kb-restore.")
+        elif resp.get("success"):
+            print(f"[OK] {format_restore_result(resp)}")
+        else:
+            print(f"[FAIL] {resp.get('message', 'unknown error')}")
+
+    def kb_review_spaces(self, args: str) -> None:
+        """Parse flags, send kb_review_spaces message, display results."""
+        try:
+            parsed = parse_kb_review_spaces(args)
+        except ValueError as e:
+            print(str(e))
+            return
+
+        msg = {
+            "type": "kb_review_spaces",
+            "message": {
+                "mode": parsed["mode"],
+                "piece_id": parsed.get("piece_id"),
+            },
+            "timestamp": timestamp(),
+        }
+        self._send_control(msg)
+
+        resp = self._wait_for_control_response("kb_review_spaces_response", timeout=10.0)
+        if resp is None:
+            print("[TIMEOUT] No response for kb-review-spaces.")
+        elif resp.get("success"):
+            if parsed["mode"] == "list":
+                results = resp.get("results", [])
+                print(format_review_spaces_results(results))
+            else:
+                print(f"[OK] {resp.get('message', 'Done')}")
         else:
             print(f"[FAIL] {resp.get('message', 'unknown error')}")
 
@@ -782,6 +1047,13 @@ class CLIClient:
         print("  /template <ver>    Set prompt template version (e.g. end_customers)")
         print("  /meta <query>      Run meta agent pipeline (trace collection + synthesis)")
         print("  /meta-debug <cmd>  Stage-by-stage debug (collect|evaluate|synthesize|validate|status|abort)")
+        print("  /kb-add <text>       Ingest knowledge via LLM structuring")
+        print("  /kb-update <text>    Update knowledge via semantic search + LLM")
+        print("  /kb-del <query>      Delete knowledge (semantic search + confirm)")
+        print("  /kb-get <query>      Search knowledge base")
+        print("  /kb-list             List knowledge pieces")
+        print("  /kb-restore <id>     Restore a soft-deleted piece")
+        print("  /kb-review-spaces    Review pending space suggestions")
         print("  /status            Show connection and session status")
         print("  /quit              Exit")
         print()
@@ -832,6 +1104,20 @@ class CLIClient:
                             print("\n[Interrupted] Stopped waiting for meta agent pipeline.")
                     else:
                         print("Usage: /meta <task description>")
+                elif line.lower().startswith("/kb-add "):
+                    self.kb_add(line[8:])
+                elif line.lower().startswith("/kb-update "):
+                    self.kb_update(line[11:])
+                elif line.lower().startswith("/kb-del "):
+                    self.kb_del(line[8:])
+                elif line.lower().startswith("/kb-get "):
+                    self.kb_get(line[8:])
+                elif line.lower().startswith("/kb-list"):
+                    self.kb_list(line[8:])
+                elif line.lower().startswith("/kb-restore "):
+                    self.kb_restore(line[12:])
+                elif line.lower().startswith("/kb-review-spaces"):
+                    self.kb_review_spaces(line[17:])
                 else:
                     try:
                         self.send_agent_request(line)

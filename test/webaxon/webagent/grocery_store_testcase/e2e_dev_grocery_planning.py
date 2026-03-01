@@ -1,14 +1,14 @@
 from functools import partial
 from os import path
 
-from science_modeling_tools.agents.agent_response import AgentResponseFormat
-from science_modeling_tools.agents.prompt_based_agents.prompt_based_action_agent import PromptBasedActionAgent
-from science_modeling_tools.agents.prompt_based_agents.prompt_based_planning_agent import PromptBasedActionPlanningAgent
-from science_modeling_tools.agents.prompt_based_agents.prompt_based_response_agent import PromptBasedResponseActionAgent
-from science_modeling_tools.agents.prompt_based_agents.prompt_based_summary_agent import PromptBasedSummaryActionAgent
-from science_modeling_tools.common.inferencers.agentic_inferencers.common import ReflectionStyles, ResponseSelectors
-from science_modeling_tools.common.inferencers.agentic_inferencers.reflective_inferencer import ReflectiveInferencer
-from science_modeling_tools.ui.terminal_interactive import TerminalInteractive
+from agent_foundation.agents.agent_response import AgentResponseFormat
+from agent_foundation.agents.prompt_based_agents.prompt_based_action_agent import PromptBasedActionAgent
+from agent_foundation.agents.prompt_based_agents.prompt_based_planning_agent import PromptBasedActionPlanningAgent
+from agent_foundation.agents.prompt_based_agents.prompt_based_response_agent import PromptBasedResponseActionAgent
+from agent_foundation.agents.prompt_based_agents.prompt_based_summary_agent import PromptBasedSummaryActionAgent
+from agent_foundation.common.inferencers.agentic_inferencers.common import ReflectionStyles, ResponseSelectors
+from agent_foundation.common.inferencers.agentic_inferencers.reflective_inferencer import ReflectiveInferencer
+from agent_foundation.ui.terminal_interactive import TerminalInteractive
 from rich_python_utils.io_utils.json_io import write_json
 from rich_python_utils.string_utils.formatting.common import KeyValueStringFormat
 from rich_python_utils.string_utils.formatting.handlebars_format import format_template as handlebars_template_format
@@ -18,10 +18,10 @@ from webaxon.automation.web_agent_actors.webpage_make_answer_actor import WebPag
     ACTION_TYPE_WEBPAGE_MAKE_ANSWER
 from webaxon.automation.web_driver import WebDriver
 
-from science_modeling_tools.knowledge import KnowledgeBase, KnowledgeDataLoader, KnowledgeProvider
-from science_modeling_tools.knowledge.stores.metadata.keyvalue_adapter import KeyValueMetadataStore
-from science_modeling_tools.knowledge.stores.pieces.retrieval_adapter import RetrievalKnowledgePieceStore
-from science_modeling_tools.knowledge.stores.graph.graph_adapter import GraphServiceEntityGraphStore
+from agent_foundation.knowledge import KnowledgeBase, KnowledgeDataLoader, KnowledgeProvider
+from agent_foundation.knowledge.stores.metadata.keyvalue_adapter import KeyValueMetadataStore
+from agent_foundation.knowledge.stores.pieces.retrieval_adapter import RetrievalKnowledgePieceStore
+from agent_foundation.knowledge.stores.graph.graph_adapter import GraphServiceEntityGraphStore
 from rich_python_utils.service_utils.keyvalue_service.memory_keyvalue_service import MemoryKeyValueService
 from rich_python_utils.service_utils.retrieval_service.memory_retrieval_service import MemoryRetrievalService
 from rich_python_utils.service_utils.graph_service.memory_graph_service import MemoryGraphService
@@ -51,7 +51,7 @@ prompt_template_manager = TemplateManager(
 )
 anchor_action_types = {'Search', 'ElementInteraction.BrowseLink'}
 
-from science_modeling_tools.common.inferencers.api_inferencers.claude_api_inferencer import (
+from agent_foundation.common.inferencers.api_inferencers.claude_api_inferencer import (
     ClaudeApiInferencer
 )
 reasoner = ClaudeApiInferencer(

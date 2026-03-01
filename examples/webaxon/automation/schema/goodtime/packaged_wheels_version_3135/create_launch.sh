@@ -87,8 +87,8 @@ PROJECTS_ROOT="$(cd "$WEBAGENT_ROOT/.." 2>/dev/null && pwd)" || PROJECTS_ROOT=""
 
 # Define local source paths
 WEBAGENT_SRC="$WEBAGENT_ROOT/src"
-SCIENCE_PYTHON_UTILS_SRC="$PROJECTS_ROOT/SciencePythonUtils/src"
-SCIENCE_MODELING_TOOLS_SRC="$PROJECTS_ROOT/ScienceModelingTools/src"
+rich_python_utils_SRC="$PROJECTS_ROOT/SciencePythonUtils/src"
+agent_foundation_SRC="$PROJECTS_ROOT/ScienceModelingTools/src"
 
 # Define file names
 WHEEL_FILE=$(ls goodtime_automation_bundle-*.whl 2>/dev/null | head -1)
@@ -131,21 +131,21 @@ if [ "$ENABLE_LOCAL_CODE" = "true" ]; then
         LOCAL_CODE_FOUND="false"
     fi
 
-    if [ -d "$SCIENCE_PYTHON_UTILS_SRC" ]; then
+    if [ -d "$rich_python_utils_SRC" ]; then
         echo "  ✓ Found: SciencePythonUtils/src"
-        echo "    Path: $SCIENCE_PYTHON_UTILS_SRC"
+        echo "    Path: $rich_python_utils_SRC"
     else
         echo "  ✗ NOT FOUND: SciencePythonUtils/src"
-        echo "    Expected: $SCIENCE_PYTHON_UTILS_SRC"
+        echo "    Expected: $rich_python_utils_SRC"
         LOCAL_CODE_FOUND="false"
     fi
 
-    if [ -d "$SCIENCE_MODELING_TOOLS_SRC" ]; then
+    if [ -d "$agent_foundation_SRC" ]; then
         echo "  ✓ Found: ScienceModelingTools/src"
-        echo "    Path: $SCIENCE_MODELING_TOOLS_SRC"
+        echo "    Path: $agent_foundation_SRC"
     else
         echo "  ✗ NOT FOUND: ScienceModelingTools/src"
-        echo "    Expected: $SCIENCE_MODELING_TOOLS_SRC"
+        echo "    Expected: $agent_foundation_SRC"
         LOCAL_CODE_FOUND="false"
     fi
 
@@ -157,7 +157,7 @@ if [ "$ENABLE_LOCAL_CODE" = "true" ]; then
         echo ""
 
         # Set PYTHONPATH to use local sources (prepend so they take priority)
-        export PYTHONPATH="$WEBAGENT_SRC:$SCIENCE_PYTHON_UTILS_SRC:$SCIENCE_MODELING_TOOLS_SRC:$PYTHONPATH"
+        export PYTHONPATH="$WEBAGENT_SRC:$rich_python_utils_SRC:$agent_foundation_SRC:$PYTHONPATH"
         echo "  PYTHONPATH configured for local sources."
         USE_LOCAL_CODE="true"
     else
@@ -167,8 +167,8 @@ if [ "$ENABLE_LOCAL_CODE" = "true" ]; then
         echo "    1. Set ENABLE_LOCAL_CODE=\"false\" in this script to use the bundled wheel"
         echo "    2. Ensure all three source repositories exist in the expected locations:"
         echo "       - $WEBAGENT_SRC"
-        echo "       - $SCIENCE_PYTHON_UTILS_SRC"
-        echo "       - $SCIENCE_MODELING_TOOLS_SRC"
+        echo "       - $rich_python_utils_SRC"
+        echo "       - $agent_foundation_SRC"
         echo ""
         exit 1
     fi
@@ -248,15 +248,15 @@ if [ "$USE_LOCAL_CODE" = "true" ]; then
 import sys
 print(f'  PYTHONPATH includes local sources: OK')
 
-import science_python_utils
-import science_modeling_tools
+import rich_python_utils
+import agent_foundation
 import webagent
 print('✓ All packages imported successfully from LOCAL CODE')
 
 # Show where imports are coming from
-print(f'  webagent loaded from: {webagent.__file__}')
-print(f'  science_python_utils loaded from: {science_python_utils.__file__}')
-print(f'  science_modeling_tools loaded from: {science_modeling_tools.__file__}')
+print(f'  webagent loaded from: {webaxon__file__}')
+print(f'  rich_python_utils loaded from: {rich_python_utils.__file__}')
+print(f'  agent_foundation loaded from: {agent_foundation.__file__}')
 "
 else
     # Verify bundle installation
@@ -265,14 +265,14 @@ else
 
     python -c "
 import goodtime_automation_bundle
-import science_python_utils
-import science_modeling_tools
+import rich_python_utils
+import agent_foundation
 import webagent
 print('✓ All packages imported successfully')
 print(f'✓ Bundle version: {goodtime_automation_bundle.__version__}')
 
 # Check if code is compiled
-from science_python_utils.string_utils import common
+from rich_python_utils.string_utils import common
 if common.__file__.endswith('.so'):
     print('✓ Source code is compiled (protected)')
     print(f'  Installed at: {common.__file__}')

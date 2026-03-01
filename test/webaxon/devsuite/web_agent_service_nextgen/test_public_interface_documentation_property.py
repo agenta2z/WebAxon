@@ -23,7 +23,7 @@ def get_all_public_classes_and_methods():
     ]
     for module_path, class_name in modules_to_check:
         try:
-            module = __import__(f'webagent.devsuite.web_agent_service_nextgen.{module_path}', fromlist=[class_name])
+            module = __import__(f'webaxondevsuite.web_agent_service_nextgen.{module_path}', fromlist=[class_name])
             cls = getattr(module, class_name)
             items.append((f'{module_path}.{class_name}', cls, 'class'))
             for method_name in dir(cls):
@@ -88,7 +88,7 @@ def test_specific_classes_have_detailed_docstrings():
     print("=" * 70)
     for module_path, class_name in key_classes:
         try:
-            module = __import__(f'webagent.devsuite.web_agent_service_nextgen.{module_path}', fromlist=[class_name])
+            module = __import__(f'webaxondevsuite.web_agent_service_nextgen.{module_path}', fromlist=[class_name])
             cls = getattr(module, class_name)
             docstring = inspect.getdoc(cls)
             assert docstring is not None, f"{class_name} is missing a docstring"

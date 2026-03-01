@@ -118,8 +118,8 @@ class CaptureAgentFactory(AgentFactory):
 
     def create_agent(self, interactive, logger, agent_type='DefaultAgent', template_version=''):
         """Build a minimal PromptBasedActionPlanningAgent without WebDriver."""
-        from science_modeling_tools.agents.agent_response import AgentResponseFormat
-        from science_modeling_tools.agents.prompt_based_agents.prompt_based_planning_agent import (
+        from agent_foundation.agents.agent_response import AgentResponseFormat
+        from agent_foundation.agents.prompt_based_agents.prompt_based_planning_agent import (
             PromptBasedActionPlanningAgent,
         )
         from rich_python_utils.string_utils.formatting.common import KeyValueStringFormat

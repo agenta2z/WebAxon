@@ -99,8 +99,8 @@ All verifications pass successfully.
 
 ### Dependencies
 - `ServiceConfig` from `core.config` - Configuration values
-- `StorageBasedQueueService` from `science_python_utils` - Queue implementation
-- `timestamp()` from `science_python_utils` - Timestamp generation
+- `StorageBasedQueueService` from `rich_python_utils` - Queue implementation
+- `timestamp()` from `rich_python_utils` - Timestamp generation
 
 ### Used By (Future)
 - `WebAgentService` (service.py) - Main service orchestration

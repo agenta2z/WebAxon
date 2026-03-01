@@ -29,7 +29,7 @@ from webaxon.html_utils.sanitization import (
 )
 
 if TYPE_CHECKING:
-    from science_modeling_tools.common.inferencers.templated_inferencer import TemplatedInferencer
+    from agent_foundation.common.inferencers.templated_inferencer import TemplatedInferencer
 
 
 def create_find_element_callable(

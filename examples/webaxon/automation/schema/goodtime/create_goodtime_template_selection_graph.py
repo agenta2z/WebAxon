@@ -48,8 +48,8 @@ for pkg in ["SciencePythonUtils", "ScienceModelingTools"]:
 
 from typing import Optional, Union
 
-from science_modeling_tools.automation.schema import ActionGraph, TargetSpec
-from science_modeling_tools.automation.schema.action_metadata import ActionMetadataRegistry
+from agent_foundation.automation.schema import ActionGraph, TargetSpec
+from agent_foundation.automation.schema.action_metadata import ActionMetadataRegistry
 
 
 def create_goodtime_template_selection_graph(
@@ -374,7 +374,7 @@ if __name__ == "__main__":
         _logger.error("Please set it: export ANTHROPIC_API_KEY='your-key-here'")
         sys.exit(1)
     
-    from science_modeling_tools.common.inferencers.api_inferencers.ag.ag_claude_api_inferencer import AgClaudeApiInferencer as ClaudeApiInferencer
+    from agent_foundation.common.inferencers.api_inferencers.ag.ag_claude_api_inferencer import AgClaudeApiInferencer as ClaudeApiInferencer
     from rich_python_utils.string_utils.formatting.template_manager import TemplateManager
     from rich_python_utils.string_utils.formatting.handlebars_format import format_template as handlebars_format
     

@@ -43,10 +43,10 @@ if src_dir.exists() and str(src_dir) not in sys.path:
 
 # Add science packages if they exist (for tests that need them)
 projects_root = webagent_root.parent
-science_python_utils_src = projects_root / "SciencePythonUtils" / "src"
-science_modeling_tools_src = projects_root / "ScienceModelingTools" / "src"
+rich_python_utils_src = projects_root / "SciencePythonUtils" / "src"
+agent_foundation_src = projects_root / "ScienceModelingTools" / "src"
 
-for path_item in [science_python_utils_src, science_modeling_tools_src]:
+for path_item in [rich_python_utils_src, agent_foundation_src]:
     if path_item.exists() and str(path_item) not in sys.path:
         sys.path.insert(0, str(path_item))
 

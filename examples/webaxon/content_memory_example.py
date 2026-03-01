@@ -5,7 +5,7 @@ This example demonstrates how to use the content memorization feature
 to track elements across multiple scroll actions.
 """
 
-from webagent.automation.web_driver import WebDriver, WebAutomationDrivers
+from webaxonautomation.web_driver import WebDriver, WebAutomationDrivers
 
 def main():
     print("=" * 80)

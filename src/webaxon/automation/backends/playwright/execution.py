@@ -269,7 +269,7 @@ def execute_actions(
         from rich_python_utils.path_utils.common import ensure_dir_existence
     except ImportError as e:
         raise ImportError(
-            f"execute_actions requires science_python_utils package: {e}"
+            f"execute_actions requires rich_python_utils package: {e}"
         ) from e
 
     try:

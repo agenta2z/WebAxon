@@ -11,10 +11,10 @@ from pathlib import Path
 # Path: test_integration.py -> schema -> automation -> webaxon -> test -> WebAgent -> workspace root
 project_root = Path(__file__).parent.parent.parent.parent.parent.parent
 webagent_src = project_root / "WebAgent" / "src"
-science_python_utils_src = project_root / "SciencePythonUtils" / "src"
-science_modeling_tools_src = project_root / "ScienceModelingTools" / "src"
+rich_python_utils_src = project_root / "SciencePythonUtils" / "src"
+agent_foundation_src = project_root / "ScienceModelingTools" / "src"
 
-for path in [webagent_src, science_python_utils_src, science_modeling_tools_src]:
+for path in [webagent_src, rich_python_utils_src, agent_foundation_src]:
     if str(path) not in sys.path:
         sys.path.insert(0, str(path))
 

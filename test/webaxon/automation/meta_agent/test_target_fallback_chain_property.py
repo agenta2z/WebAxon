@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from hypothesis import given, settings, strategies as st
 
-from science_modeling_tools.automation.meta_agent.models import TraceStep
+from agent_foundation.automation.meta_agent.models import TraceStep
 from webaxon.automation.meta_agent.web_target_converter import WebTargetConverter
 
 

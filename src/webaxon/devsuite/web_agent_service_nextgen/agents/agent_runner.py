@@ -8,7 +8,7 @@ import time
 import traceback
 from typing import Optional, Any
 
-from science_modeling_tools.ui.interactive_base import InteractionFlags
+from agent_foundation.ui.interactive_base import InteractionFlags
 from webaxon.devsuite.common import DebuggerLogTypes
 
 from ..core.config import ServiceConfig

@@ -25,7 +25,7 @@ from typing import Any, Callable, Dict, Optional
 
 from rich_python_utils.datetime_utils.common import timestamp
 
-from science_modeling_tools.ui.queue_interactive import QueueInteractive
+from agent_foundation.ui.queue_interactive import QueueInteractive
 
 logger = logging.getLogger(__name__)
 

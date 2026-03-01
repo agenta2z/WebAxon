@@ -19,11 +19,11 @@ project_root = current_file.parent.parent.parent.parent.parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-science_python_utils_src = project_root / "SciencePythonUtils" / "src"
-science_modeling_tools_src = project_root / "ScienceModelingTools" / "src"
+rich_python_utils_src = project_root / "SciencePythonUtils" / "src"
+agent_foundation_src = project_root / "ScienceModelingTools" / "src"
 webagent_src = project_root / "WebAgent" / "src"
 
-for path_item in [science_python_utils_src, science_modeling_tools_src, webagent_src]:
+for path_item in [rich_python_utils_src, agent_foundation_src, webagent_src]:
     if path_item.exists() and str(path_item) not in sys.path:
         sys.path.insert(0, str(path_item))
 

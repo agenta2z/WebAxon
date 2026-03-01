@@ -15,7 +15,7 @@ from typing import (
 _logger = logging.getLogger(__name__)
 
 from attr import attrib, attrs
-from science_modeling_tools.common.memory import ContentMemory
+from agent_foundation.common.memory import ContentMemory
 from rich_python_utils.common_objects.debuggable import Debuggable
 from rich_python_utils.common_utils import execute_with_retry, get_
 from rich_python_utils.io_utils.json_io import artifact_field

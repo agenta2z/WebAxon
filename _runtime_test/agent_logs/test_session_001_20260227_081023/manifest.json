@@ -1,0 +1,10 @@
+{
+  "creation_timestamp": "2026-02-27T08:10:23",
+  "end_timestamp": null,
+  "session_dir": "_runtime_test\\agent_logs\\test_session_001_20260227_081023",
+  "session_id": "test_session_001",
+  "session_log_file": "session.jsonl",
+  "session_type": "DefaultAgent",
+  "status": "running",
+  "turns": []
+}

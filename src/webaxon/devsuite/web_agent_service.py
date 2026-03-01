@@ -35,18 +35,18 @@ from typing import Callable
 import time
 import threading
 
-from science_modeling_tools.agents.prompt_based_agents.prompt_based_agent import DEFAULT_AGENT_TURN_IDENTIFYING_STRING
+from agent_foundation.agents.prompt_based_agents.prompt_based_agent import DEFAULT_AGENT_TURN_IDENTIFYING_STRING
 from rich_python_utils.common_objects.debuggable import Debugger
-from science_modeling_tools.agents.agent_response import AgentResponseFormat
-from science_modeling_tools.agents.prompt_based_agents.prompt_based_action_agent import PromptBasedActionAgent
-from science_modeling_tools.agents.prompt_based_agents.prompt_based_planning_agent import PromptBasedActionPlanningAgent
-from science_modeling_tools.agents.prompt_based_agents.prompt_based_response_agent import PromptBasedResponseActionAgent
-from science_modeling_tools.agents.prompt_based_agents.prompt_based_summary_agent import PromptBasedSummaryActionAgent
-from science_modeling_tools.common.inferencers.agentic_inferencers.common import ReflectionStyles, ResponseSelectors
-from science_modeling_tools.common.inferencers.agentic_inferencers.reflective_inferencer import ReflectiveInferencer
-from science_modeling_tools.common.inferencers.api_inferencers.claude_api_inferencer import ClaudeApiInferencer
-from science_modeling_tools.common.inferencers.mock_inferencers import MockClarificationInferencer
-from science_modeling_tools.ui.queue_interactive import QueueInteractive
+from agent_foundation.agents.agent_response import AgentResponseFormat
+from agent_foundation.agents.prompt_based_agents.prompt_based_action_agent import PromptBasedActionAgent
+from agent_foundation.agents.prompt_based_agents.prompt_based_planning_agent import PromptBasedActionPlanningAgent
+from agent_foundation.agents.prompt_based_agents.prompt_based_response_agent import PromptBasedResponseActionAgent
+from agent_foundation.agents.prompt_based_agents.prompt_based_summary_agent import PromptBasedSummaryActionAgent
+from agent_foundation.common.inferencers.agentic_inferencers.common import ReflectionStyles, ResponseSelectors
+from agent_foundation.common.inferencers.agentic_inferencers.reflective_inferencer import ReflectiveInferencer
+from agent_foundation.common.inferencers.api_inferencers.claude_api_inferencer import ClaudeApiInferencer
+from agent_foundation.common.inferencers.mock_inferencers import MockClarificationInferencer
+from agent_foundation.ui.queue_interactive import QueueInteractive
 from rich_python_utils.io_utils.json_io import write_json
 from rich_python_utils.string_utils.formatting.common import KeyValueStringFormat
 from rich_python_utils.string_utils.formatting.handlebars_format import format_template as handlebars_template_format
@@ -63,7 +63,7 @@ from webaxon.automation.web_agent_actors.webpage_make_answer_actor import WebPag
 from webaxon.automation.web_driver import WebDriver
 
 try:
-    from science_modeling_tools.common.inferencers.api_inferencers.ag.ag_claude_api_inferencer import \
+    from agent_foundation.common.inferencers.api_inferencers.ag.ag_claude_api_inferencer import \
         AgClaudeApiInferencer
 except ImportError:
     pass

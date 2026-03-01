@@ -321,8 +321,8 @@ The `-s` flag disables stdout capture so you can see the printed prompt and prov
 
 ## Dependencies
 
-- `science_modeling_tools` — KnowledgeBase, KnowledgeProvider, formatters, agent classes
-- `science_python_utils` — Handlebars template formatting
+- `agent_foundation` — KnowledgeBase, KnowledgeProvider, formatters, agent classes
+- `rich_python_utils` — Handlebars template formatting
 - `rank-bm25` — BM25 search engine used by `FileRetrievalService`
 - `pytest` — test runner
 - `pybars3` — Handlebars template rendering (used by prompt templates)

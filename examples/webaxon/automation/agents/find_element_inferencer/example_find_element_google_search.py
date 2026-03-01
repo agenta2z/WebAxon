@@ -28,7 +28,7 @@ for pkg in ["SciencePythonUtils", "ScienceModelingTools"]:
     if os.path.exists(pkg_src) and pkg_src not in sys.path:
         sys.path.insert(0, pkg_src)
 
-from science_modeling_tools.common.inferencers.api_inferencers.claude_api_inferencer import ClaudeApiInferencer
+from agent_foundation.common.inferencers.api_inferencers.claude_api_inferencer import ClaudeApiInferencer
 from rich_python_utils.string_utils.formatting.template_manager import TemplateManager
 from rich_python_utils.string_utils.formatting.handlebars_format import format_template as handlebars_format
 

@@ -44,8 +44,8 @@ from path_utils import setup_project_paths
 
 setup_project_paths(__file__)
 
-from science_modeling_tools.automation.schema import ActionGraph, TargetSpec
-from science_modeling_tools.automation.schema.action_metadata import ActionMetadataRegistry
+from agent_foundation.automation.schema import ActionGraph, TargetSpec
+from agent_foundation.automation.schema.action_metadata import ActionMetadataRegistry
 
 
 def create_goodtime_template_selection_graph_with_monitor(

@@ -2,7 +2,7 @@ from typing import Any, Mapping, Sequence, Dict
 
 from attr import attrs, attrib
 
-from science_modeling_tools.agents.agent_actor import AgentActor
+from agent_foundation.agents.agent_actor import AgentActor
 from rich_python_utils.common_utils import last_
 from webaxon.automation.web_agent_actors.constants import (
     DEFAULT_WEB_AGENT_TASK_INPUT_FIELD_NAME_TASK_INPUT,

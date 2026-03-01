@@ -13,7 +13,7 @@ AgentFactory (uses TemplateManagerWrapper)
     ↓
 TemplateManagerWrapper (wraps TemplateManager)
     ↓
-TemplateManager (from science_python_utils)
+TemplateManager (from rich_python_utils)
 ```
 
 ## Key Components

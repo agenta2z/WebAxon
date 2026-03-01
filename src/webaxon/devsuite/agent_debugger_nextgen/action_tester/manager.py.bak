@@ -20,7 +20,7 @@ if str(project_root) not in sys.path:
 try:
     import undetected_chromedriver as uc
     from selenium.webdriver.chrome.webdriver import WebDriver as SeleniumWebDriver
-    from webagent.automation.web_driver import WebDriver, WebAutomationDrivers
+    from webaxonautomation.web_driver import WebDriver, WebAutomationDrivers
     SELENIUM_AVAILABLE = True
 except ImportError:
     SELENIUM_AVAILABLE = False
@@ -29,7 +29,7 @@ except ImportError:
     WebDriver = None
     WebAutomationDrivers = None
 
-from webagent.devsuite.agent_debugger_nextgen.action_tester.models import (
+from webaxondevsuite.agent_debugger_nextgen.action_tester.models import (
     Test,
     TestInfo,
     BrowserStatus,
@@ -57,7 +57,7 @@ class ActionTesterManager:
         
         # Load action metadata from schema system (uses Python defaults as source of truth)
         try:
-            from science_modeling_tools.automation.schema.action_metadata import ActionMetadataRegistry
+            from agent_foundation.automation.schema.action_metadata import ActionMetadataRegistry
             self.action_metadata = ActionMetadataRegistry()  # Uses Python defaults
         except Exception as e:
             print(f"Warning: Could not load action metadata: {e}")
@@ -104,7 +104,7 @@ class ActionTesterManager:
             
             # Add profile support if requested
             if profile_directory:  # Non-empty means use existing profile
-                from webagent.browser_utils import get_chrome_user_data_dir
+                from webaxonbrowser_utils import get_chrome_user_data_dir
                 user_data_dir = get_chrome_user_data_dir()
                 if user_data_dir:
                     browser_options.append(f'--user-data-dir={user_data_dir}')
@@ -546,7 +546,7 @@ class ActionTesterManager:
         Inject __id__ attributes to all HTML elements in active tab.
         
         Uses the existing add_unique_index_to_elements() function from
-        webagent.automation.selenium.element_selection for consistency.
+        webaxonautomation.selenium.element_selection for consistency.
         
         Returns:
             Dict with {success: bool, elements_tagged: int, error: str}
@@ -583,8 +583,8 @@ class ActionTesterManager:
                 }
             
             # Use the existing utility function from element_selection
-            from webagent.automation.selenium.element_selection import add_unique_index_to_elements
-            from webagent.html_utils.element_identification import ATTR_NAME_INCREMENTAL_ID
+            from webaxonautomation.selenium.element_selection import add_unique_index_to_elements
+            from webaxonhtml_utils.element_identification import ATTR_NAME_INCREMENTAL_ID
             
             # Add __id__ attributes to all elements
             add_unique_index_to_elements(self.driver, index_name=ATTR_NAME_INCREMENTAL_ID)
@@ -693,7 +693,7 @@ class ActionTesterManager:
             }
         
         try:
-            from webagent.automation.schema import load_sequence_from_string
+            from webaxonautomation.schema import load_sequence_from_string
             
             sequence = load_sequence_from_string(json_str)
             
@@ -868,7 +868,7 @@ class ActionTesterManager:
             }]
         
         try:
-            from webagent.automation.schema import load_sequence_from_string, ActionFlowExecutor
+            from webaxonautomation.schema import load_sequence_from_string, ActionFlowExecutor
             
             # Parse sequence
             try:

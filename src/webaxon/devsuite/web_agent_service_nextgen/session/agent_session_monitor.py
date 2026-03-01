@@ -5,7 +5,7 @@ status change detection, lazy agent creation, and queue integration.
 """
 from typing import Any
 
-from science_modeling_tools.ui.queue_interactive import QueueInteractive
+from agent_foundation.ui.queue_interactive import QueueInteractive
 from rich_python_utils.common_objects.debuggable import EXCEPTION_LOG_ITEM_KEY
 from rich_python_utils.datetime_utils.common import timestamp
 from rich_python_utils.service_utils.session_management import SessionMonitor

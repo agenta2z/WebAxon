@@ -1,0 +1,10 @@
+{
+  "creation_timestamp": "2026-02-27T08:10:24",
+  "end_timestamp": "2026-02-27T08:10:25",
+  "session_dir": "_runtime_test\\agent_logs\\idle_session_20260227_081024",
+  "session_id": "idle_session",
+  "session_log_file": "session.jsonl",
+  "session_type": "DefaultAgent",
+  "status": "cancelled",
+  "turns": []
+}

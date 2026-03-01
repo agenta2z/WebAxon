@@ -144,7 +144,7 @@ python -m py_compile launch_service.py
 # ✅ No syntax errors
 
 # Verified imports
-python -c "from webagent.devsuite.web_agent_service_nextgen.service import WebAgentService"
+python -c "from webaxondevsuite.web_agent_service_nextgen.service import WebAgentService"
 # ✅ Imports work correctly
 ```
 

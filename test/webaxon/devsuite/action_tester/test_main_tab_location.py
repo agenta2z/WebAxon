@@ -21,7 +21,7 @@ class TestMainTabLocation:
     
     def test_tabbed_panel_supports_custom_main_tabs(self):
         """Test that TabbedPanel now supports custom_main_tabs parameter."""
-        from science_modeling_tools.ui.dash_interactive.components.tabbed_panel import TabbedPanel
+        from agent_foundation.ui.dash_interactive.components.tabbed_panel import TabbedPanel
         
         # Test that TabbedPanel accepts custom_main_tabs parameter
         custom_main_tabs = [
@@ -43,7 +43,7 @@ class TestMainTabLocation:
     
     def test_tabbed_panel_creates_custom_main_tab_buttons(self):
         """Test that TabbedPanel creates buttons for custom main tabs."""
-        from science_modeling_tools.ui.dash_interactive.components.tabbed_panel import TabbedPanel
+        from agent_foundation.ui.dash_interactive.components.tabbed_panel import TabbedPanel
         
         custom_main_tabs = [
             {
@@ -70,7 +70,7 @@ class TestMainTabLocation:
     
     def test_tabbed_panel_creates_custom_main_tab_content(self):
         """Test that TabbedPanel creates content divs for custom main tabs."""
-        from science_modeling_tools.ui.dash_interactive.components.tabbed_panel import TabbedPanel
+        from agent_foundation.ui.dash_interactive.components.tabbed_panel import TabbedPanel
         from dash import html
         
         test_content = html.Div("Test Action Tester Content")

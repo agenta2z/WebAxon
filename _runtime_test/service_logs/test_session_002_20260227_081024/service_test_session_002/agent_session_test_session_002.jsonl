@@ -1,0 +1,1 @@
+{"level": 20, "name": "AgentSession_test_session_002", "id": "agent_session_test_session_002", "type": "Message", "item": {"type": "SessionCleanup", "message": "Cleaning up session: test_session_002"}, "time": "2026-02-27 08:10:24"}

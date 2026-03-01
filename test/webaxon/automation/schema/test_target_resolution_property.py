@@ -32,12 +32,12 @@ if _src_dir.exists() and str(_src_dir) not in sys.path:
     sys.path.insert(0, str(_src_dir))
 # Add SciencePythonUtils and ScienceModelingTools
 _workspace_root = _project_root.parent
-_science_python_utils_src = _workspace_root / "SciencePythonUtils" / "src"
-_science_modeling_tools_src = _workspace_root / "ScienceModelingTools" / "src"
-if _science_python_utils_src.exists() and str(_science_python_utils_src) not in sys.path:
-    sys.path.insert(0, str(_science_python_utils_src))
-if _science_modeling_tools_src.exists() and str(_science_modeling_tools_src) not in sys.path:
-    sys.path.insert(0, str(_science_modeling_tools_src))
+_rich_python_utils_src = _workspace_root / "SciencePythonUtils" / "src"
+_agent_foundation_src = _workspace_root / "ScienceModelingTools" / "src"
+if _rich_python_utils_src.exists() and str(_rich_python_utils_src) not in sys.path:
+    sys.path.insert(0, str(_rich_python_utils_src))
+if _agent_foundation_src.exists() and str(_agent_foundation_src) not in sys.path:
+    sys.path.insert(0, str(_agent_foundation_src))
 
 from hypothesis import given, strategies as st, settings, assume
 import pytest
@@ -222,7 +222,7 @@ def test_description_strategy_raises_not_implemented(description):
 
 def create_test_action_node(action, mock_action_executor):
     """Create an ActionNode with a mock action executor for testing."""
-    from science_modeling_tools.automation.schema.action_node import ActionNode
+    from agent_foundation.automation.schema.action_node import ActionNode
     
     action_metadata = ActionMetadataRegistry()
     
@@ -251,10 +251,10 @@ def test_fallback_tries_strategies_in_order(failing_count, total_strategies):
     Each retry increments _fallback_index to try the next strategy.
     """
     # Use ScienceModelingTools models since ActionNode uses those
-    from science_modeling_tools.automation.schema.common import Action as SMTAction
-    from science_modeling_tools.automation.schema.common import TargetSpec as SMTTargetSpec
-    from science_modeling_tools.automation.schema.common import TargetSpecWithFallback as SMTTargetSpecWithFallback
-    from science_modeling_tools.automation.schema.common import ExecutionRuntime
+    from agent_foundation.automation.schema.common import Action as SMTAction
+    from agent_foundation.automation.schema.common import TargetSpec as SMTTargetSpec
+    from agent_foundation.automation.schema.common import TargetSpecWithFallback as SMTTargetSpecWithFallback
+    from agent_foundation.automation.schema.common import ExecutionRuntime
     
     assume(failing_count < total_strategies)
     
@@ -303,10 +303,10 @@ def test_fallback_all_fail_raises_error(num_strategies):
     fallback strategies are exhausted (via _get_fallback_result).
     """
     # Use ScienceModelingTools models since ActionNode uses those
-    from science_modeling_tools.automation.schema.common import Action as SMTAction
-    from science_modeling_tools.automation.schema.common import TargetSpec as SMTTargetSpec
-    from science_modeling_tools.automation.schema.common import TargetSpecWithFallback as SMTTargetSpecWithFallback
-    from science_modeling_tools.automation.schema.common import ExecutionRuntime
+    from agent_foundation.automation.schema.common import Action as SMTAction
+    from agent_foundation.automation.schema.common import TargetSpec as SMTTargetSpec
+    from agent_foundation.automation.schema.common import TargetSpecWithFallback as SMTTargetSpecWithFallback
+    from agent_foundation.automation.schema.common import ExecutionRuntime
     
     mock_action_executor = MagicMock()
     
@@ -385,8 +385,8 @@ def test_string_target_passed_through_to_action_executor(target_value):
     
     Note: After refactor, ActionNode._execute_action handles target pass-through.
     """
-    from science_modeling_tools.automation.schema.common import Action as SMTAction
-    from science_modeling_tools.automation.schema.common import ExecutionRuntime
+    from agent_foundation.automation.schema.common import Action as SMTAction
+    from agent_foundation.automation.schema.common import ExecutionRuntime
     
     mock_action_executor = MagicMock()
     mock_action_executor.return_value = MagicMock()

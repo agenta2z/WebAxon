@@ -17,9 +17,9 @@ Example:
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Optional, Set
 
-from science_modeling_tools.agents.agent_response import AgentResponseFormat
-from science_modeling_tools.agents.prompt_based_agents.prompt_based_action_agent import PromptBasedActionAgent
-from science_modeling_tools.common.inferencers.inferencer_base import InferencerBase
+from agent_foundation.agents.agent_response import AgentResponseFormat
+from agent_foundation.agents.prompt_based_agents.prompt_based_action_agent import PromptBasedActionAgent
+from agent_foundation.common.inferencers.inferencer_base import InferencerBase
 from rich_python_utils.string_utils.formatting.common import KeyValueStringFormat
 from rich_python_utils.string_utils.formatting.handlebars_format import format_template as handlebars_format
 from rich_python_utils.string_utils.formatting.template_manager import TemplateManager

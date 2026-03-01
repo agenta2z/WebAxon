@@ -7,7 +7,7 @@ from typing import Dict, Any, List
 from dash import html, dcc
 from dash.dependencies import Input, Output
 
-from science_modeling_tools.ui.dash_interactive.components.base import BaseComponent
+from agent_foundation.ui.dash_interactive.components.base import BaseComponent
 from webaxon.devsuite.constants import AGENT_TYPE_DEFAULT, AGENT_TYPE_MOCK_CLARIFICATION
 
 

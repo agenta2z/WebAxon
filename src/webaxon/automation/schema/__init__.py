@@ -10,7 +10,7 @@ Key Components:
 """
 
 # Re-export from agent_foundation for backward compatibility
-from science_modeling_tools.automation.schema import (
+from agent_foundation.automation.schema import (
     # Models
     Action,
     ActionSequence,
@@ -34,7 +34,7 @@ from science_modeling_tools.automation.schema import (
 )
 
 # ActionFlow from agent_foundation
-from science_modeling_tools.automation.schema import ActionFlow
+from agent_foundation.automation.schema import ActionFlow
 
 # WebAgent-specific action configuration and Selenium utilities
 from webaxon.automation.schema.webagent_action import (

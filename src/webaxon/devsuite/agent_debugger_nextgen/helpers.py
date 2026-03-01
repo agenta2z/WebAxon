@@ -7,7 +7,7 @@ while using the new modular architecture.
 """
 from pathlib import Path
 from typing import List, Optional, Tuple
-from science_modeling_tools.ui.dash_interactive.utils.log_collector import LogCollector
+from agent_foundation.ui.dash_interactive.utils.log_collector import LogCollector
 from rich_python_utils.console_utils import hprint_message
 
 # Import modular components

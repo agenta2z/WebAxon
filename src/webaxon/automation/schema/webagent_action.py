@@ -13,7 +13,7 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Dict, List, Optional, Tuple
 
-from science_modeling_tools.automation.schema.action_metadata import (
+from agent_foundation.automation.schema.action_metadata import (
     ActionTypeMetadata,
     ActionMetadataRegistry,
     ActionMemoryMode,

@@ -1,6 +1,6 @@
 # Browser Utilities
 
-Common utilities for browser management and configuration in WebAgent.
+Common utilities for browser management and configuration in webaxon
 
 ## Modules
 

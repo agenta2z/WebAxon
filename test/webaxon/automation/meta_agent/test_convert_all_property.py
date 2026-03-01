@@ -12,8 +12,8 @@ from unittest.mock import MagicMock, patch
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from science_modeling_tools.automation.meta_agent.models import TraceStep
-from science_modeling_tools.automation.meta_agent.target_converter import (
+from agent_foundation.automation.meta_agent.models import TraceStep
+from agent_foundation.automation.meta_agent.target_converter import (
     TargetConverterBase,
     TargetSpecWithFallback,
 )

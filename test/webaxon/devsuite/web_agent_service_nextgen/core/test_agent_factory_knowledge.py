@@ -16,7 +16,7 @@ import resolve_path  # Setup import paths
 
 from webaxon.devsuite.web_agent_service_nextgen.core.config import ServiceConfig
 from webaxon.devsuite.web_agent_service_nextgen.core.agent_factory import AgentFactory
-from science_modeling_tools.knowledge import KnowledgeProvider
+from agent_foundation.knowledge import KnowledgeProvider
 
 
 # Path to the grocery store knowledge data file

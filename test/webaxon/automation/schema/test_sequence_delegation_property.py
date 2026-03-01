@@ -23,24 +23,24 @@ if _src_dir.exists() and str(_src_dir) not in sys.path:
     sys.path.insert(0, str(_src_dir))
 # Add SciencePythonUtils and ScienceModelingTools
 _workspace_root = _project_root.parent
-_science_python_utils_src = _workspace_root / "SciencePythonUtils" / "src"
-_science_modeling_tools_src = _workspace_root / "ScienceModelingTools" / "src"
-if _science_python_utils_src.exists() and str(_science_python_utils_src) not in sys.path:
-    sys.path.insert(0, str(_science_python_utils_src))
-if _science_modeling_tools_src.exists() and str(_science_modeling_tools_src) not in sys.path:
-    sys.path.insert(0, str(_science_modeling_tools_src))
+_rich_python_utils_src = _workspace_root / "SciencePythonUtils" / "src"
+_agent_foundation_src = _workspace_root / "ScienceModelingTools" / "src"
+if _rich_python_utils_src.exists() and str(_rich_python_utils_src) not in sys.path:
+    sys.path.insert(0, str(_rich_python_utils_src))
+if _agent_foundation_src.exists() and str(_agent_foundation_src) not in sys.path:
+    sys.path.insert(0, str(_agent_foundation_src))
 
 from hypothesis import given, strategies as st, settings, assume
 import pytest
 
-from science_modeling_tools.automation.schema.action_flow import ActionFlow
-from science_modeling_tools.automation.schema.common import (
+from agent_foundation.automation.schema.action_flow import ActionFlow
+from agent_foundation.automation.schema.common import (
     ActionSequence,
     Action,
     TargetSpec,
 )
-from science_modeling_tools.automation.schema.common import ActionResult, ExecutionResult
-from science_modeling_tools.automation.schema.action_metadata import ActionMetadataRegistry
+from agent_foundation.automation.schema.common import ActionResult, ExecutionResult
+from agent_foundation.automation.schema.action_metadata import ActionMetadataRegistry
 
 
 # =============================================================================

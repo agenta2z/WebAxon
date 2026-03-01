@@ -448,6 +448,486 @@ class MessageHandlers:
 
         self._queue_service.put(self._config.client_control_queue_id, response)
 
+    def handle_kb_add(self, message: Dict[str, Any]) -> None:
+        """Handle kb_add message.
+
+        Ingests free text via DocumentIngester.ingest_text() which chunks,
+        LLM-structures, and loads into the KnowledgeBase.
+
+        Args:
+            message: Message dictionary from control queue
+        """
+        payload = message.get('message', {})
+        text = payload.get('text')
+
+        if not text:
+            response = {
+                'type': 'kb_add_response',
+                'success': False,
+                'message': 'Missing required field: text',
+                'timestamp': timestamp()
+            }
+            self._queue_service.put(self._config.client_control_queue_id, response)
+            return
+
+        spaces = payload.get('spaces')
+
+        ingester = self._agent_factory.get_document_ingester()
+        kb = self._agent_factory.get_knowledge_base()
+        result = ingester.ingest_text(text, kb, spaces=spaces)
+
+        if not result.success:
+            response = {
+                'type': 'kb_add_response',
+                'success': False,
+                'message': f'Ingestion failed: {", ".join(str(e) for e in result.errors)}',
+                'timestamp': timestamp()
+            }
+        else:
+            response = {
+                'type': 'kb_add_response',
+                'success': True,
+                'counts': {
+                    'pieces_created': result.pieces_created,
+                    'metadata_created': result.metadata_created,
+                    'graph_nodes_created': result.graph_nodes_created,
+                    'graph_edges_created': result.graph_edges_created,
+                },
+                'message': 'Knowledge ingested via LLM structuring',
+                'timestamp': timestamp()
+            }
+
+        self._queue_service.put(self._config.client_control_queue_id, response)
+
+    def handle_kb_update(self, message: Dict[str, Any]) -> None:
+        """Handle kb_update message.
+
+        Updates knowledge via KnowledgeUpdater.update_by_content() which
+        semantically searches for similar pieces and applies LLM-analyzed updates.
+
+        Args:
+            message: Message dictionary from control queue
+        """
+        payload = message.get('message', {})
+        text = payload.get('text')
+
+        if not text:
+            response = {
+                'type': 'kb_update_response',
+                'success': False,
+                'message': 'Missing required field: text',
+                'timestamp': timestamp()
+            }
+            self._queue_service.put(self._config.client_control_queue_id, response)
+            return
+
+        updater = self._agent_factory.get_knowledge_updater()
+        results = updater.update_by_content(text)
+
+        if not results:
+            response = {
+                'type': 'kb_update_response',
+                'success': True,
+                'results': [],
+                'count': 0,
+                'message': 'No matching pieces found',
+                'timestamp': timestamp()
+            }
+        else:
+            serialized = [
+                {
+                    'piece_id': r.piece_id,
+                    'old_version': r.old_version,
+                    'new_version': r.new_version,
+                    'action': r.details.get("action", r.operation),
+                }
+                for r in results
+            ]
+            response = {
+                'type': 'kb_update_response',
+                'success': True,
+                'results': serialized,
+                'count': len(serialized),
+                'message': f'Updated {len(serialized)} piece{"s" if len(serialized) != 1 else ""}',
+                'timestamp': timestamp()
+            }
+
+        self._queue_service.put(self._config.client_control_queue_id, response)
+
+    def handle_kb_del(self, message: Dict[str, Any]) -> None:
+        """Handle kb_del message.
+
+        Supports three phases:
+        - "search": semantic search for candidates, raises ConfirmationRequiredError
+        - "confirm": delete confirmed piece_ids
+        - "direct": delete a single piece by ID
+
+        Args:
+            message: Message dictionary from control queue
+        """
+        from agent_foundation.knowledge.ingestion.knowledge_deleter import (
+            ConfirmationRequiredError,
+            DeleteMode,
+        )
+
+        payload = message.get('message', {})
+        phase = payload.get('phase', 'search')
+        deleter = self._agent_factory.get_knowledge_deleter()
+
+        if phase == 'search':
+            query = payload.get('query', '')
+            try:
+                deleter.delete_by_query(query)
+                # If no ConfirmationRequiredError, no candidates matched
+                response = {
+                    'type': 'kb_del_response',
+                    'success': True,
+                    'phase': 'candidates',
+                    'candidates': [],
+                    'count': 0,
+                    'timestamp': timestamp()
+                }
+            except ConfirmationRequiredError as e:
+                from webaxon.devsuite.web_agent_service_nextgen.cli.kb_formatters import truncate_content
+                candidates = [
+                    {
+                        'piece_id': piece.piece_id,
+                        'content_preview': truncate_content(piece.content),
+                        'score': score,
+                    }
+                    for piece, score in e.candidates
+                ]
+                response = {
+                    'type': 'kb_del_response',
+                    'success': True,
+                    'phase': 'candidates',
+                    'candidates': candidates,
+                    'count': len(candidates),
+                    'timestamp': timestamp()
+                }
+
+        elif phase == 'confirm':
+            query = payload.get('query', '')
+            confirmed_ids = payload.get('piece_ids', [])
+            results = deleter.delete_by_query(query, piece_ids=confirmed_ids)
+            serialized = [
+                {
+                    'piece_id': r.piece_id,
+                    'success': r.success,
+                    'message': r.error,
+                }
+                for r in results
+            ]
+            response = {
+                'type': 'kb_del_response',
+                'success': True,
+                'phase': 'done',
+                'results': serialized,
+                'mode': 'soft',
+                'count': len(serialized),
+                'timestamp': timestamp()
+            }
+
+        elif phase == 'direct':
+            piece_id = payload.get('piece_id', '')
+            hard = payload.get('hard', False)
+            mode = DeleteMode.HARD if hard else DeleteMode.SOFT
+            result = deleter.delete_by_id(piece_id, mode)
+            response = {
+                'type': 'kb_del_response',
+                'success': result.success,
+                'phase': 'done',
+                'results': [
+                    {
+                        'piece_id': result.piece_id,
+                        'success': result.success,
+                        'message': result.error,
+                    }
+                ],
+                'mode': 'hard' if hard else 'soft',
+                'count': 1 if result.success else 0,
+                'timestamp': timestamp()
+            }
+
+        else:
+            response = {
+                'type': 'kb_del_response',
+                'success': False,
+                'message': f'Unknown phase: {phase}',
+                'timestamp': timestamp()
+            }
+
+        self._queue_service.put(self._config.client_control_queue_id, response)
+
+    def handle_kb_get(self, message: Dict[str, Any]) -> None:
+        """Handle kb_get message.
+
+        Searches the knowledge base via KnowledgeBase.retrieve() and returns
+        matching pieces with relevance scores.
+
+        Args:
+            message: Message dictionary from control queue
+        """
+        from webaxon.devsuite.web_agent_service_nextgen.cli.kb_formatters import truncate_content
+
+        payload = message.get('message', {})
+        query = payload.get('query', '')
+        domain = payload.get('domain')
+        limit = payload.get('limit', 5)
+        entity_id = payload.get('entity_id')
+        tags = payload.get('tags')
+        spaces = payload.get('spaces')
+
+        kb = self._agent_factory.get_knowledge_base()
+        retrieval_result = kb.retrieve(
+            query, domain=domain, top_k=limit, entity_id=entity_id, tags=tags,
+            spaces=spaces,
+        )
+
+        results = [
+            {
+                'piece_id': piece.piece_id,
+                'content': truncate_content(piece.content),
+                'domain': piece.domain,
+                'tags': piece.tags,
+                'knowledge_type': piece.knowledge_type,
+                'score': score,
+            }
+            for piece, score in retrieval_result.pieces
+        ]
+
+        response = {
+            'type': 'kb_get_response',
+            'success': True,
+            'results': results,
+            'count': len(results),
+            'timestamp': timestamp()
+        }
+
+        self._queue_service.put(self._config.client_control_queue_id, response)
+
+    def handle_kb_list(self, message: Dict[str, Any]) -> None:
+        """Handle kb_list message.
+
+        Lists knowledge pieces from the piece store, optionally filtered
+        by entity_id and domain.
+
+        Args:
+            message: Message dictionary from control queue
+        """
+        from webaxon.devsuite.web_agent_service_nextgen.cli.kb_formatters import truncate_content
+
+        payload = message.get('message', {})
+        entity_id = payload.get('entity_id')
+        domain = payload.get('domain')
+        spaces = payload.get('spaces')
+
+        kb = self._agent_factory.get_knowledge_base()
+        pieces = kb.piece_store.list_all(entity_id=entity_id, spaces=spaces)
+
+        if domain:
+            pieces = [p for p in pieces if p.domain == domain]
+
+        results = [
+            {
+                'piece_id': p.piece_id,
+                'content': truncate_content(p.content),
+                'domain': p.domain,
+                'tags': p.tags,
+                'knowledge_type': p.knowledge_type,
+                'is_active': p.is_active,
+            }
+            for p in pieces
+        ]
+
+        response = {
+            'type': 'kb_list_response',
+            'success': True,
+            'results': results,
+            'count': len(results),
+            'timestamp': timestamp()
+        }
+
+        self._queue_service.put(self._config.client_control_queue_id, response)
+
+    def handle_kb_restore(self, message: Dict[str, Any]) -> None:
+        """Handle kb_restore message.
+
+        Restores a soft-deleted knowledge piece via KnowledgeDeleter.restore_by_id().
+
+        Args:
+            message: Message dictionary from control queue
+        """
+        payload = message.get('message', {})
+        piece_id = payload.get('piece_id')
+
+        if not piece_id:
+            response = {
+                'type': 'kb_restore_response',
+                'success': False,
+                'message': 'Missing required field: piece_id',
+                'timestamp': timestamp()
+            }
+            self._queue_service.put(self._config.client_control_queue_id, response)
+            return
+
+        deleter = self._agent_factory.get_knowledge_deleter()
+        result = deleter.restore_by_id(piece_id)
+
+        if result.success:
+            response = {
+                'type': 'kb_restore_response',
+                'success': True,
+                'piece_id': result.piece_id,
+                'message': f'Restored piece: {result.piece_id}',
+                'timestamp': timestamp()
+            }
+        else:
+            response = {
+                'type': 'kb_restore_response',
+                'success': False,
+                'message': result.error,
+                'timestamp': timestamp()
+            }
+
+        self._queue_service.put(self._config.client_control_queue_id, response)
+
+    def handle_kb_review_spaces(self, message: Dict[str, Any]) -> None:
+        """Handle kb_review_spaces message.
+
+        Supports three modes:
+        - list: return all pieces with space_suggestion_status == "pending"
+        - approve: apply pending suggestions to spaces, clear suggestion fields
+        - reject: clear suggestion fields without modifying spaces
+
+        Args:
+            message: Message dictionary from control queue
+        """
+        from webaxon.devsuite.web_agent_service_nextgen.cli.kb_formatters import truncate_content
+
+        payload = message.get('message', {})
+        mode = payload.get('mode', 'list')
+        piece_id = payload.get('piece_id')
+
+        kb = self._agent_factory.get_knowledge_base()
+
+        if mode == 'list':
+            all_pieces = kb.piece_store.list_all()
+            pending = [
+                p for p in all_pieces
+                if getattr(p, 'space_suggestion_status', None) == 'pending'
+            ]
+            results = [
+                {
+                    'piece_id': p.piece_id,
+                    'summary': getattr(p, 'summary', None),
+                    'content': truncate_content(p.content, 100),
+                    'current_spaces': list(p.spaces),
+                    'suggested_spaces': list(p.pending_space_suggestions or []),
+                    'reasons': list(p.space_suggestion_reasons or []),
+                }
+                for p in pending
+            ]
+            response = {
+                'type': 'kb_review_spaces_response',
+                'success': True,
+                'results': results,
+                'count': len(results),
+                'timestamp': timestamp(),
+            }
+
+        elif mode == 'approve':
+            if not piece_id:
+                response = {
+                    'type': 'kb_review_spaces_response',
+                    'success': False,
+                    'message': 'Missing required field: piece_id',
+                    'timestamp': timestamp(),
+                }
+                self._queue_service.put(self._config.client_control_queue_id, response)
+                return
+
+            piece = kb.piece_store.get_by_id(piece_id)
+            if piece is None:
+                response = {
+                    'type': 'kb_review_spaces_response',
+                    'success': False,
+                    'message': f'Piece not found: {piece_id}',
+                    'timestamp': timestamp(),
+                }
+                self._queue_service.put(self._config.client_control_queue_id, response)
+                return
+
+            # Merge pending suggestions into spaces (deduplicate, preserve order)
+            merged = list(piece.spaces)
+            for s in (piece.pending_space_suggestions or []):
+                if s not in merged:
+                    merged.append(s)
+            piece.spaces = merged
+            piece.space = piece.spaces[0]
+            piece.pending_space_suggestions = None
+            piece.space_suggestion_reasons = None
+            piece.space_suggestion_status = "approved"
+
+            kb.piece_store.update(piece)
+
+            response = {
+                'type': 'kb_review_spaces_response',
+                'success': True,
+                'message': f'Approved suggestions for piece {piece_id}. Spaces: {piece.spaces}',
+                'piece_id': piece_id,
+                'spaces': list(piece.spaces),
+                'timestamp': timestamp(),
+            }
+
+        elif mode == 'reject':
+            if not piece_id:
+                response = {
+                    'type': 'kb_review_spaces_response',
+                    'success': False,
+                    'message': 'Missing required field: piece_id',
+                    'timestamp': timestamp(),
+                }
+                self._queue_service.put(self._config.client_control_queue_id, response)
+                return
+
+            piece = kb.piece_store.get_by_id(piece_id)
+            if piece is None:
+                response = {
+                    'type': 'kb_review_spaces_response',
+                    'success': False,
+                    'message': f'Piece not found: {piece_id}',
+                    'timestamp': timestamp(),
+                }
+                self._queue_service.put(self._config.client_control_queue_id, response)
+                return
+
+            # Clear suggestion fields without modifying spaces
+            piece.pending_space_suggestions = None
+            piece.space_suggestion_reasons = None
+            piece.space_suggestion_status = "rejected"
+
+            kb.piece_store.update(piece)
+
+            response = {
+                'type': 'kb_review_spaces_response',
+                'success': True,
+                'message': f'Rejected suggestions for piece {piece_id}. Spaces unchanged: {piece.spaces}',
+                'piece_id': piece_id,
+                'spaces': list(piece.spaces),
+                'timestamp': timestamp(),
+            }
+
+        else:
+            response = {
+                'type': 'kb_review_spaces_response',
+                'success': False,
+                'message': f'Unknown mode: {mode}',
+                'timestamp': timestamp(),
+            }
+
+        self._queue_service.put(self._config.client_control_queue_id, response)
+
     def dispatch(self, message: Dict[str, Any]) -> None:
         """Dispatch message to appropriate handler.
         
@@ -473,6 +953,13 @@ class MessageHandlers:
             'register_knowledge': self.handle_register_knowledge,
             'run_meta_agent': self.handle_run_meta_agent,
             'meta_debug_command': self.handle_meta_debug_command,
+            'kb_add': self.handle_kb_add,
+            'kb_update': self.handle_kb_update,
+            'kb_del': self.handle_kb_del,
+            'kb_get': self.handle_kb_get,
+            'kb_list': self.handle_kb_list,
+            'kb_restore': self.handle_kb_restore,
+            'kb_review_spaces': self.handle_kb_review_spaces,
         }
         
         # Get handler for this message type
@@ -489,6 +976,8 @@ class MessageHandlers:
                 # Send error response so the client doesn't hang waiting
                 error_response = {
                     'type': f'{message_type}_response',
+                    'success': False,
+                    'message': str(e),
                     'error': str(e),
                     'timestamp': timestamp(),
                 }
@@ -618,7 +1107,7 @@ class MessageHandlers:
             Optional callback passed to the pipeline.  Used by debug mode
             to block between stages.
         """
-        from science_modeling_tools.automation.meta_agent.models import (
+        from agent_foundation.automation.meta_agent.models import (
             PipelineConfig,
         )
 

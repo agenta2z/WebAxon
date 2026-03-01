@@ -11,10 +11,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
-from science_modeling_tools.automation.meta_agent.evaluator import EvaluationRule
-from science_modeling_tools.automation.meta_agent.models import PipelineConfig
-from science_modeling_tools.automation.meta_agent.pipeline import MetaAgentPipeline
-from science_modeling_tools.automation.meta_agent.synthetic_data import (
+from agent_foundation.automation.meta_agent.evaluator import EvaluationRule
+from agent_foundation.automation.meta_agent.models import PipelineConfig
+from agent_foundation.automation.meta_agent.pipeline import MetaAgentPipeline
+from agent_foundation.automation.meta_agent.synthetic_data import (
     SyntheticDataProvider,
 )
 
@@ -34,7 +34,7 @@ def create_web_meta_agent_pipeline(
     output_dir: Optional[Path] = None,
     stage_hook: Optional[Callable[[str, dict], None]] = None,
 ) -> MetaAgentPipeline:
-    """Create a :class:`MetaAgentPipeline` pre-configured for WebAgent.
+    """Create a :class:`MetaAgentPipeline` pre-configured for webaxon
 
     Injects :class:`WebTargetConverter` and :data:`WEB_ACTION_TYPE_MAP`
     into the pipeline config so that:

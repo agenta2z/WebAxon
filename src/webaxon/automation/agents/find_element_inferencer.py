@@ -35,7 +35,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 from attr import attrs, attrib, Factory
 from bs4 import BeautifulSoup
 
-from science_modeling_tools.common.inferencers.templated_inferencer import TemplatedInferencer
+from agent_foundation.common.inferencers.templated_inferencer import TemplatedInferencer
 
 if TYPE_CHECKING:
     from webaxon.automation.web_driver import WebDriver

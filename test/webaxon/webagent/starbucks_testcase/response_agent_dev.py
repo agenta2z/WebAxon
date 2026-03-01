@@ -1,10 +1,10 @@
 from functools import partial
 
-from science_modeling_tools.agents.prompt_based_agents.prompt_based_action_agent import PromptBasedActionAgent
-from science_modeling_tools.common.inferencers.api_inferencers.claude_api_inferencer import (
+from agent_foundation.agents.prompt_based_agents.prompt_based_action_agent import PromptBasedActionAgent
+from agent_foundation.common.inferencers.api_inferencers.claude_api_inferencer import (
     ClaudeApiInferencer
 )
-from science_modeling_tools.ui.terminal_interactive import TerminalInteractive
+from agent_foundation.ui.terminal_interactive import TerminalInteractive
 from rich_python_utils.io_utils.json_io import write_json
 from rich_python_utils.datetime_utils.common import timestamp
 from webaxon.automation.web_driver import WebDriver

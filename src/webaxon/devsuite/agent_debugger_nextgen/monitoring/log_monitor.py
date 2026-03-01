@@ -8,7 +8,7 @@ import time
 from pathlib import Path
 from typing import List, Optional
 
-from science_modeling_tools.ui.dash_interactive.utils.log_collector import LogCollector
+from agent_foundation.ui.dash_interactive.utils.log_collector import LogCollector
 
 
 class LogMonitor:

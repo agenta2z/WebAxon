@@ -1,7 +1,7 @@
 """Factory function to create an ActionGraph for Google search operations."""
 
-from science_modeling_tools.automation.schema import ActionGraph, TargetSpec
-from science_modeling_tools.automation.schema.action_metadata import ActionMetadataRegistry
+from agent_foundation.automation.schema import ActionGraph, TargetSpec
+from agent_foundation.automation.schema.action_metadata import ActionMetadataRegistry
 
 
 def create_slack_good_time_demo_graph(

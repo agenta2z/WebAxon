@@ -13,8 +13,8 @@ Tests cover:
 
 import pytest
 
-from science_modeling_tools.automation.meta_agent.models import TraceStep
-from science_modeling_tools.automation.meta_agent.target_converter import (
+from agent_foundation.automation.meta_agent.models import TraceStep
+from agent_foundation.automation.meta_agent.target_converter import (
     TargetSpec,
     TargetSpecWithFallback,
 )

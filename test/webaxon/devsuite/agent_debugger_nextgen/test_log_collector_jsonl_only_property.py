@@ -23,15 +23,15 @@ _src_dir = _project_root / "src"
 if _src_dir.exists() and str(_src_dir) not in sys.path:
     sys.path.insert(0, str(_src_dir))
 _workspace_root = _project_root.parent
-_science_python_utils_src = _workspace_root / "SciencePythonUtils" / "src"
-_science_modeling_tools_src = _workspace_root / "ScienceModelingTools" / "src"
-if _science_python_utils_src.exists() and str(_science_python_utils_src) not in sys.path:
-    sys.path.insert(0, str(_science_python_utils_src))
-if _science_modeling_tools_src.exists() and str(_science_modeling_tools_src) not in sys.path:
-    sys.path.insert(0, str(_science_modeling_tools_src))
+_rich_python_utils_src = _workspace_root / "SciencePythonUtils" / "src"
+_agent_foundation_src = _workspace_root / "ScienceModelingTools" / "src"
+if _rich_python_utils_src.exists() and str(_rich_python_utils_src) not in sys.path:
+    sys.path.insert(0, str(_rich_python_utils_src))
+if _agent_foundation_src.exists() and str(_agent_foundation_src) not in sys.path:
+    sys.path.insert(0, str(_agent_foundation_src))
 
 from hypothesis import given, strategies as st, settings
-from science_modeling_tools.ui.dash_interactive.utils.log_collector import LogCollector
+from agent_foundation.ui.dash_interactive.utils.log_collector import LogCollector
 
 
 def _make_log_entry(node_id: str, parent_ids=None, log_type: str = 'Info'):

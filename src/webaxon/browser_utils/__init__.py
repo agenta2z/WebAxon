@@ -1,5 +1,5 @@
 """
-Browser utilities for WebAgent.
+Browser utilities for webaxon
 
 Provides cross-platform utilities for browser management and configuration.
 """

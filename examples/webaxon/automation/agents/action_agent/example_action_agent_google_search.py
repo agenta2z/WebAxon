@@ -57,8 +57,8 @@ def run_dry_run_test() -> bool:
 
     # Test 1: Verify imports
     try:
-        from science_modeling_tools.agents.prompt_based_agents.prompt_based_action_agent import PromptBasedActionAgent
-        from science_modeling_tools.common.inferencers.inferencer_base import InferencerBase
+        from agent_foundation.agents.prompt_based_agents.prompt_based_action_agent import PromptBasedActionAgent
+        from agent_foundation.common.inferencers.inferencer_base import InferencerBase
         from rich_python_utils.string_utils.formatting.template_manager import TemplateManager
         from webaxon.automation.agents import create_action_agent
         result.check("Import create_action_agent", True)
@@ -138,7 +138,7 @@ def run_live_test() -> bool:
     3. Action agent can make LLM call and get response
     4. Browser actually executed the search task
     """
-    from science_modeling_tools.common.inferencers.api_inferencers.claude_api_inferencer import ClaudeApiInferencer
+    from agent_foundation.common.inferencers.api_inferencers.claude_api_inferencer import ClaudeApiInferencer
     from webaxon.automation.web_driver import WebDriver
     from webaxon.automation.agents import create_action_agent
 

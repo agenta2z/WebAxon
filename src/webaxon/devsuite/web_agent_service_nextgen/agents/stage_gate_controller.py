@@ -19,7 +19,7 @@ from typing import Any, Dict, Optional
 
 from rich_python_utils.datetime_utils.common import timestamp
 
-from science_modeling_tools.automation.meta_agent.errors import PipelineAborted
+from agent_foundation.automation.meta_agent.errors import PipelineAborted
 
 logger = logging.getLogger(__name__)
 

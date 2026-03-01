@@ -1,4 +1,4 @@
-"""Thread-safe session lifecycle management for WebAgent.
+"""Thread-safe session lifecycle management for webaxon
 
 Extends the generic SessionManager with WebAgent-specific session creation,
 directory setup, and cleanup logic.

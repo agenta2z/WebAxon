@@ -14,13 +14,13 @@ project_root = Path(__file__).parent.parent.parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-science_python_utils_src = project_root / "SciencePythonUtils" / "src"
-science_modeling_tools_src = project_root / "ScienceModelingTools" / "src"
-for path_item in [science_python_utils_src, science_modeling_tools_src]:
+rich_python_utils_src = project_root / "SciencePythonUtils" / "src"
+agent_foundation_src = project_root / "ScienceModelingTools" / "src"
+for path_item in [rich_python_utils_src, agent_foundation_src]:
     if path_item.exists() and str(path_item) not in sys.path:
         sys.path.insert(0, str(path_item))
 
-from science_modeling_tools.ui.dash_interactive.queue_based_dash_interactive_app import QueueBasedDashInteractiveApp
+from agent_foundation.ui.dash_interactive.queue_based_dash_interactive_app import QueueBasedDashInteractiveApp
 from rich_python_utils.common_objects.debuggable import Debugger
 from rich_python_utils.io_utils.json_io import write_json
 from dash import html, dcc
@@ -1236,7 +1236,7 @@ class AgentDebuggerApp(QueueBasedDashInteractiveApp):
                     }, 'AUTO_LOAD')
                     try:
                         # Load logs directly (this is synchronous, but only happens once)
-                        from science_modeling_tools.ui.dash_interactive.utils.log_collector import LogCollector
+                        from agent_foundation.ui.dash_interactive.utils.log_collector import LogCollector
                         log_collector = LogCollector.from_json_logs(log_file_path, json_file_pattern='*')
                         graph_structure = log_collector.get_graph_structure()
                         
@@ -1399,7 +1399,7 @@ class AgentDebuggerApp(QueueBasedDashInteractiveApp):
                         'action': 'loading_last_displayed_data',
                         'log_file_path': log_file_path
                     }, 'SESSION_SWITCH')
-                    from science_modeling_tools.ui.dash_interactive.utils.log_collector import LogCollector
+                    from agent_foundation.ui.dash_interactive.utils.log_collector import LogCollector
                     log_collector = LogCollector.from_json_logs(log_file_path, json_file_pattern='*')
                     graph_structure = log_collector.get_graph_structure()
                 except Exception as e:

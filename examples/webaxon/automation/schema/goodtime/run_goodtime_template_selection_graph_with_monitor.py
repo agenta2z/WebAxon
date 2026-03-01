@@ -67,7 +67,7 @@ try:
     from rich_python_utils.string_utils.formatting.template_manager import (
         TemplateManager,
     )
-    from science_modeling_tools.common.inferencers.api_inferencers.ag.ag_claude_api_inferencer import (
+    from agent_foundation.common.inferencers.api_inferencers.ag.ag_claude_api_inferencer import (
         AgClaudeApiInferencer as ClaudeApiInferencer,
     )
     from webaxon.automation.agents import (

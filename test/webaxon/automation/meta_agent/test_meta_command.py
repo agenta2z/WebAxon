@@ -662,7 +662,7 @@ class TestStageGateController:
         assert hook_returned.wait(timeout=2)
 
     def test_abort_raises_pipeline_aborted(self):
-        from science_modeling_tools.automation.meta_agent.errors import PipelineAborted
+        from agent_foundation.automation.meta_agent.errors import PipelineAborted
 
         controller = self._make_controller(wait_timeout=5)
 
@@ -692,7 +692,7 @@ class TestStageGateController:
         assert "evaluation" in str(exc_holder[0])
 
     def test_timeout_raises_pipeline_aborted(self):
-        from science_modeling_tools.automation.meta_agent.errors import PipelineAborted
+        from agent_foundation.automation.meta_agent.errors import PipelineAborted
 
         controller = self._make_controller(wait_timeout=0.1)
 

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Task 8 implemented the `TemplateManagerWrapper` class in `agents/template_manager.py`. This wrapper provides version tracking capabilities around the existing `TemplateManager` from `science_python_utils`, enabling per-session template versioning for the web agent service.
+Task 8 implemented the `TemplateManagerWrapper` class in `agents/template_manager.py`. This wrapper provides version tracking capabilities around the existing `TemplateManager` from `rich_python_utils`, enabling per-session template versioning for the web agent service.
 
 ## Implementation Details
 

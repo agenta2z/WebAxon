@@ -77,7 +77,7 @@ All property-based tests passed! ✓
 4. **Audit Trail**: Timestamped directories provide a history of service runs
 
 ### Implementation Details
-The QueueManager uses `science_python_utils.datetime_utils.common.timestamp()` to generate timestamps in the format that includes:
+The QueueManager uses `rich_python_utils.datetime_utils.common.timestamp()` to generate timestamps in the format that includes:
 - Date (YYYY-MM-DD)
 - Time (HH-MM-SS)
 - Microseconds (for uniqueness)
@@ -109,7 +109,7 @@ The property-based test validates this requirement by:
 - `hypothesis` - Property-based testing framework
 - `web_agent_service_nextgen.core.ServiceConfig` - Configuration
 - `web_agent_service_nextgen.communication.QueueManager` - Queue management
-- `science_python_utils.datetime_utils.common.timestamp` - Timestamp generation
+- `rich_python_utils.datetime_utils.common.timestamp` - Timestamp generation
 
 ## Next Steps
 

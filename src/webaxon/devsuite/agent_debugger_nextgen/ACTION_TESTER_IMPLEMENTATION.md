@@ -188,7 +188,7 @@ To complete the Action Tester implementation:
 - `undetected_chromedriver`: For browser automation
 - `selenium`: WebDriver interface
 - `dash`: UI framework
-- `webagent.automation.selenium.actions`: Web action implementations
+- `webaxonautomation.selenium.actions`: Web action implementations
 
 ## Status
 

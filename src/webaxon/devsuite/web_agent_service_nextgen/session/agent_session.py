@@ -8,8 +8,8 @@ import threading
 from typing import Optional
 
 from attr import attrs, attrib
-from science_modeling_tools.agents.prompt_based_agents.prompt_based_planning_agent import PromptBasedActionPlanningAgent
-from science_modeling_tools.ui.queue_interactive import QueueInteractive
+from agent_foundation.agents.prompt_based_agents.prompt_based_planning_agent import PromptBasedActionPlanningAgent
+from agent_foundation.ui.queue_interactive import QueueInteractive
 from rich_python_utils.service_utils.session_management import SessionBase
 
 from .agent_session_info import AgentSessionInfo

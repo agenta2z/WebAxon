@@ -357,7 +357,7 @@ result = executor.execute(sequence)
 
 ```python
 # From ScienceModelingTools (source of truth)
-from science_modeling_tools.automation.schema import (
+from agent_foundation.automation.schema import (
     ActionMemoryMode,  # Enum: FULL, TARGET, NONE
     TargetStrategy,  # Enum: FRAMEWORK_ID, ID, XPATH, CSS, TEXT, LITERAL
     ActionTypeMetadata,  # Base Pydantic model

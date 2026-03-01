@@ -8,7 +8,7 @@ from functools import partial
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 
-from science_modeling_tools.ui.dash_interactive.utils.log_collector import LogCollector
+from agent_foundation.ui.dash_interactive.utils.log_collector import LogCollector
 from rich_python_utils.common_objects.debuggable import Debugger
 from rich_python_utils.datetime_utils.common import timestamp
 from rich_python_utils.io_utils.json_io import write_json

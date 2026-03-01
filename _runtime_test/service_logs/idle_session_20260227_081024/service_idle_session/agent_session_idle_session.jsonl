@@ -1,0 +1,2 @@
+{"level": 20, "name": "AgentSession_idle_session", "id": "agent_session_idle_session", "type": "Message", "item": {"type": "SessionCleanup", "message": "Session idle_session idle for 1.5s (timeout: 1s)"}, "time": "2026-02-27 08:10:25"}
+{"level": 20, "name": "AgentSession_idle_session", "id": "agent_session_idle_session", "type": "Message", "item": {"type": "SessionCleanup", "message": "Cleaning up session: idle_session"}, "time": "2026-02-27 08:10:25"}

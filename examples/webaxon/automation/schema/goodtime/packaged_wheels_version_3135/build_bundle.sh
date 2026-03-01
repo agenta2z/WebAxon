@@ -61,10 +61,10 @@ echo ""
 echo "[4/10] Copying source code from packages..."
 
 echo "  - Copying SciencePythonUtils (127 files)..."
-cp -r "$PROJECTS_ROOT/SciencePythonUtils/src/science_python_utils" "$SRC_DIR/"
+cp -r "$PROJECTS_ROOT/SciencePythonUtils/src/rich_python_utils" "$SRC_DIR/"
 
 echo "  - Copying ScienceModelingTools (103 files)..."
-cp -r "$PROJECTS_ROOT/ScienceModelingTools/src/science_modeling_tools" "$SRC_DIR/"
+cp -r "$PROJECTS_ROOT/ScienceModelingTools/src/agent_foundation" "$SRC_DIR/"
 
 echo "  - Copying WebAgent (132 files + templates)..."
 cp -r "$PROJECTS_ROOT/WebAgent/src/webagent" "$SRC_DIR/"
@@ -175,8 +175,8 @@ echo "[6/10] Generating MANIFEST.in for resource files..."
 cat > "$BUNDLE_DIR/MANIFEST.in" << 'MANIFEST_IN'
 # Include all resource files from the packages
 # Note: recursive-include handles recursion - no need for **/ prefix
-recursive-include src/goodtime_automation_bundle/science_python_utils *.md *.pkl *.json
-recursive-include src/goodtime_automation_bundle/science_modeling_tools *.json
+recursive-include src/goodtime_automation_bundle/rich_python_utils *.md *.pkl *.json
+recursive-include src/goodtime_automation_bundle/agent_foundation *.json
 recursive-include src/goodtime_automation_bundle/webagent *.hbs
 MANIFEST_IN
 
@@ -201,21 +201,21 @@ import sys
 
 # Import the bundled packages
 try:
-    from goodtime_automation_bundle import science_python_utils
-    from goodtime_automation_bundle import science_modeling_tools
+    from goodtime_automation_bundle import rich_python_utils
+    from goodtime_automation_bundle import agent_foundation
     from goodtime_automation_bundle import webagent
 except ImportError:
     # During build, these imports might not work yet
     pass
 else:
     # Register them under their original names in sys.modules
-    # This allows imports like "from science_python_utils.string_utils import ..."
-    sys.modules['science_python_utils'] = science_python_utils
-    sys.modules['science_modeling_tools'] = science_modeling_tools
+    # This allows imports like "from rich_python_utils.string_utils import ..."
+    sys.modules['rich_python_utils'] = rich_python_utils
+    sys.modules['agent_foundation'] = agent_foundation
     sys.modules['webagent'] = webagent
 
 __version__ = "1.0.2"
-__all__ = ['science_python_utils', 'science_modeling_tools', 'webagent']
+__all__ = ['rich_python_utils', 'agent_foundation', 'webagent']
 INIT_PY
 
 echo "Generated __init__.py"
@@ -261,7 +261,7 @@ with open(filepath, 'r') as f:
 # The bundle import block to insert
 bundle_import = '''# =============================================================================
 # Import goodtime_automation_bundle first (for bundle wheel mode)
-# This registers science_python_utils, science_modeling_tools, webagent in sys.modules
+# This registers rich_python_utils, agent_foundation, webagent in sys.modules
 # =============================================================================
 try:
     import goodtime_automation_bundle
@@ -400,7 +400,7 @@ echo "  $PYTHON run_goodtime_template_selection_graph_with_monitor.py"
 echo ""
 echo "To verify source protection:"
 echo ""
-echo "  $PYTHON -c \"import science_python_utils; print(science_python_utils.__file__)\""
+echo "  $PYTHON -c \"import rich_python_utils; print(rich_python_utils.__file__)\""
 echo ""
 echo "Expected: Path should end with .so (compiled native code)"
 echo ""

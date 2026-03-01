@@ -33,8 +33,8 @@ Architecture:
 - ActionGraph handles "monitor" action type with lazy imports from WebAgent
 """
 
-from science_modeling_tools.automation.schema import ActionGraph, TargetSpec
-from science_modeling_tools.automation.schema.action_metadata import ActionMetadataRegistry
+from agent_foundation.automation.schema import ActionGraph, TargetSpec
+from agent_foundation.automation.schema.action_metadata import ActionMetadataRegistry
 
 
 def create_google_search_action_graph(

@@ -118,7 +118,7 @@ All tests pass successfully:
 - `TemplateManager`: For prompt template management
 - `ServiceConfig`: For service configuration
 - `QueueInteractive`: For agent communication
-- Various agent classes from science_modeling_tools
+- Various agent classes from agent_foundation
 - Reasoner classes (Claude API, Mock)
 - Actor classes (WebDriver, WebActor)
 

@@ -42,7 +42,7 @@ def run_live_test() -> bool:
     3. Action agent can click the Flights tab
     4. Flights section is displayed
     """
-    from science_modeling_tools.common.inferencers.api_inferencers.claude_api_inferencer import ClaudeApiInferencer
+    from agent_foundation.common.inferencers.api_inferencers.claude_api_inferencer import ClaudeApiInferencer
     from webaxon.automation.web_driver import WebDriver
     from webaxon.automation.agents import create_action_agent
 

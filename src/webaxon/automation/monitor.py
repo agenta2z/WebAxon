@@ -21,7 +21,7 @@ from typing import Any, Callable, Optional, Tuple, Union, TYPE_CHECKING
 from attr import attrs, attrib
 
 # Import generic layer from ScienceModelingTools
-from science_modeling_tools.automation.schema.monitor import (
+from agent_foundation.automation.schema.monitor import (
     MonitorResult,
     MonitorStatus,
 )
@@ -29,7 +29,7 @@ from rich_python_utils.common_objects.workflow.common.worknode_base import NextN
 from webaxon.automation.web_driver_protocols import MonitorCapableDriver
 
 if TYPE_CHECKING:
-    from science_modeling_tools.automation.schema.common import TargetSpec, TargetSpecWithFallback
+    from agent_foundation.automation.schema.common import TargetSpec, TargetSpecWithFallback
 
 
 class MonitorConditionType(str, Enum):
@@ -289,7 +289,7 @@ def _extract_webdriver(webdriver_or_executor: Any) -> Any:
     """
     # Try lazy import of MultiActionExecutor for isinstance check
     try:
-        from science_modeling_tools.automation.schema.action_executor import MultiActionExecutor
+        from agent_foundation.automation.schema.action_executor import MultiActionExecutor
         has_multi_executor = True
     except ImportError:
         has_multi_executor = False
@@ -463,7 +463,7 @@ def create_monitor_callbacks(
         )
 
     # Import here to avoid circular imports at module level
-    from science_modeling_tools.automation.schema.common import TargetSpec, TargetSpecWithFallback
+    from agent_foundation.automation.schema.common import TargetSpec, TargetSpecWithFallback
 
     # Extract actual webdriver from action_executor formats (dict, MultiActionExecutor, etc.)
     # ActionGraph passes self.action_executor which may be a dict or wrapper, not the raw webdriver
@@ -509,7 +509,7 @@ def create_monitor_callbacks(
             )
         
         # Import Agent class for isinstance check
-        from science_modeling_tools.agents.agent import Agent
+        from agent_foundation.agents.agent import Agent
         
         # Resolve find_element_agent from executor
         if hasattr(action_executor, 'resolve'):

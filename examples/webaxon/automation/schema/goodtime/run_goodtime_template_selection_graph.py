@@ -47,7 +47,7 @@ for pkg in ["SciencePythonUtils", "ScienceModelingTools"]:
 from create_goodtime_template_selection_graph import (
     create_goodtime_template_selection_graph,
 )
-from science_modeling_tools.common.inferencers.api_inferencers.ag.ag_claude_api_inferencer import (
+from agent_foundation.common.inferencers.api_inferencers.ag.ag_claude_api_inferencer import (
     AgClaudeApiInferencer as ClaudeApiInferencer,
 )
 from rich_python_utils.string_utils.formatting.handlebars_format import (

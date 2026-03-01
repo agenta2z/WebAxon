@@ -7,7 +7,7 @@ Handles agent status updates, control acknowledgments, and log path notification
 import datetime
 from pathlib import Path
 from typing import Optional, Tuple, Dict, Any
-from science_modeling_tools.ui.dash_interactive.utils.log_collector import LogCollector
+from agent_foundation.ui.dash_interactive.utils.log_collector import LogCollector
 
 
 class MessageHandlers:

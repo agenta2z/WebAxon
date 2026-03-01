@@ -58,7 +58,7 @@ class ActionTesterManager:
         
         # Load action metadata from schema system (uses Python defaults as source of truth)
         try:
-            from science_modeling_tools.automation.schema.action_metadata import ActionMetadataRegistry
+            from agent_foundation.automation.schema.action_metadata import ActionMetadataRegistry
             self.action_metadata = ActionMetadataRegistry()  # Uses Python defaults
         except Exception as e:
             print(f"Warning: Could not load action metadata: {e}")

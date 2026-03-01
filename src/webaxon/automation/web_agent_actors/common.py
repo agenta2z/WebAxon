@@ -2,9 +2,9 @@ from typing import Callable, Any, Sequence, Mapping
 
 from attr import attrs, attrib
 from .constants import DEFAULT_WEB_AGENT_TASK_INPUT_FIELD_NAME_USER_INPUT, DEFAULT_WEB_AGENT_TASK_INPUT_FIELD_NAME_ATTACHMENTS
-from science_modeling_tools.agents.agent_actor import AgentActor
-from science_modeling_tools.agents.prompt_based_agents.prompt_based_action_agent import PromptBasedActionAgent
-from science_modeling_tools.agents.prompt_based_agents.prompt_based_agent import PromptBasedAgent
+from agent_foundation.agents.agent_actor import AgentActor
+from agent_foundation.agents.prompt_based_agents.prompt_based_action_agent import PromptBasedActionAgent
+from agent_foundation.agents.prompt_based_agents.prompt_based_agent import PromptBasedAgent
 
 
 def _create_web_actor_visit_url_base_action(init_url: str) -> PromptBasedAgent:
