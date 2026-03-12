@@ -18,7 +18,10 @@ from webaxon.automation.web_agent_actors.webpage_make_answer_actor import WebPag
     ACTION_TYPE_WEBPAGE_MAKE_ANSWER
 from webaxon.automation.web_driver import WebDriver
 
-from agent_foundation.knowledge import KnowledgeBase, KnowledgeDataLoader, KnowledgeProvider
+from agent_foundation.knowledge import KnowledgeBase, KnowledgeDataLoader
+from agent_foundation.knowledge.retrieval.retrieval_pipeline import RetrievalPipeline
+from agent_foundation.knowledge.retrieval.post_processors import GroupedDictPostProcessor
+from agent_foundation.knowledge.retrieval.provider import _default_formatter
 from agent_foundation.knowledge.stores.metadata.keyvalue_adapter import KeyValueMetadataStore
 from agent_foundation.knowledge.stores.pieces.retrieval_adapter import RetrievalKnowledgePieceStore
 from agent_foundation.knowledge.stores.graph.graph_adapter import GraphServiceEntityGraphStore
@@ -26,7 +29,7 @@ from rich_python_utils.service_utils.keyvalue_service.memory_keyvalue_service im
 from rich_python_utils.service_utils.retrieval_service.memory_retrieval_service import MemoryRetrievalService
 from rich_python_utils.service_utils.graph_service.memory_graph_service import MemoryGraphService
 
-# Create KnowledgeProvider from knowledge data file
+# Create knowledge provider from knowledge data file using RetrievalPipeline
 _knowledge_data_file = path.join(path.dirname(__file__), 'knowledge_data.json')
 _kb = KnowledgeBase(
     metadata_store=KeyValueMetadataStore(kv_service=MemoryKeyValueService()),
@@ -35,7 +38,18 @@ _kb = KnowledgeBase(
     active_entity_id="user:[name]"
 )
 KnowledgeDataLoader.load(_kb, _knowledge_data_file)
-knowledge_provider = KnowledgeProvider(_kb)
+
+
+def knowledge_provider(query: str):
+    """Pipeline-based knowledge provider replacing KnowledgeProvider."""
+    post_processor = GroupedDictPostProcessor(
+        type_formatters={},
+        default_formatter=_default_formatter,
+        metadata_info_type="user_profile",
+        active_entity_id=_kb.active_entity_id,
+    )
+    pipeline = RetrievalPipeline(kb=_kb, post_processor=post_processor)
+    return pipeline.execute(query)
 
 raw_response_start_delimiter = '<StructuredResponse>'
 raw_response_end_delimiter = '</StructuredResponse>'

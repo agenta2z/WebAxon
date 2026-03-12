@@ -522,7 +522,7 @@ class MessageHandlers:
             return
 
         updater = self._agent_factory.get_knowledge_updater()
-        results = updater.update_by_content(text)
+        results = updater.update_by_content(text, update_instruction=text)
 
         if not results:
             response = {
@@ -530,10 +530,13 @@ class MessageHandlers:
                 'success': True,
                 'results': [],
                 'count': 0,
-                'message': 'No matching pieces found',
+                'message': 'No pieces were updated',
                 'timestamp': timestamp()
             }
         else:
+            successes = [r for r in results if r.success]
+            failures = [r for r in results if not r.success]
+
             serialized = [
                 {
                     'piece_id': r.piece_id,
@@ -541,14 +544,23 @@ class MessageHandlers:
                     'new_version': r.new_version,
                     'action': r.details.get("action", r.operation),
                 }
-                for r in results
+                for r in successes
             ]
+
+            if serialized:
+                msg = f'Updated {len(serialized)} piece{"s" if len(serialized) != 1 else ""}'
+            elif failures:
+                msg = f'{len(failures)} update{"s" if len(failures) != 1 else ""} failed'
+            else:
+                msg = 'No matching pieces found'
+
             response = {
                 'type': 'kb_update_response',
-                'success': True,
+                'success': len(successes) > 0,
                 'results': serialized,
                 'count': len(serialized),
-                'message': f'Updated {len(serialized)} piece{"s" if len(serialized) != 1 else ""}',
+                'message': msg,
+                'errors': [r.error for r in failures] if failures else [],
                 'timestamp': timestamp()
             }
 

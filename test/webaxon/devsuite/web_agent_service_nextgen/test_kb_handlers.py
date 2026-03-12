@@ -152,7 +152,7 @@ class TestKbUpdateEmptyResults:
         assert resp["success"] is True
         assert resp["results"] == []
         assert resp["count"] == 0
-        assert "No matching pieces found" in resp["message"]
+        assert "No pieces were updated" in resp["message"]
 
 
 # ---------------------------------------------------------------------------
@@ -722,3 +722,87 @@ class TestKbReviewSpacesDispatch:
             message = {"type": "kb_review_spaces", "message": {}}
             handlers.dispatch(message)
             mock_handler.assert_called_once_with(message)
+
+
+# ---------------------------------------------------------------------------
+# Test: handle_kb_update passes update_instruction
+# Validates: Instruction-mode fix (Step 3a)
+# ---------------------------------------------------------------------------
+
+
+class TestKbUpdateInstructionPassthrough:
+    """handle_kb_update passes text as update_instruction to update_by_content."""
+
+    def test_kb_update_passes_update_instruction(self):
+        handlers, agent_factory, queue_service = _make_handlers()
+
+        updater = MagicMock()
+        updater.update_by_content.return_value = []
+        agent_factory.get_knowledge_updater.return_value = updater
+
+        message = {
+            "type": "kb_update",
+            "message": {"text": 'change "shopping" to "price-checking"'},
+        }
+        handlers.handle_kb_update(message)
+
+        updater.update_by_content.assert_called_once_with(
+            'change "shopping" to "price-checking"',
+            update_instruction='change "shopping" to "price-checking"',
+        )
+
+    def test_kb_update_failure_results_reported(self):
+        """When results contain failures, response includes errors list."""
+        handlers, agent_factory, queue_service = _make_handlers()
+
+        # Mock a failure result
+        fail_result = MagicMock()
+        fail_result.success = False
+        fail_result.piece_id = "piece-1"
+        fail_result.error = "Instruction-mode content generation failed"
+
+        updater = MagicMock()
+        updater.update_by_content.return_value = [fail_result]
+        agent_factory.get_knowledge_updater.return_value = updater
+
+        message = {"type": "kb_update", "message": {"text": "rewrite this"}}
+        handlers.handle_kb_update(message)
+
+        resp = _sent_response(queue_service)
+        assert resp["success"] is False
+        assert resp["count"] == 0
+        assert len(resp["errors"]) == 1
+        assert "generation failed" in resp["errors"][0].lower()
+        assert "failed" in resp["message"].lower()
+
+    def test_kb_update_mixed_success_and_failure(self):
+        """When results contain both successes and failures, response reflects both."""
+        handlers, agent_factory, queue_service = _make_handlers()
+
+        success_result = MagicMock()
+        success_result.success = True
+        success_result.piece_id = "piece-1"
+        success_result.old_version = 1
+        success_result.new_version = 2
+        success_result.details = {"action": "replace"}
+        success_result.operation = "update"
+
+        fail_result = MagicMock()
+        fail_result.success = False
+        fail_result.piece_id = "piece-2"
+        fail_result.error = "Content generation failed"
+
+        updater = MagicMock()
+        updater.update_by_content.return_value = [success_result, fail_result]
+        agent_factory.get_knowledge_updater.return_value = updater
+
+        message = {"type": "kb_update", "message": {"text": "update stuff"}}
+        handlers.handle_kb_update(message)
+
+        resp = _sent_response(queue_service)
+        assert resp["success"] is True  # At least one succeeded
+        assert resp["count"] == 1
+        assert len(resp["results"]) == 1
+        assert resp["results"][0]["piece_id"] == "piece-1"
+        assert len(resp["errors"]) == 1
+        assert "generation failed" in resp["errors"][0].lower()

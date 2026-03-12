@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Callable, List, Dict, Any, Optional
 
 from agent_foundation.agents.agent_response import AgentResponseFormat
-from agent_foundation.knowledge import KnowledgeBase, KnowledgeDataLoader, KnowledgeProvider
+from agent_foundation.knowledge import KnowledgeBase, KnowledgeDataLoader
 from agent_foundation.knowledge.stores.metadata.keyvalue_adapter import KeyValueMetadataStore
 from agent_foundation.knowledge.stores.pieces.retrieval_adapter import RetrievalKnowledgePieceStore
 from agent_foundation.knowledge.stores.graph.graph_adapter import GraphServiceEntityGraphStore
@@ -47,6 +47,42 @@ except ImportError:
     AgClaudeApiInferencer = None
 
 from .config import ServiceConfig
+
+
+class _PipelineKnowledgeProvider:
+    """Callable knowledge provider backed by RetrievalPipeline + GroupedDictPostProcessor.
+
+    Drop-in replacement for the removed KnowledgeProvider class. Provides:
+    - __call__(query: str) -> Dict[str, str]  (for Agent.knowledge_provider)
+    - .kb attribute  (for ingestion, updater, deleter access)
+    - .close() method  (for shutdown cleanup)
+    """
+
+    def __init__(self, kb: KnowledgeBase, consolidator: Any = None):
+        self.kb = kb
+        self._consolidator = consolidator
+
+    def __call__(self, query: str) -> Dict[str, str]:
+        from agent_foundation.knowledge.retrieval.retrieval_pipeline import RetrievalPipeline
+        from agent_foundation.knowledge.retrieval.post_processors import GroupedDictPostProcessor
+        from agent_foundation.knowledge.retrieval.provider import _default_formatter
+
+        post_processor = GroupedDictPostProcessor(
+            type_formatters={},
+            default_formatter=_default_formatter,
+            metadata_info_type="user_profile",
+            active_entity_id=self.kb.active_entity_id,
+            consolidator=self._consolidator,
+        )
+        pipeline = RetrievalPipeline(
+            kb=self.kb,
+            post_processor=post_processor,
+        )
+        return pipeline.execute(query)
+
+    def close(self):
+        """Close the underlying KnowledgeBase."""
+        self.kb.close()
 
 
 class AgentFactory:
@@ -502,21 +538,22 @@ class AgentFactory:
         """
         return ['DefaultAgent', 'MockClarificationAgent']
     
-    def _create_knowledge_provider(self) -> Optional[KnowledgeProvider]:
-        """Create a KnowledgeProvider with file-based persistent stores.
+    def _create_knowledge_provider(self) -> Optional["_PipelineKnowledgeProvider"]:
+        """Create a pipeline-based knowledge provider with file-based persistent stores.
 
         Always creates the provider so that knowledge can be registered at runtime
         (e.g. via CLI) even without a seed file.  If config has a knowledge_data_file,
         the stores are seeded from it on first run only (when piece store is empty).
 
         Returns:
-            KnowledgeProvider instance.
+            _PipelineKnowledgeProvider instance wrapping RetrievalPipeline +
+            GroupedDictPostProcessor.
         """
         from webaxon.devsuite.web_agent_service_nextgen.constants import KNOWLEDGE_STORE_DIR
         store_base = self._testcase_root / KNOWLEDGE_STORE_DIR
 
         logger = logging.getLogger(__name__)
-        logger.info("Creating file-based KnowledgeProvider at %s", store_base)
+        logger.info("Creating file-based knowledge provider at %s", store_base)
 
         kb = KnowledgeBase(
             metadata_store=KeyValueMetadataStore(
@@ -543,7 +580,26 @@ class AgentFactory:
             else:
                 logger.info("Knowledge store already populated, skipping seed")
 
-        return KnowledgeProvider(kb)
+        # Optional knowledge consolidation (deduplication + conflict detection)
+        from agent_foundation.knowledge.retrieval.knowledge_consolidator import KnowledgeConsolidator
+        from agent_foundation.knowledge.retrieval.models.enums import ConsolidationMode
+
+        consolidator = None
+        mode_str = self._config.knowledge_consolidation_mode
+        try:
+            mode = ConsolidationMode(mode_str)
+        except ValueError:
+            logger.warning("Unknown consolidation mode '%s', defaulting to DISABLED", mode_str)
+            mode = ConsolidationMode.DISABLED
+
+        if mode != ConsolidationMode.DISABLED:
+            consolidator = KnowledgeConsolidator(
+                llm_fn=self._make_llm_fn(),
+                mode=mode,
+                short_knowledge_threshold=self._config.knowledge_consolidation_short_threshold,
+            )
+
+        return _PipelineKnowledgeProvider(kb, consolidator=consolidator)
 
     @staticmethod
     def _detect_and_set_active_entity_id(kb: KnowledgeBase) -> None:
@@ -681,20 +737,20 @@ class AgentFactory:
     def _load_user_profile(self) -> Optional[Dict[str, Any]]:
         """Load user profile configuration.
         
-        Returns None if a KnowledgeProvider is active (the provider supplies
+        Returns None if a knowledge provider is active (the provider supplies
         user_profile via dict merge in additional_reasoner_input_feed).
         Falls back to MOCK_USER_PROFILE if no provider is configured.
         
         Returns:
             User profile dictionary for the configured prompt version, or None
-            if a KnowledgeProvider is active.
+            if a knowledge provider is active.
         """
         if self._provider:
             return None
         return MOCK_USER_PROFILE.get(OPTION_DEFAULT_PROMPT_VERSION, MOCK_USER_PROFILE['default'])
     
     def close(self):
-        """Close the KnowledgeProvider if it exists. Called during service shutdown."""
+        """Close the knowledge provider if it exists. Called during service shutdown."""
         if self._provider:
             self._provider.close()
 

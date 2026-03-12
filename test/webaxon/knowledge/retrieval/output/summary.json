@@ -1,0 +1,70 @@
+{
+  "run_at": "2026-03-01T09:39:16.161914+00:00",
+  "query": "what is organic egg prices on safeway right now",
+  "active_entity_id": "user:tony-chen",
+  "knowledge_store_path": "C:\\Users\\yxinl\\OneDrive\\Projects\\PythonProjects\\CoreProjects\\WebAxon\\src\\webaxon\\devsuite\\web_agent_service_nextgen\\_workspace\\_knowledge_store",
+  "tests": [
+    {
+      "test_name": "test_1_no_filter",
+      "spaces_filter": null,
+      "piece_count": 4,
+      "piece_ids": [
+        "grocery-store-shopping-procedure",
+        "tony-chen-safeway-membership",
+        "tony-chen-qfc-membership",
+        "tony-chen-whole-foods-membership"
+      ],
+      "graph_context_count": 4
+    },
+    {
+      "test_name": "test_2_personal",
+      "spaces_filter": [
+        "personal"
+      ],
+      "piece_count": 3,
+      "piece_ids": [
+        "tony-chen-safeway-membership",
+        "tony-chen-qfc-membership",
+        "tony-chen-whole-foods-membership"
+      ],
+      "graph_context_count": 0
+    },
+    {
+      "test_name": "test_3_main",
+      "spaces_filter": [
+        "main"
+      ],
+      "piece_count": 1,
+      "piece_ids": [
+        "grocery-store-shopping-procedure"
+      ],
+      "graph_context_count": 4
+    },
+    {
+      "test_name": "test_4_developmental",
+      "spaces_filter": [
+        "developmental"
+      ],
+      "piece_count": 1,
+      "piece_ids": [
+        "grocery-store-shopping-procedure"
+      ],
+      "graph_context_count": 4
+    },
+    {
+      "test_name": "test_5_personal_and_main",
+      "spaces_filter": [
+        "personal",
+        "main"
+      ],
+      "piece_count": 4,
+      "piece_ids": [
+        "grocery-store-shopping-procedure",
+        "tony-chen-safeway-membership",
+        "tony-chen-qfc-membership",
+        "tony-chen-whole-foods-membership"
+      ],
+      "graph_context_count": 4
+    }
+  ]
+}

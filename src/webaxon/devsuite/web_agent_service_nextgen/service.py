@@ -354,7 +354,7 @@ class WebAgentService:
         This method:
         1. Stops all agent threads
         2. Cleans up all sessions
-        3. Closes the agent factory (KnowledgeProvider cleanup)
+        3. Closes the agent factory (knowledge provider cleanup)
         4. Closes the queue service
         5. Logs shutdown completion
         
@@ -399,7 +399,7 @@ class WebAgentService:
                         'error': str(e)
                     })
         
-        # Close agent factory (KnowledgeProvider cleanup)
+        # Close agent factory (knowledge provider cleanup)
         if self._agent_factory:
             try:
                 self._agent_factory.close()

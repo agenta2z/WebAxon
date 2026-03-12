@@ -1,0 +1,136 @@
+{
+  "test_name": "test_1_no_filter",
+  "query": "what is organic egg prices on safeway right now",
+  "spaces_filter": null,
+  "active_entity_id": "user:tony-chen",
+  "result": {
+    "metadata": null,
+    "global_metadata": null,
+    "pieces": [
+      {
+        "piece_id": "grocery-store-shopping-procedure",
+        "score": 0.2222,
+        "space": "main",
+        "spaces": [
+          "main",
+          "developmental"
+        ],
+        "content": "Complete grocery store shopping procedure: Step 1 - Login first if user is a member to apply member pricing and discounts. Step 2 - Find right store and location first before further operations. Step 3 - Must add items to cart, and apply all coupons, and check out to view final price.",
+        "knowledge_type": "procedure",
+        "info_type": "instructions",
+        "tags": [
+          "grocery",
+          "shopping",
+          "workflow",
+          "login",
+          "cart",
+          "checkout",
+          "coupons",
+          "pricing"
+        ],
+        "entity_id": null,
+        "embedding_text": "grocery store shopping procedure login member pricing discounts find store location add items cart apply coupons checkout final price workflow steps",
+        "domain": "general",
+        "created_at": "2026-02-10T05:41:52.672367+00:00",
+        "updated_at": "2026-02-10T05:41:52.672367+00:00"
+      },
+      {
+        "piece_id": "tony-chen-safeway-membership",
+        "score": 0.2222,
+        "space": "personal",
+        "spaces": [
+          "personal"
+        ],
+        "content": "Tony Chen is a member of Safeway (www.safeway.com) with email tzchen86@gmail.com using Google login authentication",
+        "knowledge_type": "fact",
+        "info_type": "user_profile",
+        "tags": [
+          "membership",
+          "grocery",
+          "safeway",
+          "authentication"
+        ],
+        "entity_id": "user:tony-chen",
+        "embedding_text": "Safeway member membership tzchen86@gmail.com google login authentication grocery store www.safeway.com",
+        "domain": "general",
+        "created_at": "2026-02-10T05:41:52.669228+00:00",
+        "updated_at": "2026-02-10T05:41:52.669228+00:00"
+      },
+      {
+        "piece_id": "tony-chen-qfc-membership",
+        "score": 0.1111,
+        "space": "personal",
+        "spaces": [
+          "personal"
+        ],
+        "content": "Tony Chen is a member of QFC (www.qfc.com) with email tzchen86@gmail.com",
+        "knowledge_type": "fact",
+        "info_type": "user_profile",
+        "tags": [
+          "membership",
+          "grocery",
+          "qfc"
+        ],
+        "entity_id": "user:tony-chen",
+        "embedding_text": "QFC member membership tzchen86@gmail.com grocery store www.qfc.com",
+        "domain": "general",
+        "created_at": "2026-02-10T05:41:52.670229+00:00",
+        "updated_at": "2026-02-10T05:41:52.670229+00:00"
+      },
+      {
+        "piece_id": "tony-chen-whole-foods-membership",
+        "score": 0.1111,
+        "space": "personal",
+        "spaces": [
+          "personal"
+        ],
+        "content": "Tony Chen is a Prime member of Whole Foods (www.wholefoodsmarket.com) with email tuf72841@temple.edu",
+        "knowledge_type": "fact",
+        "info_type": "user_profile",
+        "tags": [
+          "membership",
+          "grocery",
+          "whole-foods",
+          "prime"
+        ],
+        "entity_id": "user:tony-chen",
+        "embedding_text": "Whole Foods Prime member membership tuf72841@temple.edu grocery store amazon prime www.wholefoodsmarket.com",
+        "domain": "general",
+        "created_at": "2026-02-10T05:41:52.671227+00:00",
+        "updated_at": "2026-02-10T05:41:52.671227+00:00"
+      }
+    ],
+    "graph_context": [
+      {
+        "relation_type": "HAS_SKILL",
+        "target_node_id": "procedure:grocery-shopping",
+        "target_label": "Grocery Store Shopping Procedure",
+        "depth": 1,
+        "linked_piece": null
+      },
+      {
+        "relation_type": "MEMBER_OF",
+        "target_node_id": "service:qfc",
+        "target_label": "QFC",
+        "depth": 1,
+        "linked_piece": null
+      },
+      {
+        "relation_type": "MEMBER_OF",
+        "target_node_id": "service:safeway",
+        "target_label": "Safeway",
+        "depth": 1,
+        "linked_piece": null
+      },
+      {
+        "relation_type": "MEMBER_OF",
+        "target_node_id": "service:whole-foods",
+        "target_label": "Whole Foods",
+        "depth": 1,
+        "linked_piece": null
+      }
+    ]
+  },
+  "piece_count": 4,
+  "graph_context_count": 4
+}

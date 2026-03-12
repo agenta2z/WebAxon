@@ -1,0 +1,12 @@
+Name: Alex Johnson
+Location 456 Oak Avenue, Portland, OR, 97201
+Family: single
+Frequent Grocery Stores:
+Safeway - member alex.johnson@example.com, google log in
+QFC - member alex.johnson@example.com
+Whole Foods - prime member a.johnson@university.edu
+
+Grocery store skills:
+1 - Login first if user is a member to apply member pricing and discounts
+2 - Find right store and location first before further operations
+3 - Must add items to cart, and apply all coupons, and check out to view final price

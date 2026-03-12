@@ -64,7 +64,9 @@ Thought: [
 <CurrentDateAndTime>
  {{currentDateTime}}
 </CurrentDateAndTime>
-{{#if context}}{{{context}}}{{/if}}
+{{#if consolidated_knowledge}}<ConsolidatedKnowledge>
+{{{consolidated_knowledge}}}
+</ConsolidatedKnowledge>{{else}}{{#if context}}{{{context}}}{{/if}}{{/if}}
 </Context>
 
 <Conversation>

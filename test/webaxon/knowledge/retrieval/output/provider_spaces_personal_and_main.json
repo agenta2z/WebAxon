@@ -1,0 +1,16 @@
+{
+  "test_name": "provider_spaces_personal_and_main",
+  "query": "what is organic egg prices on safeway right now",
+  "spaces_filter": [
+    "personal",
+    "main"
+  ],
+  "feed": {
+    "instructions": "Complete grocery store shopping procedure: Step 1 - Login first if user is a member to apply member pricing and discounts. Step 2 - Find right store and location first before further operations. Step 3 - Must add items to cart, and apply all coupons, and check out to view final price.",
+    "user_profile": "Tony Chen is a member of Safeway (www.safeway.com) with email tzchen86@gmail.com using Google login authentication\nTony Chen is a member of QFC (www.qfc.com) with email tzchen86@gmail.com\nTony Chen is a Prime member of Whole Foods (www.wholefoodsmarket.com) with email tuf72841@temple.edu\n\nHAS_SKILL → procedure:grocery-shopping (Grocery Store Shopping Procedure)\nMEMBER_OF → service:qfc (QFC)\nMEMBER_OF → service:safeway (Safeway)\nMEMBER_OF → service:whole-foods (Whole Foods)"
+  },
+  "feed_keys": [
+    "instructions",
+    "user_profile"
+  ]
+}

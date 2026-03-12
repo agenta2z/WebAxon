@@ -1,0 +1,12 @@
+{
+  "entity_id": "user:alex-johnson",
+  "entity_type": "person",
+  "properties": {
+    "name": "Alex Johnson",
+    "location": "456 Oak Avenue, Portland, OR, 97201",
+    "family_status": "single"
+  },
+  "created_at": "2026-01-15T10:30:00.000000+00:00",
+  "updated_at": "2026-01-15T10:30:00.000000+00:00",
+  "spaces": ["personal"]
+}

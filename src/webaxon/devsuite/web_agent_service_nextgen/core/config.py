@@ -28,7 +28,7 @@ class ServiceConfig:
         queue_root_path: Optional custom queue root path
         log_root_path: Root path for log files
         template_dir: Directory name for prompt templates (relative to testcase_root)
-        knowledge_data_file: Optional path to knowledge data JSON file for KnowledgeProvider
+        knowledge_data_file: Optional path to knowledge data JSON file for knowledge provider
         chrome_version: Chrome major version to pin ChromeDriver (e.g. 145). None = auto-detect.
     """
     # Session management
@@ -57,7 +57,11 @@ class ServiceConfig:
     log_root_path: str = '_runtime'
     template_dir: str = 'prompt_templates'
     knowledge_data_file: Optional[str] = None
-    
+
+    # Knowledge consolidation
+    knowledge_consolidation_mode: str = "disabled"  # "enabled", "disabled", "disabled_for_short_knowledge"
+    knowledge_consolidation_short_threshold: int = 200  # tokens (count_tokens units, ~800 chars)
+
     @classmethod
     def from_env(cls, prefix: str = 'WEBAGENT_SERVICE_') -> 'ServiceConfig':
         """Load configuration from environment variables.
@@ -107,6 +111,8 @@ class ServiceConfig:
             template_dir=get_env_str('template_dir', 'prompt_templates'),
             knowledge_data_file=get_env_optional_str('knowledge_data_file'),
             chrome_version=get_env_int('chrome_version', 0) or None,
+            knowledge_consolidation_mode=get_env_str('knowledge_consolidation_mode', 'disabled'),
+            knowledge_consolidation_short_threshold=get_env_int('knowledge_consolidation_short_threshold', 200),
         )
     
     def validate(self) -> None:

@@ -1,0 +1,61 @@
+{
+  "run_at": "2026-03-01T11:07:29.018363+00:00",
+  "query": "what is organic egg prices on safeway right now",
+  "active_entity_id": "user:tony-chen",
+  "knowledge_store_path": "C:\\Users\\yxinl\\OneDrive\\Projects\\PythonProjects\\CoreProjects\\WebAxon\\src\\webaxon\\devsuite\\web_agent_service_nextgen\\_workspace\\_knowledge_store",
+  "tests": [
+    {
+      "test_name": "provider_no_filter",
+      "spaces_filter": null,
+      "feed_keys": [
+        "instructions",
+        "user_profile"
+      ],
+      "feed_lengths": {
+        "instructions": 285,
+        "user_profile": 477
+      }
+    },
+    {
+      "test_name": "provider_spaces_personal",
+      "spaces_filter": [
+        "personal"
+      ],
+      "feed_keys": [
+        "user_profile"
+      ],
+      "feed_lengths": {
+        "user_profile": 288
+      }
+    },
+    {
+      "test_name": "provider_spaces_main",
+      "spaces_filter": [
+        "main"
+      ],
+      "feed_keys": [
+        "instructions",
+        "user_profile"
+      ],
+      "feed_lengths": {
+        "instructions": 285,
+        "user_profile": 452
+      }
+    },
+    {
+      "test_name": "provider_spaces_personal_and_main",
+      "spaces_filter": [
+        "personal",
+        "main"
+      ],
+      "feed_keys": [
+        "instructions",
+        "user_profile"
+      ],
+      "feed_lengths": {
+        "instructions": 285,
+        "user_profile": 477
+      }
+    }
+  ]
+}

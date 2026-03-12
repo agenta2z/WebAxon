@@ -1,0 +1,13 @@
+{
+  "test_name": "provider_spaces_personal",
+  "query": "what is organic egg prices on safeway right now",
+  "spaces_filter": [
+    "personal"
+  ],
+  "feed": {
+    "user_profile": "Tony Chen is a member of Safeway (www.safeway.com) with email tzchen86@gmail.com using Google login authentication\nTony Chen is a member of QFC (www.qfc.com) with email tzchen86@gmail.com\nTony Chen is a Prime member of Whole Foods (www.wholefoodsmarket.com) with email tuf72841@temple.edu"
+  },
+  "feed_keys": [
+    "user_profile"
+  ]
+}
