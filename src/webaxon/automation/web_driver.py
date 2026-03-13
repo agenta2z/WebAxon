@@ -1,4 +1,5 @@
 import logging
+import os
 from datetime import datetime
 from time import sleep
 from typing import (
@@ -64,6 +65,8 @@ class WebDriverActionResult:
     is_follow_up: bool = attrib(default=False)
     action_skipped: bool = attrib(default=False)
     skip_reason: Optional[str] = attrib(default=None)
+    screenshot_before_path: Optional[str] = attrib(default=None)
+    screenshot_after_path: Optional[str] = attrib(default=None)
 
     def __str__(self):
         return self.cleaned_body_html_after_last_action
@@ -191,6 +194,11 @@ class WebDriver(Debuggable):
         # Monitor tab tracking: handles of tabs dedicated to monitoring
         # These tabs are excluded from action execution to prevent accidental use
         self._monitor_tabs: set = set()
+
+        # Trajectory capture: save per-step screenshots for evaluation
+        self._capture_trajectory: bool = False
+        self._trajectory_dir: Optional[str] = None
+        self._trajectory_step_counter: int = 0
 
     @property
     def backend(self) -> Optional[Any]:
@@ -592,6 +600,20 @@ class WebDriver(Debuggable):
             restore_window_size=restore_window_size,
             reset_zoom=reset_zoom,
             use_cdp_cmd_for_chrome=use_cdp_cmd_for_chrome,
+        )
+
+    def capture_screenshot(self, output_path: str, reset_zoom: bool = True) -> None:
+        """Capture a full-page screenshot via the backend.
+
+        Simplified wrapper around capture_full_page_screenshot() for evaluation
+        and trajectory capture use cases.
+        """
+        self._backend.capture_full_page_screenshot(
+            output_path=output_path,
+            reset_zoom=reset_zoom,
+            use_cdp_cmd_for_chrome=(
+                hasattr(self._backend, 'supports_cdp') and self._backend.supports_cdp()
+            ),
         )
 
     # region action methods
@@ -1194,6 +1216,10 @@ class WebDriver(Debuggable):
         else:
             body_html_before_last_action = None
 
+        # Initialize trajectory screenshot paths (set in execute_single_action branch)
+        _screenshot_before_path = None
+        _screenshot_after_path = None
+
         if action_type == 'no_op':
             # No operation — just capture current page state (used after user copilot interactions)
             action_is_follow_up = False
@@ -1341,6 +1367,20 @@ class WebDriver(Debuggable):
             _handles_before = set(self.window_handles)
             _current_before = self.current_window_handle()
 
+            # Trajectory capture: screenshot BEFORE action
+            _screenshot_before_path = None
+            if self._capture_trajectory and self._trajectory_dir:
+                _screenshot_before_path = os.path.join(
+                    self._trajectory_dir,
+                    f"{self._trajectory_step_counter}_screenshot.png",
+                )
+                try:
+                    os.makedirs(self._trajectory_dir, exist_ok=True)
+                    self.capture_screenshot(_screenshot_before_path)
+                except Exception as _exc:
+                    _logger.warning("Trajectory pre-screenshot failed: %s", _exc)
+                    _screenshot_before_path = None
+
             self.execute_single_action(
                 element=element,
                 action_type=action_type,
@@ -1349,6 +1389,20 @@ class WebDriver(Debuggable):
                 timeout=timeout,
                 additional_wait_time=additional_wait_time,
             )
+
+            # Trajectory capture: screenshot AFTER action
+            _screenshot_after_path = None
+            if self._capture_trajectory and self._trajectory_dir:
+                _screenshot_after_path = os.path.join(
+                    self._trajectory_dir,
+                    f"{self._trajectory_step_counter}_post_screenshot.png",
+                )
+                try:
+                    self.capture_screenshot(_screenshot_after_path)
+                except Exception as _exc:
+                    _logger.warning("Trajectory post-screenshot failed: %s", _exc)
+                    _screenshot_after_path = None
+                self._trajectory_step_counter += 1
 
             # Log window handle after visit_url to trace tab switching
             if action_type == 'visit_url':
@@ -1385,6 +1439,8 @@ class WebDriver(Debuggable):
             source=self.source,
             action_memory=action_memory,
             is_follow_up=action_is_follow_up,
+            screenshot_before_path=_screenshot_before_path,
+            screenshot_after_path=_screenshot_after_path,
         )
 
     def quit(self):

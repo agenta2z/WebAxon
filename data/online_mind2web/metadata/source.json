@@ -1,0 +1,17 @@
+{
+  "dataset": "osunlp/Online-Mind2Web",
+  "split": "test",
+  "downloaded_at": "2026-01-31T05:18:23.358881+00:00",
+  "num_rows_raw": 300,
+  "num_rows_processed": 300,
+  "num_rows_skipped": 0,
+  "fingerprint": "14d5227cf8bb0667",
+  "features": {
+    "task_id": "Value('string')",
+    "confirmed_task": "Value('string')",
+    "website": "Value('string')",
+    "reference_length": "Value('int64')",
+    "level": "Value('string')"
+  },
+  "datasets_version": "4.5.0"
+}
