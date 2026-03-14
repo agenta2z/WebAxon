@@ -19,7 +19,7 @@ from attr import attrib, attrs
 from agent_foundation.common.memory import ContentMemory
 from rich_python_utils.common_objects.debuggable import Debuggable
 from rich_python_utils.common_utils import execute_with_retry, get_
-from rich_python_utils.io_utils.json_io import artifact_field
+from rich_python_utils.io_utils.artifact import artifact_field
 from rich_python_utils.string_utils import cut, split_
 from rich_python_utils.string_utils.misc import camel_to_snake_case
 from selenium.webdriver.remote.webelement import WebElement
