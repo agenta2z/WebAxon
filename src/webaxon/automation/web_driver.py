@@ -200,6 +200,27 @@ class WebDriver(Debuggable):
         self._trajectory_dir: Optional[str] = None
         self._trajectory_step_counter: int = 0
 
+    def _log_trajectory_screenshot(
+        self, screenshot_path: str, step: int, phase: str = "before"
+    ) -> None:
+        """Log a trajectory screenshot as an artifact through the Debuggable logger.
+
+        This enables turn-aware association: SessionLogger routes the log entry
+        into the current turn's session.jsonl via ``group='turn_NNN'``.
+        """
+        from datetime import datetime
+
+        self.log_info(
+            {
+                "artifact_type": "Screenshot",
+                "path": screenshot_path,
+                "step": step,
+                "phase": phase,
+                "timestamp": datetime.now().isoformat(),
+            },
+            log_type="TrajectoryScreenshot",
+        )
+
     @property
     def backend(self) -> Optional[Any]:
         """Get the backend adapter if using backend mode, None otherwise."""
@@ -1377,6 +1398,11 @@ class WebDriver(Debuggable):
                 try:
                     os.makedirs(self._trajectory_dir, exist_ok=True)
                     self.capture_screenshot(_screenshot_before_path)
+                    self._log_trajectory_screenshot(
+                        _screenshot_before_path,
+                        self._trajectory_step_counter,
+                        phase="before",
+                    )
                 except Exception as _exc:
                     _logger.warning("Trajectory pre-screenshot failed: %s", _exc)
                     _screenshot_before_path = None
@@ -1399,6 +1425,11 @@ class WebDriver(Debuggable):
                 )
                 try:
                     self.capture_screenshot(_screenshot_after_path)
+                    self._log_trajectory_screenshot(
+                        _screenshot_after_path,
+                        self._trajectory_step_counter,
+                        phase="after",
+                    )
                 except Exception as _exc:
                     _logger.warning("Trajectory post-screenshot failed: %s", _exc)
                     _screenshot_after_path = None

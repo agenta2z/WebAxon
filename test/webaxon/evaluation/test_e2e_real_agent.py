@@ -191,10 +191,17 @@ class TestAgentRun:
 
     def test_trajectory_screenshots_captured(self, agent_run_result, e2e_output_dir, e2e_task):
         """Agent captures at least one trajectory screenshot."""
-        traj_dir = e2e_output_dir / e2e_task.task_id / "trajectory"
-        assert traj_dir.exists(), f"trajectory/ not found at {traj_dir}"
+        # Screenshots may be in session_dir/screenshots/ (save_screenshots_to_session=True)
+        # or in trajectory_dir (legacy).  Check metadata.screenshot_dir first.
+        screenshot_dir = (agent_run_result.get("metadata") or {}).get("screenshot_dir", "")
+        if screenshot_dir and Path(screenshot_dir).is_dir():
+            screenshot_path = Path(screenshot_dir)
+        else:
+            screenshot_path = e2e_output_dir / e2e_task.task_id / "trajectory"
 
-        screenshots = list(traj_dir.glob("*_screenshot.png"))
+        assert screenshot_path.exists(), f"Screenshot dir not found at {screenshot_path}"
+
+        screenshots = list(screenshot_path.glob("*_screenshot.png"))
         assert len(screenshots) >= 1, "Expected at least one screenshot"
 
     def test_result_has_answer(self, agent_run_result):

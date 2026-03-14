@@ -1,12 +1,17 @@
-"""WebAxon evaluation adapter — delegates to MetaAgentAdapter.
+"""WebAxon evaluation adapter — delegates to RegularAgentAdapter (default)
+or MetaAgentAdapter (fallback).
 
 This adapter bridges the agent-agnostic evaluation framework with WebAxon's
-concrete agent infrastructure.  It extends MetaAgentAdapter to inject:
+concrete agent infrastructure.  It wraps the underlying adapter to inject:
 
 1. **start_url navigation** via ``agent.base_action``
 2. **trajectory capture** by enabling ``WebDriver._capture_trajectory``
 3. **max_num_loops** to limit agent LLM turns
 4. **resource cleanup** (browser quit, queue deletion)
+
+By default, ``RegularAgentAdapter`` is used — it follows the same code path
+as a real user interacting with the CLI service.  Pass
+``use_meta_adapter=True`` to fall back to the ``/meta`` command path.
 """
 
 from __future__ import annotations
@@ -28,7 +33,7 @@ class WebAxonAdapter:
 
     Constructs the full WebAxon service stack (ServiceConfig, AgentFactory,
     AgentSessionManager, StorageBasedQueueService) and delegates agent
-    execution to an extended MetaAgentAdapter.
+    execution to RegularAgentAdapter (default) or MetaAgentAdapter.
     """
 
     name = "webaxon"
@@ -43,12 +48,15 @@ class WebAxonAdapter:
         agent_timeout: int = 300,
         knowledge_data_file: Optional[str] = None,
         stay_on_start_url: bool = True,
+        use_meta_adapter: bool = False,
+        save_screenshots_to_session: bool = True,
     ) -> None:
         self._testcase_root = Path(testcase_root)
         self._agent_type = agent_type
         self._template_version = template_version
         self._agent_timeout = agent_timeout
         self._stay_on_start_url = stay_on_start_url
+        self._save_screenshots_to_session = save_screenshots_to_session
 
         # Temp dir for queue storage
         self._tmp_dir = tempfile.mkdtemp(prefix="webaxon_eval_")
@@ -116,21 +124,37 @@ class WebAxonAdapter:
             service_log_dir=service_log_dir,
         )
 
-        # Build MetaAgentAdapter
-        from webaxon.devsuite.web_agent_service_nextgen.agents.meta_agent_adapter import (
-            MetaAgentAdapter,
-        )
+        # Build agent adapter (RegularAgentAdapter by default, MetaAgentAdapter as fallback)
+        if use_meta_adapter:
+            from webaxon.devsuite.web_agent_service_nextgen.agents.meta_agent_adapter import (
+                MetaAgentAdapter,
+            )
+            self._adapter = MetaAgentAdapter(
+                agent_factory=self._agent_factory,
+                session_manager=self._session_manager,
+                queue_service=self._queue_service,
+                config=self._config,
+            )
+        else:
+            from webaxon.devsuite.web_agent_service_nextgen.agents.regular_agent_adapter import (
+                RegularAgentAdapter,
+            )
+            from webaxon.devsuite.web_agent_service_nextgen.agents.agent_runner import (
+                AgentRunner,
+            )
+            agent_runner = AgentRunner(config=self._config)
+            self._adapter = RegularAgentAdapter(
+                agent_factory=self._agent_factory,
+                session_manager=self._session_manager,
+                queue_service=self._queue_service,
+                config=self._config,
+                agent_runner=agent_runner,
+            )
+        self._adapter.agent_run_timeout = self._agent_timeout
 
-        self._meta_adapter = MetaAgentAdapter(
-            agent_factory=self._agent_factory,
-            session_manager=self._session_manager,
-            queue_service=self._queue_service,
-            config=self._config,
-        )
-        self._meta_adapter.agent_run_timeout = self._agent_timeout
-
-        # Track last run's WebDriver and queue IDs for cleanup
+        # Track last run's WebDriver, screenshot dir, and queue IDs for cleanup
         self._last_webdriver = None
+        self._last_screenshot_dir: Optional[Path] = None
         self._last_queue_ids: list[str] = []
 
     def run_task(
@@ -177,13 +201,15 @@ class WebAxonAdapter:
                 error=str(exc),
             )
         finally:
+            # Capture screenshot_dir before cleanup resets it
+            actual_screenshot_dir = self._last_screenshot_dir or trajectory_dir
             self._cleanup_run_resources()
 
         # Post-process: extract trajectory from session logs + screenshots
         session_dir = result.session_dir if result else ""
         traj = capture_trajectory(
             session_dir=session_dir,
-            trajectory_dir=trajectory_dir,
+            trajectory_dir=actual_screenshot_dir,
         )
 
         duration = time.time() - start_time
@@ -197,7 +223,10 @@ class WebAxonAdapter:
             raw_generations=traj.raw_generations,
             screenshot_paths=traj.screenshots,
             duration_seconds=round(duration, 2),
-            metadata={"session_dir": session_dir},
+            metadata={
+                "session_dir": session_dir,
+                "screenshot_dir": str(actual_screenshot_dir),
+            },
         )
 
     def _run_with_hooks(
@@ -207,7 +236,7 @@ class WebAxonAdapter:
         max_steps: int,
         trajectory_dir: Path,
     ):
-        """Extended MetaAgentAdapter.run() with evaluation hooks.
+        """Run the underlying adapter with evaluation hooks.
 
         We monkey-patch the agent between creation and thread start by
         wrapping AgentFactory.create_agent to intercept the created agent.
@@ -215,6 +244,7 @@ class WebAxonAdapter:
         original_create = self._agent_factory.create_agent
 
         captured_webdriver = None
+        captured_screenshot_dir = None
 
         def patched_create_agent(interactive, logger, agent_type=None, template_version=""):
             agent = original_create(
@@ -236,19 +266,28 @@ class WebAxonAdapter:
                 agent.max_num_loops = max_steps
 
             # Hook 3: Enable trajectory capture on WebDriver
-            nonlocal captured_webdriver
+            nonlocal captured_webdriver, captured_screenshot_dir
             try:
                 # planning_agent.actor = master_action_agent (direct callable)
                 master_action_agent = agent.actor
                 # master_action_agent.actor = MultiActionExecutor({'default': webdriver, ...})
                 webdriver = master_action_agent.actor.resolve('default')
+
+                # Determine screenshot destination: session_dir/screenshots/ (persistent)
+                # or trajectory_dir (ephemeral, original behavior)
+                screenshot_dest = trajectory_dir
+                if self._save_screenshots_to_session and hasattr(logger, 'session_dir'):
+                    session_screenshot_dir = logger.session_dir / "screenshots"
+                    session_screenshot_dir.mkdir(parents=True, exist_ok=True)
+                    screenshot_dest = session_screenshot_dir
+
                 webdriver._capture_trajectory = True
-                webdriver._trajectory_dir = str(trajectory_dir)
+                webdriver._trajectory_dir = str(screenshot_dest)
                 webdriver._trajectory_step_counter = 0
                 captured_webdriver = webdriver
-                logger_msg = f"Trajectory capture enabled: {trajectory_dir}"
+                captured_screenshot_dir = screenshot_dest
                 _logger = logging.getLogger(__name__)
-                _logger.info(logger_msg)
+                _logger.info("Trajectory capture enabled: %s", screenshot_dest)
             except Exception as exc:
                 _logger = logging.getLogger(__name__)
                 _logger.warning("Could not enable trajectory capture: %s", exc)
@@ -258,11 +297,12 @@ class WebAxonAdapter:
         # Temporarily replace create_agent
         self._agent_factory.create_agent = patched_create_agent
         try:
-            result = self._meta_adapter.run(task_description=task_message)
+            result = self._adapter.run(task_description=task_message)
         finally:
             self._agent_factory.create_agent = original_create
 
         self._last_webdriver = captured_webdriver
+        self._last_screenshot_dir = Path(captured_screenshot_dir) if captured_screenshot_dir else None
         return result
 
     def _cleanup_run_resources(self) -> None:
@@ -274,6 +314,7 @@ class WebAxonAdapter:
             except Exception as exc:
                 logger.warning("WebDriver quit failed: %s", exc)
             self._last_webdriver = None
+        self._last_screenshot_dir = None
 
     def cleanup(self) -> None:
         """Release all resources — called between tasks in dataset runs."""

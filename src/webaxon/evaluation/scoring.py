@@ -44,15 +44,10 @@ _SKIP_PATTERNS: List[str] = [
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _is_infra_failure(result_path: Path) -> bool:
-    """Return *True* if ``result.json`` indicates an infrastructure failure."""
-    try:
-        data = json.loads(result_path.read_text(encoding="utf-8"))
-    except Exception:
-        return False
-
-    final = data.get("final_result_response", "")
-    thoughts = data.get("thoughts", [])
+def _is_infra_failure(result_data: dict) -> bool:
+    """Return *True* if the parsed result dict indicates an infrastructure failure."""
+    final = result_data.get("final_result_response", "")
+    thoughts = result_data.get("thoughts", [])
 
     # Check final_result_response
     for pat in _SKIP_PATTERNS:
@@ -80,9 +75,12 @@ def sanitize_runs(
 ) -> List[str]:
     """Filter infrastructure failures and copy valid runs to *sanitized_dir*.
 
-    For each task directory under *runs_dir* that contains ``result.json`` and
-    a ``trajectory/`` sub-directory:
+    For each task directory under *runs_dir* that contains ``result.json``:
 
+    * Determine the screenshot source directory: if ``result.json`` contains
+      ``metadata.screenshot_dir`` (written by ``WebAxonAdapter`` when
+      ``save_screenshots_to_session=True``), use that path; otherwise fall
+      back to the ``trajectory/`` sub-directory (backward compatible).
     * Skip the task if ``_is_infra_failure()`` is *True*.
     * Otherwise copy ``result.json``, trajectory screenshots (excluding
       ``_post_`` screenshots), and ``*_snapshot_text.txt`` DOM content files
@@ -103,12 +101,27 @@ def sanitize_runs(
             continue
 
         result_path = task_dir / "result.json"
-        traj_dir = task_dir / "trajectory"
-        if not result_path.exists() or not traj_dir.exists():
+        if not result_path.exists():
+            continue
+
+        # Parse result.json once — used for infra-failure check and screenshot_dir
+        try:
+            result_data = json.loads(result_path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+
+        # Determine screenshot source: metadata.screenshot_dir (session logs)
+        # or trajectory/ (original layout).  Backward compatible with old runs.
+        screenshot_src_dir = task_dir / "trajectory"
+        meta_screenshot_dir = (result_data.get("metadata") or {}).get("screenshot_dir", "")
+        if meta_screenshot_dir and Path(meta_screenshot_dir).is_dir():
+            screenshot_src_dir = Path(meta_screenshot_dir)
+
+        if not screenshot_src_dir.is_dir():
             continue
 
         # Skip tasks that failed due to infrastructure errors
-        if _is_infra_failure(result_path):
+        if _is_infra_failure(result_data):
             skipped.append(task_dir.name)
             continue
 
@@ -119,8 +132,8 @@ def sanitize_runs(
         # Copy result.json
         shutil.copy2(result_path, dest_task_dir / "result.json")
 
-        # Copy trajectory contents
-        for item in traj_dir.iterdir():
+        # Copy screenshot and snapshot_text contents
+        for item in screenshot_src_dir.iterdir():
             if not item.is_file():
                 continue
 

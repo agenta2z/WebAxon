@@ -88,11 +88,14 @@ For detailed documentation, see the individual module files:
 
 from .agent_runner import AgentRunner
 from .meta_agent_adapter import MetaAgentAdapter, MetaAgentRunResult
+from .regular_agent_adapter import RegularAgentAdapter, RegularAgentRunResult
 from .template_manager import TemplateManagerWrapper
 
 __all__ = [
     'AgentRunner',
     'MetaAgentAdapter',
     'MetaAgentRunResult',
+    'RegularAgentAdapter',
+    'RegularAgentRunResult',
     'TemplateManagerWrapper',
 ]
