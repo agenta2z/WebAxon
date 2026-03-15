@@ -9,6 +9,8 @@ import base64
 import io
 from typing import Dict, List, Protocol, runtime_checkable
 
+from PIL import Image
+
 
 @runtime_checkable
 class EvalLLMEngine(Protocol):
@@ -118,12 +120,20 @@ class InferencerEngine:
         return block
 
 
-def encode_image(image):
-    """Encode a PIL Image to base64 JPEG string."""
+def encode_image(image, max_dimension=7680):
+    """Encode a PIL Image to base64 JPEG string.
+
+    Resizes if any dimension exceeds max_dimension (Claude API limit is 8000px).
+    """
     # JPEG only supports RGB, L (grayscale), and CMYK.
     # Convert any incompatible mode (RGBA, LA, P, PA, etc.) to RGB.
     if image.mode not in ("RGB", "L", "CMYK"):
         image = image.convert("RGB")
+    # Resize if either dimension exceeds the limit
+    w, h = image.size
+    if w > max_dimension or h > max_dimension:
+        scale = max_dimension / max(w, h)
+        image = image.resize((int(w * scale), int(h * scale)), Image.LANCZOS)
     buffered = io.BytesIO()
     image.save(buffered, format="JPEG")
     return base64.b64encode(buffered.getvalue()).decode("utf-8")

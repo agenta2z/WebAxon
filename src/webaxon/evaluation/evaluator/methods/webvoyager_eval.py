@@ -34,7 +34,7 @@ Result Response: {response}
         whole_content_img.append(
             {
                 'type': 'image_url',
-                'image_url': {"url": f"data:image/png;base64,{jpg_base64_str}", "detail": "high"}
+                'image_url': {"url": f"data:image/jpeg;base64,{jpg_base64_str}", "detail": "high"}
             }
         )
     messages = [

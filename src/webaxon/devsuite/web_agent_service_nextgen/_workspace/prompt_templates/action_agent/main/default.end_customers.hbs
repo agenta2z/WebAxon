@@ -13,6 +13,7 @@ Thought: [step by step reasoning and analysis in details; list your steps as Ste
  <TaskStatus>[
   - 'Ongoing' if you decide you are still working on the current task, and NextActions has action items (including UserInputsRequired.* actions, *.MakeAnswer actions)
   - 'Completed' if you decide all required actions for the current task have been successfully executed, there is no pending question, ImmediateNextActions is empty, and therefore no further actions are needed.
+  - DO NOT rush to set TaskStatus to 'Completed' immediately after a search submission, form submission, or navigation action without first verifying the resulting page has loaded and contains the expected results or information. If the last action was a search, form submit, or page navigation, TaskStatus MUST remain 'Ongoing' until you have examined the resulting page content.
  ]
  </TaskStatus>
  <InstantResponse> ... </InstantResponse>

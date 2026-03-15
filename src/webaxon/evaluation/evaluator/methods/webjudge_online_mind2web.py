@@ -16,7 +16,9 @@ async def identify_key_points(task, model):
 2. Identify and extract **key points** directly stated in the task description.
    - A **key point** is a critical element, condition, or step explicitly mentioned in the task description.
    - Do not infer or add any unstated elements.
-   - Words such as "best," "highest," "cheapest," "latest," "most recent," "lowest," "closest," "highest-rated," "largest," and "newest" must go through the sort function(e.g., the key point should be "Filter by highest").
+   - Words such as "best," "highest," "cheapest," "latest," "most recent," "lowest," "closest," "highest-rated," "largest," and "newest" should be treated as filter/sort requirements ONLY when the task involves browsing a filterable or sortable list (e.g., product listings, search results, review listings). In such cases the key point should be "Filter by highest" or "Sort by lowest price."
+   - However, when these words merely describe WHAT to find or retrieve (e.g., "find the latest news," "look up specs for the latest model," "find the most recent articles"), they are NOT filter requirements. Extract the key point as the information to locate (e.g., "Find current news articles," "Retrieve specs for the current model").
+   - Do not infer filter requirements that are not explicitly stated in the task.
 
 **Respond with**:
 - **Key Points**: A numbered list of the explicit key points for completing this task, one per line, without explanations or additional details."""
@@ -97,7 +99,7 @@ async def WebJudge_Online_Mind2Web_eval(task, last_actions, images_path, model, 
 Your response must strictly follow the following evaluation criteria!
 *Important Evaluation Criteria*:
 1: The filtered results must be displayed correctly. If filters were not properly applied (i.e., missing selection, missing confirmation, or no visible effect in results), the task is not considered successful.
-2: You must carefully check whether these snapshots and action history meet these key points. Ensure that specific filter conditions, such as "best," "highest," "cheapest," "latest," "most recent," "lowest," "closest," "highest-rated," "largest," and "newest" are correctly applied using the filter function(e.g., sort function).
+2: You must carefully check whether these snapshots and action history meet these key points. Ensure that specific filter conditions, such as "best," "highest," "cheapest," "latest," "most recent," "lowest," "closest," "highest-rated," "largest," and "newest" are correctly applied using the filter function(e.g., sort function), WHEN such filter/sort controls exist and are applicable. If the content inherently satisfies the requirement without explicit filtering (see criterion 7), this criterion is met.
 3: Certain key points or requirements should be applied by the filter. Otherwise, a search with all requirements as input will be deemed a failure since it cannot guarantee that all results meet the requirements!
 4: If the task requires filtering by a specific range of money, years, or the number of beds and bathrooms, the applied filter must exactly match the given requirement. Any deviation results in failure. To ensure the task is successful, the applied filter must precisely match the specified range without being too broad or too narrow.
 Examples of Failure Cases:
@@ -109,7 +111,7 @@ Examples of Failure Cases:
 - If the task requires exactly 2 beds, but the filter applied is 2+ beds, it is a failure.
 5: Some tasks require a submission action or a display of results to be considered successful.
 6: If the retrieved information is invalid or empty(e.g., No match was found), but the agent has correctly performed the required action, it should still be considered successful.
-7: If the current page already displays all available items, then applying a filter is not necessary. As long as the agent selects items that meet the requirements (e.g., the cheapest or lowest price), the task is still considered successful.
+7: If the current page already displays all available items, or if the content is inherently ordered or presented in a way that satisfies the requirement (e.g., a news page showing articles in reverse chronological order by default, a product page that inherently shows the current/latest model, a comparison page that already includes the requested item), then applying an explicit filter or sort is not necessary. As long as the displayed content meets the task's requirements, the task is considered successful.
 
 *IMPORTANT*
 Format your response into two lines as shown below:
@@ -199,7 +201,7 @@ The potentially important snapshots of the webpage in the agent's trajectory and
             whole_content_img.append(
                 {
                     'type': 'image_url',
-                    'image_url': {"url": f"data:image/png;base64,{jpg_base64_str}", "detail": "high"}
+                    'image_url': {"url": f"data:image/jpeg;base64,{jpg_base64_str}", "detail": "high"}
                 }
             )
             if thought != "":

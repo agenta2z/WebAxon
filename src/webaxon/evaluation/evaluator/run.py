@@ -157,7 +157,7 @@ def auto_eval(task_dir, engine, mode, score_threshold, output_path, trajectories
     snapshot_texts = _load_snapshot_texts(trajectory_images_path)
 
     print(f"Start evaluation for {task_description}")
-    print(f"  action_history: {len(action_history or [])} raw → {len(clean_actions or [])} after cleaning")
+    print(f"  action_history: {len(action_history or [])} raw -> {len(clean_actions or [])} after cleaning")
     print(f"  screenshots: {len(screenshot_paths)} images")
     if snapshot_texts:
         print(f"  snapshot_texts: {len(snapshot_texts)} files (DOM content agent used)")

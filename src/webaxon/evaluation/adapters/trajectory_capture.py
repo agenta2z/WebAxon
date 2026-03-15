@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import struct
 import zlib
 from dataclasses import dataclass, field
@@ -16,6 +17,28 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
+
+# XML tag extraction patterns for BaseActionRawResponse items
+_INSTANT_RESPONSE_RE = re.compile(
+    r"<InstantResponse>(.*?)</InstantResponse>", re.DOTALL
+)
+_REASONING_RE = re.compile(r"<Reasoning>(.*?)</Reasoning>", re.DOTALL)
+_ACTION_TYPE_RE = re.compile(r"<Type>(.*?)</Type>", re.DOTALL)
+_ACTION_TARGET_RE = re.compile(r"<Target>(.*?)</Target>", re.DOTALL)
+
+# Detects forward-looking InstantResponses that are mid-task status updates, not answers
+_STATUS_UPDATE_RE = re.compile(
+    r"^(I('ll| will| need to| should| am going to| can see)"
+    r"|Let me"
+    r"|I'm (now |going to |about to )"
+    r"|Next,? I('ll| will| need to))",
+    re.IGNORECASE,
+)
+
+
+def _is_status_update(text: str) -> bool:
+    """Detect if an InstantResponse is a mid-task status update rather than a final answer."""
+    return bool(_STATUS_UPDATE_RE.match(text.strip()))
 
 # Canonical action types from AgentFoundation schema/constants.py
 _ACTION_FORMAT_MAP = {
@@ -83,6 +106,10 @@ def capture(
     # Collect screenshots from trajectory_dir
     screenshots = _collect_screenshots(trajectory_dir)
 
+    # Mark status-update answers as incomplete (agent stopped mid-task)
+    if answer and _is_status_update(answer):
+        answer = f"[Task incomplete] {answer}"
+
     # Compute confidence heuristic from answer
     confidence = _compute_confidence(answer)
 
@@ -102,6 +129,13 @@ def _parse_session_logs(
 ) -> tuple[List[str], List[str], List[str], List[str], str]:
     """Parse session JSONL logs into trajectory components.
 
+    Actual log types in WebAxon session logs:
+    - ``ReasonerResponse`` — raw LLM output containing XML-structured
+      ``<InstantResponse>`` (agent answer), ``<Reasoning>`` (thoughts),
+      ``<ImmediateNextActions>`` with ``<Type>``/``<Target>`` (planned actions)
+    - ``AgentActionResults`` — action execution results with source URL,
+      action_skipped, skip_reason, screenshot paths
+
     Returns (thoughts, raw_generations, action_history, action_history_readable, answer).
     """
     from rich_python_utils.service_utils.session_management.session_logger import (
@@ -112,11 +146,18 @@ def _parse_session_logs(
     raw_generations: List[str] = []
     action_history: List[str] = []
     action_history_readable: List[str] = []
-    answer = ""
+    best_answer = ""   # last non-status-update InstantResponse
+    last_answer = ""   # very last InstantResponse (fallback)
 
     reader = SessionLogReader(session_dir, resolve_parts=True)
 
-    for entry in reader:
+    # Always use disk-based iteration: SessionLogReader.__iter__ fails when
+    # session.jsonl is a directory of component files (the normal layout for
+    # WebAxon sessions) because _iter_log_file expects a file path.
+    # _iter_turns_from_disk correctly iterates component files inside the dir.
+    entry_iter = _iter_turns_from_disk(reader, Path(session_dir))
+
+    for entry in entry_iter:
         if not isinstance(entry, dict):
             continue
 
@@ -126,40 +167,101 @@ def _parse_session_logs(
             continue
 
         if log_type == "ReasonerResponse":
-            # Raw LLM output
+            # Raw LLM output — also contains XML-structured data
             raw_text = str(item) if not isinstance(item, str) else item
             raw_generations.append(raw_text)
 
-        elif log_type == "AgentResponse":
-            # Extract thoughts from AgentResponse
-            _extract_agent_response(item, thoughts)
-            # The last AgentResponse's instant_response is the answer
-            instant_resp = _safe_getattr(item, "instant_response", "")
+            # Extract <Reasoning> and planned actions from XML
+            _extract_reasoner_response(
+                raw_text, thoughts, action_history, action_history_readable,
+            )
+
+            # Track InstantResponses: prefer substantive answers over status updates
+            instant_resp = _extract_xml_tag(raw_text, _INSTANT_RESPONSE_RE)
             if instant_resp:
-                answer = instant_resp
+                last_answer = instant_resp
+                if not _is_status_update(instant_resp):
+                    best_answer = instant_resp
 
         elif log_type == "AgentActionResults":
-            # Extract action history from WebDriverActionResult(s)
+            # Action execution results (source URL, skipped, screenshots)
             _extract_action_results(item, action_history, action_history_readable)
 
+    answer = best_answer or last_answer
     return thoughts, raw_generations, action_history, action_history_readable, answer
 
 
-def _extract_agent_response(
-    item: Any,
+def _iter_turns_from_disk(reader, session_dir: Path):
+    """Iterate log entries by discovering turn directories from disk.
+
+    Fallback for sessions where manifest.turns is empty (e.g. status="running").
+    Yields cross-turn entries first, then each turn's entries in order.
+    """
+    # Cross-turn entries
+    yield from reader.iter_cross_turn()
+
+    # Discover turn_NNN directories and iterate them in order
+    turn_dirs = sorted(
+        [d for d in session_dir.iterdir() if d.is_dir() and d.name.startswith("turn_")],
+        key=lambda p: int(p.name.split("_")[1]) if p.name.split("_")[1].isdigit() else 0,
+    )
+
+    session_log_file = reader.manifest.session_log_file  # e.g. "session.jsonl"
+
+    for turn_dir in turn_dirs:
+        log_dir = turn_dir / session_log_file
+        if not log_dir.is_dir():
+            continue
+        # Each component has its own log file inside the turn's session.jsonl/ dir
+        component_files = sorted(
+            [f for f in log_dir.iterdir() if f.is_file()],
+            key=lambda p: p.name,
+        )
+        for component_file in component_files:
+            yield from reader._iter_log_file(component_file)
+
+
+def _extract_xml_tag(item: Any, pattern: re.Pattern) -> str:
+    """Extract text matching a regex pattern from a log item."""
+    text = str(item) if not isinstance(item, str) else item
+    match = pattern.search(text)
+    return match.group(1).strip() if match else ""
+
+
+def _extract_reasoner_response(
+    text: str,
     thoughts: List[str],
+    action_history: List[str],
+    action_history_readable: List[str],
 ) -> None:
-    """Extract reasoning/thoughts from an AgentResponse log item."""
-    # AgentResponse has .next_actions: list[list[AgentAction]]
-    next_actions = _safe_getattr(item, "next_actions", None)
-    if next_actions:
-        for action_group in next_actions:
-            if not isinstance(action_group, (list, tuple)):
-                continue
-            for action in action_group:
-                reasoning = _safe_getattr(action, "reasoning", "")
-                if reasoning:
-                    thoughts.append(reasoning)
+    """Extract reasoning and planned actions from a ReasonerResponse.
+
+    The text may contain XML ``<ImmediateNextActions>`` with ``<Action>``
+    elements, each having ``<Reasoning>``, ``<Type>``, ``<Target>``.
+    """
+
+    # Extract all <Reasoning> entries as thoughts
+    for match in _REASONING_RE.finditer(text):
+        reasoning = match.group(1).strip()
+        if reasoning:
+            thoughts.append(reasoning)
+
+    # Extract actions: pair <Type> and <Target> tags
+    action_types = _ACTION_TYPE_RE.findall(text)
+    action_targets = _ACTION_TARGET_RE.findall(text)
+
+    for i, action_type in enumerate(action_types):
+        action_type = action_type.strip()
+        target = action_targets[i].strip() if i < len(action_targets) else ""
+
+        entry = {"type": action_type, "target": target}
+        action_history.append(json.dumps(entry, ensure_ascii=False))
+
+        # Human-readable format
+        readable = f"{action_type}"
+        if target:
+            readable += f" [{target[:80]}]"
+        action_history_readable.append(readable)
 
 
 def _extract_action_results(
@@ -169,16 +271,12 @@ def _extract_action_results(
 ) -> None:
     """Extract action history from AgentActionResults log items.
 
-    The item is typically a list of WebDriverActionResult or similar objects,
-    but it may also be a single item or a nested structure.
+    The item is a dict with: source (url), action_skipped, skip_reason,
+    screenshot_before_path, screenshot_after_path, action_memory, etc.
     """
     items = item if isinstance(item, (list, tuple)) else [item]
 
     for result_item in items:
-        # Try to extract action type and target from the result
-        # WebDriverActionResult has: source (url), action_skipped, skip_reason
-        # But the ACTION details come from the preceding AgentResponse.next_actions
-        # For now, capture what we can from the result
         source = _safe_getattr(result_item, "source", "")
         skipped = _safe_getattr(result_item, "action_skipped", False)
 

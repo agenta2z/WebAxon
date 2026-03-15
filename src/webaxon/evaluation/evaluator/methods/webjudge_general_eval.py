@@ -31,7 +31,7 @@ async def identify_key_points(task, input_image_paths, model):
             input_images_msg.append(
                 {
                     'type': 'image_url',
-                    'image_url': {"url": f"data:image/png;base64,{input_images_jpg_base64_str}", "detail": "high"}
+                    'image_url': {"url": f"data:image/jpeg;base64,{input_images_jpg_base64_str}", "detail": "high"}
                 }
             )
 
@@ -89,7 +89,7 @@ The snapshot of the web page is shown in the image."""
             input_images_msg.append(
                 {
                     'type': 'image_url',
-                    'image_url': {"url": f"data:image/png;base64,{input_images_jpg_base64_str}", "detail": "high"}
+                    'image_url': {"url": f"data:image/jpeg;base64,{input_images_jpg_base64_str}", "detail": "high"}
                 }
             )
     messages = [{"role": "system", "content": system_msg}]
@@ -203,7 +203,7 @@ The potentially important snapshots of the webpage in the agent's trajectory and
             whole_content_img.append(
                 {
                     'type': 'image_url',
-                    'image_url': {"url": f"data:image/png;base64,{jpg_base64_str}", "detail": "high"}
+                    'image_url': {"url": f"data:image/jpeg;base64,{jpg_base64_str}", "detail": "high"}
                 }
             )
             if thought != "":
@@ -231,7 +231,7 @@ Action History:
             input_images_jpg_base64_str = encode_image(Image.open(path))
             input_images_msg.append({
                 "type": "image_url",
-                "image_url": {"url": f"data:image/png;base64,{input_images_jpg_base64_str}", "detail": "high"}
+                "image_url": {"url": f"data:image/jpeg;base64,{input_images_jpg_base64_str}", "detail": "high"}
             })
 
     messages = [{"role": "system", "content": system_msg}]
