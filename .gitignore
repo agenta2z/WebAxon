@@ -50,3 +50,6 @@ dev_data/
 
 # Test recordings (large screenshot files)
 test_case_recordings/
+
+# Evaluation run output folders
+_easy_runs*/
