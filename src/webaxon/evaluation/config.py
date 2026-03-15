@@ -30,5 +30,5 @@ class EvaluationConfig:
     stay_on_start_url: bool = True
     """Whether to constrain the agent to the start URL's site."""
 
-    output_dir: Path = field(default_factory=lambda: Path("runs"))
+    output_dir: Path = field(default_factory=lambda: Path("_eval_runs"))
     """Root directory for evaluation outputs."""

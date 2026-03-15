@@ -42,7 +42,7 @@ def main():
     parser = argparse.ArgumentParser(description="Run easy tasks")
     parser.add_argument(
         "--output-dir",
-        default=str(_WEBAXON_ROOT / "_easy_runs"),
+        default=str(_WEBAXON_ROOT / "_eval_runs" / "easy"),
         help="Output directory for results",
     )
     parser.add_argument("--skip", type=int, default=0, help="Skip first N easy tasks")

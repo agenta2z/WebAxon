@@ -52,4 +52,4 @@ dev_data/
 test_case_recordings/
 
 # Evaluation run output folders
-_easy_runs*/
+_eval_runs/
