@@ -58,6 +58,28 @@ from webaxon.html_utils.common import parse_onclick_for_url
 from urllib.parse import urljoin, urlparse
 
 
+class ClearMethod(StrEnum):
+    """Strategy for clearing existing content in an input field before typing.
+
+    Attributes:
+        SELECT_ALL: Use Ctrl+A (Cmd+A on Mac) to select all text, then typing
+            replaces the selection. Works reliably with React/Vue/Angular
+            controlled inputs because it uses standard keyboard events.
+        ELEMENT_CLEAR: Use Selenium's ``element.clear()`` method. May fail
+            silently on framework-controlled inputs (React comboboxes, etc.)
+            because it doesn't trigger synthetic event handlers.
+    """
+    SELECT_ALL = 'select_all'
+    ELEMENT_CLEAR = 'element_clear'
+
+
+def _get_select_all_keys() -> str:
+    """Return the platform-appropriate 'select all' key chord (Ctrl+A or Cmd+A)."""
+    current_os = get_current_platform()
+    modifier = Keys.COMMAND if current_os in (OperatingSystem.MACOS, OperatingSystem.IOS) else Keys.CONTROL
+    return modifier + "a"
+
+
 def _get_attachments_text(attachments, original_text: str = '', separator: str = '\n\n') -> str:
     """
     Extract text from attachments, filtering out those already present in original text.
@@ -732,6 +754,33 @@ def _click_element(
         raise last_exc
 
 
+def _verify_input_value(element: WebElement, expected_text: str, was_cleared: bool) -> None:
+    """Check that the element's value matches what was typed and log a warning on mismatch."""
+    try:
+        actual = element.get_property('value')
+    except Exception:
+        return  # Element may have been detached or is not an input; skip verification
+
+    if actual is None:
+        return
+
+    if was_cleared:
+        # When clearing was requested, the final value should be exactly the typed text
+        if actual != expected_text:
+            _logger.warning(
+                "Input verification mismatch: expected %r but got %r "
+                "(element.clear/select-all may not have worked on this input)",
+                expected_text, actual
+            )
+    else:
+        # When not clearing, text was appended; just check it ends with the typed text
+        if not actual.endswith(expected_text):
+            _logger.warning(
+                "Input verification mismatch: expected value to end with %r but got %r",
+                expected_text, actual
+            )
+
+
 def send_keys_with_random_delay(
         driver: WebDriver,
         element: WebElement,
@@ -739,6 +788,8 @@ def send_keys_with_random_delay(
         min_delay: float = 0.1,
         max_delay: float = 1,
         clear_content: bool = False,
+        clear_method: ClearMethod = ClearMethod.SELECT_ALL,
+        verify_input: bool = True,
         raise_exception: bool = False,
 ):
     """Send keys to an element, character by character, with a random delay between each key.
@@ -750,6 +801,11 @@ def send_keys_with_random_delay(
         min_delay (float): Minimum delay between key presses in seconds.
         max_delay (float): Maximum delay between key presses in seconds.
         clear_content (bool): Whether to clear the existing content before typing.
+        clear_method: Strategy for clearing content. ``SELECT_ALL`` (default) uses
+            Ctrl+A/Cmd+A so the first typed character replaces the selection;
+            ``ELEMENT_CLEAR`` uses Selenium's ``element.clear()``.
+        verify_input: If True (default), reads the element's value after typing
+            and logs a warning if it doesn't match the expected text.
         raise_exception: If True, raises on click failure. If False (default),
             warns and skips typing.
     """
@@ -763,11 +819,18 @@ def send_keys_with_random_delay(
         return
 
     if clear_content:
-        element.clear()
+        if clear_method == ClearMethod.SELECT_ALL:
+            element.send_keys(_get_select_all_keys())
+            random_sleep(min_delay, max_delay)
+        else:
+            element.clear()
     random_sleep(min_delay, max_delay)
     for char in text:
         element.send_keys(char)
         random_sleep(min_delay, max_delay)
+
+    if verify_input:
+        _verify_input_value(element, text, clear_content)
 
 
 def input_text(
@@ -775,6 +838,8 @@ def input_text(
         element: WebElement,
         text: str,
         clear_content: bool = False,
+        clear_method: ClearMethod = ClearMethod.SELECT_ALL,
+        verify_input: bool = True,
         implementation: str = 'auto',
         default_implementation: str = 'send_keys',
         fast_implementation: str = 'send_keys_fast',
@@ -917,6 +982,8 @@ def input_text(
                 element=element,
                 text=text,
                 clear_content=clear_content,
+                clear_method=clear_method,
+                verify_input=verify_input,
                 min_delay=min_delay,
                 max_delay=max_delay
             )
@@ -925,8 +992,13 @@ def input_text(
             # Send entire string at once (faster, still triggers keyboard events)
             _click_element(driver, element)
             if clear_content:
-                element.clear()
+                if clear_method == ClearMethod.SELECT_ALL:
+                    element.send_keys(_get_select_all_keys())
+                else:
+                    element.clear()
             element.send_keys(text)
+            if verify_input:
+                _verify_input_value(element, text, clear_content)
 
         elif implementation == 'javascript':
             # Direct value setting via JavaScript (fastest)
@@ -946,6 +1018,8 @@ def input_text(
                 element.dispatchEvent(new Event('change', { bubbles: true }));
                 element.dispatchEvent(new Event('blur', { bubbles: true }));
             """, element, text, clear_content)
+            if verify_input:
+                _verify_input_value(element, text, clear_content)
 
         else:
             raise ValueError(

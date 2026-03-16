@@ -1179,6 +1179,7 @@ class WebDriver(Debuggable):
         action_target_strategy: Union[str, TargetStrategy] = None,
         force_new_tab_if_current_tab_is_monitored: bool = True,
         no_action_if_target_not_found: bool = False,
+        ongoing_sequence_actions: bool = False,
     ):
         """
         Execute a web action with configuration-driven memory capture.
@@ -1200,6 +1201,9 @@ class WebDriver(Debuggable):
             no_action_if_target_not_found: If True, skip action gracefully when target element is not found
                                           instead of raising ElementNotFoundError. Returns a WebDriverActionResult
                                           with action_skipped=True. Default is False (raises exception).
+            reindex_after_action: If True (default), re-assign __id__ attributes to all DOM elements
+                                 after action execution. Set to False when executing batched actions
+                                 to preserve the __id__ values that the LLM planned against.
 
         Returns:
             WebDriverActionResult with execution details and captured HTML
@@ -1451,7 +1455,8 @@ class WebDriver(Debuggable):
                 action_config, memory_element, action_memory
             )
 
-        self.add_unique_index_to_elements(index_name=ATTR_NAME_INCREMENTAL_ID)
+        if not ongoing_sequence_actions:
+            self.add_unique_index_to_elements(index_name=ATTR_NAME_INCREMENTAL_ID)
         body_html_after_last_action = self.get_body_html(return_dynamic_contents=True)
         cleaned_body_html_after_last_action = self._clean_html_for_action_results(
             html_after_action=body_html_after_last_action,
