@@ -53,3 +53,5 @@ test_case_recordings/
 
 # Evaluation run output folders
 _eval_runs/
+_chrome_profile/
+__pycache__/
