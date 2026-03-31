@@ -274,22 +274,39 @@ class AgentFactory:
         )
         
         # Create WebDriver actor
-        browser_config = None
-        if self._config.chrome_version:
-            browser_config = BrowserConfig(
-                headless=False,
-                undetected_chrome=UndetectedChromeConfig(
-                    version_main=self._config.chrome_version
-                ),
+        import os
+        is_headless = os.getenv("WEBAXON_HEADLESS", "false").lower() == "true"
+
+        # Allow injecting a pre-initialized WebDriver (e.g., from sidecar)
+        webdriver_actor = self._config.injected_webdriver if hasattr(self._config, 'injected_webdriver') and self._config.injected_webdriver else None
+
+        if webdriver_actor is None:
+            browser_config = None
+            _has_browser_config = (
+                self._config.chrome_version
+                or self._config.chrome_profile_directory
+                or self._config.chrome_user_data_dir
             )
-        webdriver_actor = WebDriver(
-            headless=False,
-            id='webdriver',
-            logger=logger,
-            debug_mode=debug_mode,
-            always_add_logging_based_logger=always_add_logging_based_logger,
-            config=browser_config,
-        )
+            if _has_browser_config:
+                browser_config = BrowserConfig(
+                    headless=is_headless,
+                    user_data_dir=self._config.chrome_user_data_dir,
+                    undetected_chrome=UndetectedChromeConfig(
+                        version_main=self._config.chrome_version,
+                        profile_directory=self._config.chrome_profile_directory,
+                    ),
+                )
+            webdriver_actor = WebDriver(
+                headless=is_headless,
+                user_data_dir=self._config.chrome_user_data_dir,
+                profile_directory=self._config.chrome_profile_directory,
+                copy_profile=self._config.chrome_copy_profile,
+                id='webdriver',
+                logger=logger,
+                debug_mode=debug_mode,
+                always_add_logging_based_logger=always_add_logging_based_logger,
+                config=browser_config,
+            )
         
         # Create info ask question actor
         info_ask_question_actor = WebActor(
@@ -653,12 +670,20 @@ class AgentFactory:
 
         # Create a lightweight inferencer for knowledge structuring (reused across calls)
         if self._ingestion_inferencer is None:
-            self._ingestion_inferencer = ClaudeApiInferencer(
-                max_retry=3,
-                default_inference_args=DEFAULT_AGENT_REASONER_ARGS,
-                logger=logging.getLogger(__name__).info,
-                debug_mode=True,
-            )
+            if OPTION_BASE_REASONER == 'AgClaude' and AgClaudeApiInferencer is not None:
+                self._ingestion_inferencer = AgClaudeApiInferencer(
+                    max_retry=3,
+                    default_inference_args=DEFAULT_AGENT_REASONER_ARGS,
+                    logger=logging.getLogger(__name__).info,
+                    debug_mode=True,
+                )
+            else:
+                self._ingestion_inferencer = ClaudeApiInferencer(
+                    max_retry=3,
+                    default_inference_args=DEFAULT_AGENT_REASONER_ARGS,
+                    logger=logging.getLogger(__name__).info,
+                    debug_mode=True,
+                )
 
         cli = KnowledgeIngestionCLI(
             inferencer=self._ingestion_inferencer,
@@ -676,17 +701,25 @@ class AgentFactory:
         return counts
 
     def _ensure_ingestion_inferencer(self) -> None:
-        """Lazily create the ClaudeApiInferencer if not already set.
+        """Lazily create the inferencer (AgClaude or Claude) if not already set.
 
         Follows the same pattern as ingest_knowledge().
         """
         if self._ingestion_inferencer is None:
-            self._ingestion_inferencer = ClaudeApiInferencer(
-                max_retry=3,
-                default_inference_args=DEFAULT_AGENT_REASONER_ARGS,
-                logger=logging.getLogger(__name__).info,
-                debug_mode=True,
-            )
+            if OPTION_BASE_REASONER == 'AgClaude' and AgClaudeApiInferencer is not None:
+                self._ingestion_inferencer = AgClaudeApiInferencer(
+                    max_retry=3,
+                    default_inference_args=DEFAULT_AGENT_REASONER_ARGS,
+                    logger=logging.getLogger(__name__).info,
+                    debug_mode=True,
+                )
+            else:
+                self._ingestion_inferencer = ClaudeApiInferencer(
+                    max_retry=3,
+                    default_inference_args=DEFAULT_AGENT_REASONER_ARGS,
+                    logger=logging.getLogger(__name__).info,
+                    debug_mode=True,
+                )
 
     def _make_llm_fn(self) -> Callable[[str], str]:
         """Create an LLM callable from the ingestion inferencer.

@@ -30,6 +30,9 @@ class ServiceConfig:
         template_dir: Directory name for prompt templates (relative to testcase_root)
         knowledge_data_file: Optional path to knowledge data JSON file for knowledge provider
         chrome_version: Chrome major version to pin ChromeDriver (e.g. 145). None = auto-detect.
+        chrome_user_data_dir: Path to Chrome user data directory. None = auto-detect or temp.
+        chrome_profile_directory: Chrome profile folder name within user_data_dir
+            (e.g. "Default", "Profile 1"). None = "Default".
     """
     # Session management
     session_idle_timeout: int = 30 * 60  # 30 minutes in seconds
@@ -45,6 +48,9 @@ class ServiceConfig:
 
     # Browser
     chrome_version: Optional[int] = None  # Chrome major version (e.g. 145) to pin ChromeDriver
+    chrome_user_data_dir: Optional[str] = None
+    chrome_profile_directory: Optional[str] = None
+    chrome_copy_profile: bool = True  # Copy profile to temp dir to avoid lock conflicts
     
     # Queue IDs
     input_queue_id: str = 'user_input'
@@ -111,6 +117,9 @@ class ServiceConfig:
             template_dir=get_env_str('template_dir', 'prompt_templates'),
             knowledge_data_file=get_env_optional_str('knowledge_data_file'),
             chrome_version=get_env_int('chrome_version', 0) or None,
+            chrome_user_data_dir=get_env_optional_str('chrome_user_data_dir'),
+            chrome_profile_directory=get_env_optional_str('chrome_profile_directory'),
+            chrome_copy_profile=get_env_bool('chrome_copy_profile', True),
             knowledge_consolidation_mode=get_env_str('knowledge_consolidation_mode', 'disabled'),
             knowledge_consolidation_short_threshold=get_env_int('knowledge_consolidation_short_threshold', 200),
         )

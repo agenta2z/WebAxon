@@ -95,6 +95,10 @@ class CLIClient:
 
         print(f"Connected to service at {self._queue_service.root_path}")
         print(f"Session: {self._session_id}")
+
+        from webaxon.devsuite.config import OPTION_DEFAULT_PROMPT_VERSION, OPTION_BASE_REASONER
+        prompt_ver = OPTION_DEFAULT_PROMPT_VERSION if OPTION_DEFAULT_PROMPT_VERSION else '(default)'
+        print(f"Prompt version: {prompt_ver}  |  Reasoner: {OPTION_BASE_REASONER}")
         return True
 
     # ------------------------------------------------------------------
@@ -116,6 +120,48 @@ class CLIClient:
                 return resp
             time.sleep(0.2)
         return None
+
+    # ------------------------------------------------------------------
+    # Browser profile
+    # ------------------------------------------------------------------
+
+    def send_browser_profile(
+        self,
+        profile_directory: str,
+        user_data_dir: Optional[str] = None,
+        copy_profile=None,
+    ) -> bool:
+        """Send the selected Chrome profile to the service.
+
+        Must be called after connect() and before the first agent request
+        so the service can configure the WebDriver with the chosen profile.
+
+        Args:
+            profile_directory: Profile folder name (e.g. "Default").
+            user_data_dir: Chrome user data directory path.
+            copy_profile: True to copy to temp dir, a path string to copy
+                there, False to disable, or None to leave the service default.
+
+        Returns True if the service acknowledged the profile.
+        """
+        payload = {
+            "profile_directory": profile_directory,
+            "user_data_dir": user_data_dir,
+        }
+        if copy_profile is not None:
+            payload["copy_profile"] = copy_profile
+        msg = {
+            "type": "set_browser_profile",
+            "message": payload,
+            "timestamp": timestamp(),
+        }
+        self._send_control(msg)
+        resp = self._wait_for_control_response(
+            "set_browser_profile_response", timeout=5.0
+        )
+        if resp and resp.get("success"):
+            return True
+        return False
 
     # ------------------------------------------------------------------
     # Knowledge registration
@@ -1035,10 +1081,28 @@ class CLIClient:
     # REPL
     # ------------------------------------------------------------------
 
-    def run(self) -> None:
-        """Run the interactive REPL loop."""
+    def run(
+        self,
+        profile_directory: Optional[str] = None,
+        user_data_dir: Optional[str] = None,
+        copy_profile=None,
+    ) -> None:
+        """Run the interactive REPL loop.
+
+        Args:
+            profile_directory: Chrome profile folder name to send to the
+                service (e.g. "Default", "Profile 1").  Skipped when None.
+            user_data_dir: Chrome user data directory path.  Skipped when None.
+            copy_profile: True to copy profile to temp dir, a path string to
+                copy there for reuse, False to disable, or None for service default.
+        """
         if not self.connect():
             return
+
+        if profile_directory:
+            ok = self.send_browser_profile(profile_directory, user_data_dir, copy_profile)
+            if not ok:
+                print("Warning: service did not acknowledge browser profile. Continuing anyway.")
 
         self._running = True
         print()
@@ -1131,6 +1195,10 @@ class CLIClient:
 
     def _cmd_status(self) -> None:
         """Print status information."""
-        print(f"  Session ID : {self._session_id}")
-        print(f"  Queue root : {self._queue_service.root_path if self._queue_service else 'N/A'}")
-        print(f"  Testcase   : {self._testcase_root}")
+        from webaxon.devsuite.config import OPTION_DEFAULT_PROMPT_VERSION, OPTION_BASE_REASONER
+        prompt_ver = OPTION_DEFAULT_PROMPT_VERSION if OPTION_DEFAULT_PROMPT_VERSION else '(default)'
+        print(f"  Session ID      : {self._session_id}")
+        print(f"  Queue root      : {self._queue_service.root_path if self._queue_service else 'N/A'}")
+        print(f"  Testcase        : {self._testcase_root}")
+        print(f"  Prompt version  : {prompt_ver}")
+        print(f"  Reasoner        : {OPTION_BASE_REASONER}")

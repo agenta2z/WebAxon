@@ -68,6 +68,8 @@ class UndetectedChromeConfig:
         version_main: Major Chrome version as integer (e.g., 126, not "126.0.0")
         browser_executable_path: Path to Chrome binary
         driver_executable_path: Path to specific chromedriver binary
+        profile_directory: Chrome profile folder name within user_data_dir
+            (e.g., "Default", "Profile 1"). Defaults to "Default" if not specified.
         arguments: Command-line arguments
 
     Example:
@@ -80,6 +82,7 @@ class UndetectedChromeConfig:
     version_main: Optional[int] = None
     browser_executable_path: Optional[str] = None
     driver_executable_path: Optional[str] = None
+    profile_directory: Optional[str] = None
     arguments: List[str] = field(default_factory=list)
 
 

@@ -113,6 +113,8 @@ class WebDriver(Debuggable):
             timeout: int = 120,
             options: List[str] = None,
             user_data_dir: str = None,
+            profile_directory: str = None,
+            copy_profile: Union[bool, str] = False,
             state: Mapping[str, Any] = None,
             state_setting_max_retry: int = 3,
             state_setting_min_wait: float = 0.2,
@@ -131,21 +133,105 @@ class WebDriver(Debuggable):
             timeout (int): The maximum time to wait for a page to load. Default is 120 seconds.
             options (List[str]): Additional browser-specific options to set. Default is None.
             user_data_dir (str): Path to browser profile directory. Default is None.
+            profile_directory (str): Chrome profile folder name within user_data_dir
+                (e.g., "Default", "Profile 1"). Only applies to Chromium-based browsers.
+                Default is None (uses "Default").
+            copy_profile (Union[bool, str]): Copy the Chrome profile before launching
+                to avoid single-process lock conflicts.
+                - False (default): no copy, use user_data_dir directly.
+                - True: copy to a temp directory (auto-cleaned on quit()).
+                - str path: copy there if not already present; reuse if present.
             state (Mapping[str, Any]): Initial state for the WebDriver. Default is None.
             state_setting_max_retry (int): Max retries for state setting. Default is 3.
             state_setting_min_wait (float): Min wait between retries. Default is 0.2.
             action_configs (Mapping[str, WebAgentAction]): Action configuration mapping. Defaults to DEFAULT_ACTION_CONFIGS.
             backend (BackendAdapter, optional): Pre-initialized backend adapter to use instead of creating
                 a Selenium driver. When provided, driver_type, headless, user_agent, timeout, options,
-                and user_data_dir are ignored. The backend should already be initialized.
+                user_data_dir, profile_directory, and copy_profile are ignored. The backend should already be initialized.
         """
         # Initialize parent class (Debuggable -> Identifiable)
         super().__init__(**kwargs)
+
+        # Track temp profile dir for cleanup (set when copy_profile is True)
+        self._copied_profile_dir: Optional[str] = None
 
         # Always use a backend adapter for unified interface
         if backend is not None:
             self._backend = backend
         else:
+            # Copy profile to a separate directory if requested
+            if copy_profile and user_data_dir and profile_directory:
+                from webaxon.browser_utils.chrome.chrome_profiles import copy_chrome_profile
+
+                dest = None if copy_profile is True else str(copy_profile)
+                user_data_dir = copy_chrome_profile(
+                    user_data_dir, profile_directory, dest
+                )
+                if copy_profile is True:
+                    self._copied_profile_dir = user_data_dir
+
+            # Clear stale Chromium singleton locks before launch (persistent dirs
+            # and reused copies can leave SingletonLock/Socket/Cookie behind).
+            if user_data_dir:
+                _dt = (
+                    driver_type.value
+                    if hasattr(driver_type, "value")
+                    else str(driver_type)
+                )
+                # #region agent log
+                try:
+                    import json as _json
+                    import time as _time
+
+                    _p = "/Users/tchen7/MyProjects/.cursor/debug-deb179.log"
+                    _line = (
+                        _json.dumps(
+                            {
+                                "sessionId": "deb179",
+                                "timestamp": int(_time.time() * 1000),
+                                "hypothesisId": "H1",
+                                "location": "web_driver.__init__:pre_lock_cleanup",
+                                "message": "branch_check",
+                                "data": {
+                                    "driver_type_repr": repr(driver_type),
+                                    "_dt": _dt,
+                                    "user_data_dir": user_data_dir,
+                                    "profile_directory": profile_directory,
+                                    "copy_profile": copy_profile,
+                                    "will_run_cleanup": _dt
+                                    in (
+                                        "chrome",
+                                        "undetected_chrome",
+                                        "edge",
+                                        "chromium",
+                                    ),
+                                    "web_driver_file": __file__,
+                                },
+                                "runId": "pre-fix",
+                            },
+                            ensure_ascii=False,
+                        )
+                        + "\n"
+                    )
+                    with open(_p, "a", encoding="utf-8") as _df:
+                        _df.write(_line)
+                except Exception:
+                    pass
+                # #endregion
+                if _dt in (
+                    "chrome",
+                    "undetected_chrome",
+                    "edge",
+                    "chromium",
+                ):
+                    from webaxon.browser_utils.chrome.chrome_profiles import (
+                        remove_chrome_user_data_singleton_locks,
+                    )
+
+                    remove_chrome_user_data_singleton_locks(
+                        user_data_dir, profile_directory
+                    )
+
             # Default to SeleniumBackend for backward compatibility
             from webaxon.automation.backends.selenium import SeleniumBackend
 
@@ -161,6 +247,7 @@ class WebDriver(Debuggable):
                 timeout=timeout,
                 options=options,
                 user_data_dir=user_data_dir,
+                profile_directory=profile_directory,
                 config=config,
             )
 
@@ -1500,6 +1587,12 @@ class WebDriver(Debuggable):
         if hasattr(self, "_backend") and self._backend is not None:
             self._backend.quit()
             self._backend = None
+
+        # Clean up temp profile directory created by copy_profile=True
+        if hasattr(self, "_copied_profile_dir") and self._copied_profile_dir:
+            import shutil
+            shutil.rmtree(self._copied_profile_dir, ignore_errors=True)
+            self._copied_profile_dir = None
 
     def __del__(self):
         self.quit()

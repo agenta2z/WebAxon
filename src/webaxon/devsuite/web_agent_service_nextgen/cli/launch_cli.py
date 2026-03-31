@@ -4,6 +4,9 @@ Launch Script for Web Agent CLI Client
 Entry point for the interactive CLI that connects to a running
 web_agent_service_nextgen instance.
 
+Chrome profile selection is handled by the *service* (launch_service_debug_mode.py),
+not the CLI. The CLI simply connects and sends messages.
+
 Usage:
     python launch_cli.py [workspace_path] [--session-id SESSION_ID] [--queue-root-path PATH]
 """
@@ -19,9 +22,9 @@ project_root = current_file.parent.parent.parent.parent.parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-rich_python_utils_src = project_root / "SciencePythonUtils" / "src"
-agent_foundation_src = project_root / "ScienceModelingTools" / "src"
-webagent_src = project_root / "WebAgent" / "src"
+rich_python_utils_src = project_root / "RichPythonUtils" / "src"
+agent_foundation_src = project_root / "AgentFoundation" / "src"
+webagent_src = project_root / "WebAxon" / "src"
 
 for path_item in [rich_python_utils_src, agent_foundation_src, webagent_src]:
     if path_item.exists() and str(path_item) not in sys.path:

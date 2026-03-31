@@ -26,6 +26,7 @@ Usage:
 """
 
 import logging
+import os
 from enum import Enum
 from typing import List, Optional, TYPE_CHECKING, Union
 
@@ -94,6 +95,7 @@ def get_driver(
     timeout: int = 120,
     options: Optional[List[str]] = None,
     user_data_dir: Optional[str] = None,
+    profile_directory: Optional[str] = None,
     config: Optional["BrowserConfig"] = None,
     driver_version: Optional[str] = None,
     binary_location: Optional[str] = None,
@@ -122,6 +124,10 @@ def get_driver(
             Example: ["--disable-extensions", "--disable-gpu"]
         user_data_dir: Path to browser profile directory. Useful for
             preserving cookies and settings across sessions.
+        profile_directory: Chrome profile folder name within user_data_dir
+            (e.g., "Default", "Profile 1"). Only applies to Chromium-based
+            browsers. Overridden by UndetectedChromeConfig.profile_directory
+            when a config is provided. Default is "Default".
         config: BrowserConfig object with comprehensive browser settings.
             When provided, takes precedence over individual parameters.
         driver_version: Browser/driver version string.
@@ -171,6 +177,9 @@ def get_driver(
         config.driver_version if config and config.driver_version else driver_version
     )
     effective_extra_args = (config.extra_args if config else []) + (options or [])
+
+    # Set True when we patch undetected_chromedriver for Apple Silicon (see UC branch).
+    uc_darwin_arm64_platform_patch_applied = False
 
     # Get browser-specific config
     browser_config = config.get_browser_config(driver_type.value) if config else None
@@ -230,8 +239,12 @@ def get_driver(
     # Chrome (regular, using webdriver-manager)
     # =========================================================================
     elif driver_type == WebAutomationDrivers.Chrome:
-        # Version support - NOTE: ChromeDriverManager uses 'driver_version=' param
-        if effective_driver_version:
+        # Use system chromedriver if available (e.g., chromium-driver package on ARM Linux)
+        import shutil
+        system_chromedriver = os.environ.get("CHROMEDRIVER_PATH") or shutil.which("chromedriver")
+        if system_chromedriver:
+            webdriver_service = ChromeService(system_chromedriver)
+        elif effective_driver_version:
             webdriver_service = ChromeService(
                 ChromeDriverManager(driver_version=effective_driver_version).install()
             )
@@ -250,6 +263,12 @@ def get_driver(
             _options.add_argument(f"--user-data-dir={effective_user_data_dir}")
 
         # Apply Chrome-specific config
+        # Auto-detect system Chromium binary when using system chromedriver
+        if not binary_location and system_chromedriver:
+            system_chromium = shutil.which("chromium") or shutil.which("google-chrome") or shutil.which("chromium-browser")
+            if system_chromium:
+                binary_location = system_chromium
+
         if chrome_config:
             # Binary location
             if chrome_config.binary_location:
@@ -277,12 +296,44 @@ def get_driver(
     elif driver_type == WebAutomationDrivers.UndetectedChrome:
         webdriver_service = None  # UC doesn't use services
         _options = uc.ChromeOptions()
-        _options.add_argument("--profile-directory=Default")
         driver_class = uc.Chrome
 
         # Get UndetectedChrome-specific config
         if browser_config:
             uc_config = browser_config
+
+        # Apple Silicon: undetected_chromedriver's Patcher uses mac-x64 for all macOS
+        # when Chrome-for-Testing is used (>114). ARM Macs need chromedriver-mac-arm64
+        # or Chrome often never binds the debug port → "cannot connect to chrome".
+        import platform as _platform
+        import sys as _sys
+
+        if (
+            _sys.platform == "darwin"
+            and _platform.machine() == "arm64"
+            and not (uc_config and uc_config.driver_executable_path)
+        ):
+            import undetected_chromedriver.patcher as _uc_patcher_mod
+
+            _patch_attr = "_webaxon_darwin_arm64_platform_name_patched"
+            if not getattr(_uc_patcher_mod.Patcher, _patch_attr, False):
+                _orig_set_platform_name = _uc_patcher_mod.Patcher._set_platform_name
+
+                def _set_platform_name_mac_arm64(self):
+                    _orig_set_platform_name(self)
+                    if self.platform.endswith("darwin") and not self.is_old_chromedriver:
+                        self.platform_name = "mac-arm64"
+
+                _uc_patcher_mod.Patcher._set_platform_name = _set_platform_name_mac_arm64
+                setattr(_uc_patcher_mod.Patcher, _patch_attr, True)
+            uc_darwin_arm64_platform_patch_applied = True
+
+        uc_profile_dir = (
+            (uc_config.profile_directory if uc_config and uc_config.profile_directory else None)
+            or profile_directory
+            or "Default"
+        )
+        _options.add_argument(f"--profile-directory={uc_profile_dir}")
 
         # Apply arguments from UC config
         if uc_config and uc_config.arguments:
@@ -363,6 +414,12 @@ def get_driver(
         if effective_headless and driver_type != WebAutomationDrivers.UndetectedChrome:
             _options.add_argument("--headless")
 
+        # Docker/container compatibility flags
+        if os.environ.get("WEBAXON_DOCKER") or os.path.exists("/.dockerenv"):
+            _options.add_argument("--no-sandbox")
+            _options.add_argument("--disable-dev-shm-usage")
+            _options.add_argument("--disable-gpu")
+
         # User agent
         if effective_user_agent:
             agent_string = (
@@ -408,6 +465,46 @@ def get_driver(
                 uc_kwargs["browser_executable_path"] = uc_config.browser_executable_path
             if uc_config.driver_executable_path:
                 uc_kwargs["driver_executable_path"] = uc_config.driver_executable_path
+        # #region agent log
+        try:
+            import json as _json
+            import time as _time
+
+            _p = "/Users/tchen7/MyProjects/.cursor/debug-deb179.log"
+            _line = (
+                _json.dumps(
+                    {
+                        "sessionId": "deb179",
+                        "timestamp": int(_time.time() * 1000),
+                        "hypothesisId": "H4",
+                        "location": "driver_factory.get_driver:uc_before_instantiate",
+                        "message": "uc_chrome_kwargs",
+                        "data": {
+                            "effective_user_data_dir": effective_user_data_dir,
+                            "uc_profile_dir": uc_profile_dir,
+                            "param_user_data_dir": user_data_dir,
+                            "config_user_data_dir": getattr(
+                                config, "user_data_dir", None
+                            )
+                            if config
+                            else None,
+                            "version_main": uc_kwargs.get("version_main"),
+                            "has_headless_kw": "headless" in uc_kwargs,
+                            "driver_factory_file": __file__,
+                            "hypothesis_H6_uc_darwin_arm64_patch": uc_darwin_arm64_platform_patch_applied,
+                            "machine": __import__("platform").machine(),
+                        },
+                        "runId": "post-fix",
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n"
+            )
+            with open(_p, "a", encoding="utf-8") as _df:
+                _df.write(_line)
+        except Exception:
+            pass
+        # #endregion
         driver = driver_class(**uc_kwargs)
     else:
         _logger.debug(f"Creating driver with options only: {driver_class}")

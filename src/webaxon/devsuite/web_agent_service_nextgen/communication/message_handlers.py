@@ -940,6 +940,51 @@ class MessageHandlers:
 
         self._queue_service.put(self._config.client_control_queue_id, response)
 
+    def handle_set_browser_profile(self, message: Dict[str, Any]) -> None:
+        """Handle set_browser_profile message.
+
+        Updates the service config with the requested Chrome profile settings
+        before an agent (and its WebDriver) is created.
+
+        Message format:
+        {
+            'type': 'set_browser_profile',
+            'message': {
+                'profile_directory': 'Profile 1',
+                'user_data_dir': '/path/to/chrome/user-data'  (optional)
+            },
+            'timestamp': '...'
+        }
+        """
+        payload = message.get('message', {})
+        profile_directory = payload.get('profile_directory')
+        user_data_dir = payload.get('user_data_dir')
+        copy_profile = payload.get('copy_profile')
+
+        if profile_directory:
+            self._config.chrome_profile_directory = profile_directory
+        if user_data_dir:
+            self._config.chrome_user_data_dir = user_data_dir
+        if copy_profile is not None:
+            self._config.chrome_copy_profile = bool(copy_profile)
+
+        logger.info(
+            "Browser profile updated: profile_directory=%s, user_data_dir=%s, copy_profile=%s",
+            self._config.chrome_profile_directory,
+            self._config.chrome_user_data_dir,
+            self._config.chrome_copy_profile,
+        )
+
+        response = {
+            'type': 'set_browser_profile_response',
+            'success': True,
+            'profile_directory': self._config.chrome_profile_directory,
+            'user_data_dir': self._config.chrome_user_data_dir,
+            'copy_profile': self._config.chrome_copy_profile,
+            'timestamp': timestamp(),
+        }
+        self._queue_service.put(self._config.client_control_queue_id, response)
+
     def dispatch(self, message: Dict[str, Any]) -> None:
         """Dispatch message to appropriate handler.
         
@@ -972,6 +1017,7 @@ class MessageHandlers:
             'kb_list': self.handle_kb_list,
             'kb_restore': self.handle_kb_restore,
             'kb_review_spaces': self.handle_kb_review_spaces,
+            'set_browser_profile': self.handle_set_browser_profile,
         }
         
         # Get handler for this message type

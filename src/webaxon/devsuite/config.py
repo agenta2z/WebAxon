@@ -32,9 +32,9 @@ Use Case for True (default):
   4. User sends first message → Agent created → Browser opens → Message processed
 """
 
-OPTION_BASE_REASONER = 'Claude'
+OPTION_BASE_REASONER = 'AgClaude'
 
-OPTION_DEFAULT_PROMPT_VERSION = 'end_customers'
+OPTION_DEFAULT_PROMPT_VERSION = ''
 
 # Debug Mode Configuration
 # -------------------------
