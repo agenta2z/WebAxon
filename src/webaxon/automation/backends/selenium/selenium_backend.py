@@ -60,6 +60,7 @@ class SeleniumBackend(BackendAdapter):
         timeout: int = 120,
         options: Optional[List[str]] = None,
         user_data_dir: Optional[str] = None,
+        profile_directory: Optional[str] = None,
         config: Optional["BrowserConfig"] = None,
         driver_version: Optional[str] = None,
         binary_location: Optional[str] = None,
@@ -74,6 +75,8 @@ class SeleniumBackend(BackendAdapter):
             timeout: Default page load timeout in seconds
             options: Additional browser-specific command-line options
             user_data_dir: Path to browser profile directory
+            profile_directory: Chrome profile folder name within user_data_dir
+                (e.g., "Default", "Profile 1"). Only applies to Chromium-based browsers.
             config: BrowserConfig object with comprehensive browser settings
             driver_version: Browser/driver version string
             binary_location: Path to browser binary executable
@@ -96,6 +99,7 @@ class SeleniumBackend(BackendAdapter):
             timeout=timeout,
             options=options,
             user_data_dir=user_data_dir,
+            profile_directory=profile_directory,
             config=config,
             driver_version=driver_version,
             binary_location=binary_location,
@@ -699,6 +703,51 @@ class SeleniumBackend(BackendAdapter):
     def get_cookies(self) -> List[dict]:
         """Get all cookies from the current browser session."""
         return self._driver.get_cookies()
+
+    def add_cookies(self, cookies: List[dict]) -> None:
+        """Add cookies to the current browser session.
+
+        Selenium's add_cookie() expects specific keys. We normalize the
+        cookie dicts to match Selenium's expected format.
+        """
+        for cookie in cookies:
+            selenium_cookie = {
+                "name": cookie["name"],
+                "value": cookie["value"],
+            }
+            # Optional fields
+            if "domain" in cookie:
+                selenium_cookie["domain"] = cookie["domain"]
+            if "path" in cookie:
+                selenium_cookie["path"] = cookie["path"]
+            else:
+                selenium_cookie["path"] = "/"
+            if "secure" in cookie:
+                selenium_cookie["secure"] = cookie["secure"]
+            if "httpOnly" in cookie:
+                selenium_cookie["httpOnly"] = cookie["httpOnly"]
+            if "expiry" in cookie:
+                selenium_cookie["expiry"] = int(cookie["expiry"])
+            elif "expirationDate" in cookie:
+                selenium_cookie["expiry"] = int(cookie["expirationDate"])
+            if "sameSite" in cookie:
+                # Selenium expects "Strict", "Lax", or "None"
+                ss = cookie["sameSite"]
+                if ss.lower() in ("strict", "lax", "none"):
+                    selenium_cookie["sameSite"] = ss.capitalize()
+                    if ss.capitalize() == "None":
+                        selenium_cookie["sameSite"] = "None"
+
+            try:
+                self._driver.add_cookie(selenium_cookie)
+            except Exception as e:
+                _logger.warning(
+                    f"Failed to add cookie '{cookie.get('name')}': {e}"
+                )
+
+    def delete_all_cookies(self) -> None:
+        """Delete all cookies from the current browser session."""
+        self._driver.delete_all_cookies()
 
     def get_user_agent(self) -> str:
         """Get the user agent string of the current browser session."""

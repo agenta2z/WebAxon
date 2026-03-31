@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "WebAxon Cookie Export",
+  "version": "1.0.0",
+  "description": "Export browser cookies (including HttpOnly) to WebAxon sidecar for remote browser authentication",
+  "permissions": ["cookies"],
+  "host_permissions": ["<all_urls>"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Export Cookies to WebAxon"
+  }
+}

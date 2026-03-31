@@ -804,6 +804,37 @@ class BackendAdapter(ABC):
         pass
 
     @abstractmethod
+    def add_cookies(self, cookies: List[dict]) -> None:
+        """
+        Add cookies to the current browser session.
+
+        This is used by the remote authentication module to inject cookies
+        received from the user's local browser into the headless browser,
+        enabling authenticated access to internal websites.
+
+        Args:
+            cookies: List of cookie dictionaries. Each dict should contain
+                at minimum 'name' and 'value'. Optional keys include:
+                'domain', 'path', 'secure', 'httpOnly', 'sameSite', 'expiry'.
+
+        Note:
+            - The browser should be navigated to the target domain before
+              adding cookies (browsers enforce domain matching).
+            - HttpOnly cookies from the user's browser can be injected here
+              even though JavaScript cannot read them client-side.
+        """
+        pass
+
+    @abstractmethod
+    def delete_all_cookies(self) -> None:
+        """
+        Delete all cookies from the current browser session.
+
+        Useful for clearing state before injecting new authentication cookies.
+        """
+        pass
+
+    @abstractmethod
     def get_user_agent(self) -> str:
         """
         Get the user agent string of the current browser session.

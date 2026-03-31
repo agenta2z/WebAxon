@@ -1134,6 +1134,66 @@ class PlaywrightBackend(BackendAdapter):
         """Get all cookies from the current browser session."""
         return self._context.cookies()
 
+    def add_cookies(self, cookies: List[dict]) -> None:
+        """Add cookies to the current browser session.
+
+        Playwright's add_cookies() expects a specific format. We normalize
+        the cookie dicts to match Playwright's expected format.
+        """
+        pw_cookies = []
+        for cookie in cookies:
+            pw_cookie = {
+                "name": cookie["name"],
+                "value": cookie["value"],
+            }
+            # Playwright requires either 'url' or both 'domain' and 'path'
+            if "domain" in cookie:
+                pw_cookie["domain"] = cookie["domain"]
+                pw_cookie["path"] = cookie.get("path", "/")
+            elif "url" in cookie:
+                pw_cookie["url"] = cookie["url"]
+            else:
+                # Derive from current page URL
+                pw_cookie["url"] = self._page.url
+
+            # Optional fields
+            if "secure" in cookie:
+                pw_cookie["secure"] = cookie["secure"]
+            if "httpOnly" in cookie:
+                pw_cookie["httpOnly"] = cookie["httpOnly"]
+            if "sameSite" in cookie:
+                ss = cookie["sameSite"].lower()
+                if ss in ("strict", "lax", "none"):
+                    pw_cookie["sameSite"] = ss.capitalize()
+                    if ss == "none":
+                        pw_cookie["sameSite"] = "None"
+            if "expires" in cookie:
+                pw_cookie["expires"] = float(cookie["expires"])
+            elif "expiry" in cookie:
+                pw_cookie["expires"] = float(cookie["expiry"])
+            elif "expirationDate" in cookie:
+                pw_cookie["expires"] = float(cookie["expirationDate"])
+
+            pw_cookies.append(pw_cookie)
+
+        if pw_cookies:
+            try:
+                self._context.add_cookies(pw_cookies)
+            except Exception as e:
+                _logger.warning(f"Failed to add cookies: {e}")
+                # Fall back to adding one by one
+                for pw_cookie in pw_cookies:
+                    try:
+                        self._context.add_cookies([pw_cookie])
+                    except Exception as e2:
+                        _logger.warning(
+                            f"Failed to add cookie '{pw_cookie.get('name')}': {e2}"
+                        )
+
+    def delete_all_cookies(self) -> None:
+        """Delete all cookies from the current browser session."""
+        self._context.clear_cookies()
+
     def get_user_agent(self) -> str:
         """Get the user agent string of the current browser session."""
         return self._page.evaluate("navigator.userAgent")
