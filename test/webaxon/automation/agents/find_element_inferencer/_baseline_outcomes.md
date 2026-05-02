@@ -57,3 +57,26 @@ python -m pytest WebAxon/test/webaxon/automation/agents/find_element_inferencer/
 # Real-LLM (with ANTHROPIC_API_KEY)
 python -m pytest WebAxon/test/webaxon/automation/agents/find_element_inferencer/test_find_element_inferencer_real.py -v -m integration
 ```
+
+## Post-migration verification (2026-05-02)
+
+After moving ``FindElementInferencer`` from ``TemplatedInferencer`` (composition
+wrapper) to ``TemplatedInferencerBase`` (inheritance):
+
+```
+MRO: FindElementInferencer → TemplatedInferencerBase → InferencerBase → Debuggable → ...
+inf.template_key == 'find_element'
+inf.base_inferencer is the composed ClaudeApiInferencer
+inf.max_html_length == 50000
+```
+
+| Test | Pre-migration xpath | Post-migration xpath | Behavior |
+|------|---------------------|----------------------|----------|
+| `test_real_find_google_search_submit_button` | `(//input[@value='Google Search'])[2]` | `(//input[@value='Google Search'])[2]` | identical match |
+| `test_real_find_im_feeling_lucky_button`     | `//input[@id='gbqfbb']`                 | `//input[@id='gbqfbb']`                 | identical match |
+| `test_real_find_with_options_hint`           | `(//input[@value='Google Search'])[2]` | `(//input[@value='Google Search'])[2]` | identical match |
+
+All unit tests (14/14) and real-LLM tests (3/3) pass post-migration. The
+AgentFoundation YAML smoke test (`test_yaml_smoke_instantiate`) also still
+passes — the migration is a clean swap of inheritance bases with no
+visible-behavior changes for callers.
