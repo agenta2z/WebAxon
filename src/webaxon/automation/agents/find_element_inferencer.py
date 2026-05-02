@@ -207,8 +207,11 @@ class FindElementInferencer(TemplatedInferencerBase):
         """
         Find element matching description and return its locator.
 
-        This method follows the base TemplatedInferencer signature while adding
-        domain-specific keyword-only parameters for element finding.
+        Custom call signature with domain-specific keyword-only parameters
+        for element finding. The leading positional-friendly args
+        (``template_key``, ``feed``, ``inference_config``, ``active_template_*``)
+        are kept for backward compatibility with the wrapper-era API; the
+        keyword-only ``html_source`` / ``description`` are the modern path.
 
         Args:
             template_key: Template key (default: self.template_key).
