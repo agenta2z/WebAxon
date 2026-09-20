@@ -36,7 +36,7 @@ Required Setup:
 --------------
 This example requires two LLM-based components:
 1. `find_element_agent` - For TargetSpec(strategy="agent", ...)
-   Uses FindElementInferencer (extends TemplatedInferencer)
+   Uses FindElementInferencer (extends TemplatedInferencerBase)
 2. `agent` executor - For graph.action("agent", ...)
    Uses PromptBasedActionAgent (same as web_agent_service.py)
 

@@ -6,7 +6,7 @@ from agent_foundation.agents.prompt_based_agents.prompt_based_action_agent impor
 from agent_foundation.agents.prompt_based_agents.prompt_based_planning_agent import PromptBasedActionPlanningAgent
 from agent_foundation.agents.prompt_based_agents.prompt_based_response_agent import PromptBasedResponseActionAgent
 from agent_foundation.common.inferencers.agentic_inferencers.common import ReflectionStyles, ResponseSelectors
-from agent_foundation.common.inferencers.agentic_inferencers.reflective_inferencer import ReflectiveInferencer
+from agent_foundation.common.inferencers.agentic_inferencers.flow_inferencers.reflective_inferencer import ReflectiveInferencer
 from agent_foundation.common.inferencers.api_inferencers.claude_api_inferencer import (
     ClaudeApiInferencer
 )

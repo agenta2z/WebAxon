@@ -5,7 +5,7 @@ This script demonstrates how to set up and execute the Google search example
 using PromptBasedActionAgent for task execution (same infrastructure as web_agent_service.py).
 
 Components:
-- FindElementInferencer: One-inference agent for LLM-based element finding (extends TemplatedInferencer)
+- FindElementInferencer: One-inference agent for LLM-based element finding (extends TemplatedInferencerBase)
 - create_action_agent: Factory function for creating action agents with default templates
 
 Prerequisites:
@@ -82,7 +82,7 @@ def main():
     # 4. Create agents
     _logger.info("Creating agents...")
 
-    # Find element inferencer (extends TemplatedInferencer)
+    # Find element inferencer (extends TemplatedInferencerBase)
     # Note: webdriver is passed at call time, not construction time
     find_element_inferencer = FindElementInferencer(
         base_inferencer=reasoner,
