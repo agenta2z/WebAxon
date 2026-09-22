@@ -12,132 +12,135 @@ This module provides utilities to sanitize text before sending to WebDriver.
 import re
 import unicodedata
 from enum import StrEnum
-from typing import Optional, Callable
+from typing import Callable, Optional
 
 
 class NonBMPHandling(StrEnum):
     """How to handle non-BMP characters (code points > U+FFFF)."""
-    KEEP = "keep"               # Keep non-BMP characters as-is (only works with JavaScript implementation)
-    REMOVE = "remove"           # Remove non-BMP characters entirely
-    REPLACE = "replace"         # Replace with a placeholder character
+
+    KEEP = "keep"  # Keep non-BMP characters as-is (only works with JavaScript implementation)
+    REMOVE = "remove"  # Remove non-BMP characters entirely
+    REPLACE = "replace"  # Replace with a placeholder character
     TRANSLITERATE = "transliterate"  # Attempt to transliterate (e.g., emoji to text)
-    RAISE = "raise"             # Raise an exception if non-BMP found
+    RAISE = "raise"  # Raise an exception if non-BMP found
 
 
 class NewlineHandling(StrEnum):
     """How to handle newline characters."""
-    KEEP = "keep"               # Keep newlines as-is
-    SPACE = "space"             # Replace with single space
-    REMOVE = "remove"           # Remove entirely
-    NORMALIZE = "normalize"     # Normalize to \n only (remove \r)
+
+    KEEP = "keep"  # Keep newlines as-is
+    SPACE = "space"  # Replace with single space
+    REMOVE = "remove"  # Remove entirely
+    NORMALIZE = "normalize"  # Normalize to \n only (remove \r)
 
 
 class WhitespaceHandling(StrEnum):
     """How to handle whitespace."""
-    KEEP = "keep"               # Keep as-is
-    NORMALIZE = "normalize"     # Collapse multiple spaces to single
-    STRIP = "strip"             # Strip leading/trailing only
-    FULL = "full"               # Both normalize and strip
+
+    KEEP = "keep"  # Keep as-is
+    NORMALIZE = "normalize"  # Collapse multiple spaces to single
+    STRIP = "strip"  # Strip leading/trailing only
+    FULL = "full"  # Both normalize and strip
 
 
 # Common emoji descriptions for transliteration
 _EMOJI_TRANSLITERATIONS = {
     # Faces
-    '\U0001F600': ':grinning:',
-    '\U0001F601': ':beaming:',
-    '\U0001F602': ':joy:',
-    '\U0001F603': ':smiley:',
-    '\U0001F604': ':smile:',
-    '\U0001F605': ':sweat_smile:',
-    '\U0001F606': ':laughing:',
-    '\U0001F607': ':innocent:',
-    '\U0001F608': ':smiling_imp:',
-    '\U0001F609': ':wink:',
-    '\U0001F60A': ':blush:',
-    '\U0001F60B': ':yum:',
-    '\U0001F60C': ':relieved:',
-    '\U0001F60D': ':heart_eyes:',
-    '\U0001F60E': ':sunglasses:',
-    '\U0001F60F': ':smirk:',
-    '\U0001F610': ':neutral_face:',
-    '\U0001F611': ':expressionless:',
-    '\U0001F612': ':unamused:',
-    '\U0001F613': ':sweat:',
-    '\U0001F614': ':pensive:',
-    '\U0001F615': ':confused:',
-    '\U0001F616': ':confounded:',
-    '\U0001F617': ':kissing:',
-    '\U0001F618': ':kissing_heart:',
-    '\U0001F619': ':kissing_smiling_eyes:',
-    '\U0001F61A': ':kissing_closed_eyes:',
-    '\U0001F61B': ':stuck_out_tongue:',
-    '\U0001F61C': ':stuck_out_tongue_winking_eye:',
-    '\U0001F61D': ':stuck_out_tongue_closed_eyes:',
-    '\U0001F61E': ':disappointed:',
-    '\U0001F61F': ':worried:',
-    '\U0001F620': ':angry:',
-    '\U0001F621': ':rage:',
-    '\U0001F622': ':cry:',
-    '\U0001F623': ':persevere:',
-    '\U0001F624': ':triumph:',
-    '\U0001F625': ':disappointed_relieved:',
-    '\U0001F626': ':frowning:',
-    '\U0001F627': ':anguished:',
-    '\U0001F628': ':fearful:',
-    '\U0001F629': ':weary:',
-    '\U0001F62A': ':sleepy:',
-    '\U0001F62B': ':tired_face:',
-    '\U0001F62C': ':grimacing:',
-    '\U0001F62D': ':sob:',
-    '\U0001F62E': ':open_mouth:',
-    '\U0001F62F': ':hushed:',
-    '\U0001F630': ':cold_sweat:',
-    '\U0001F631': ':scream:',
-    '\U0001F632': ':astonished:',
-    '\U0001F633': ':flushed:',
-    '\U0001F634': ':sleeping:',
-    '\U0001F635': ':dizzy_face:',
-    '\U0001F636': ':no_mouth:',
-    '\U0001F637': ':mask:',
+    "\U0001f600": ":grinning:",
+    "\U0001f601": ":beaming:",
+    "\U0001f602": ":joy:",
+    "\U0001f603": ":smiley:",
+    "\U0001f604": ":smile:",
+    "\U0001f605": ":sweat_smile:",
+    "\U0001f606": ":laughing:",
+    "\U0001f607": ":innocent:",
+    "\U0001f608": ":smiling_imp:",
+    "\U0001f609": ":wink:",
+    "\U0001f60a": ":blush:",
+    "\U0001f60b": ":yum:",
+    "\U0001f60c": ":relieved:",
+    "\U0001f60d": ":heart_eyes:",
+    "\U0001f60e": ":sunglasses:",
+    "\U0001f60f": ":smirk:",
+    "\U0001f610": ":neutral_face:",
+    "\U0001f611": ":expressionless:",
+    "\U0001f612": ":unamused:",
+    "\U0001f613": ":sweat:",
+    "\U0001f614": ":pensive:",
+    "\U0001f615": ":confused:",
+    "\U0001f616": ":confounded:",
+    "\U0001f617": ":kissing:",
+    "\U0001f618": ":kissing_heart:",
+    "\U0001f619": ":kissing_smiling_eyes:",
+    "\U0001f61a": ":kissing_closed_eyes:",
+    "\U0001f61b": ":stuck_out_tongue:",
+    "\U0001f61c": ":stuck_out_tongue_winking_eye:",
+    "\U0001f61d": ":stuck_out_tongue_closed_eyes:",
+    "\U0001f61e": ":disappointed:",
+    "\U0001f61f": ":worried:",
+    "\U0001f620": ":angry:",
+    "\U0001f621": ":rage:",
+    "\U0001f622": ":cry:",
+    "\U0001f623": ":persevere:",
+    "\U0001f624": ":triumph:",
+    "\U0001f625": ":disappointed_relieved:",
+    "\U0001f626": ":frowning:",
+    "\U0001f627": ":anguished:",
+    "\U0001f628": ":fearful:",
+    "\U0001f629": ":weary:",
+    "\U0001f62a": ":sleepy:",
+    "\U0001f62b": ":tired_face:",
+    "\U0001f62c": ":grimacing:",
+    "\U0001f62d": ":sob:",
+    "\U0001f62e": ":open_mouth:",
+    "\U0001f62f": ":hushed:",
+    "\U0001f630": ":cold_sweat:",
+    "\U0001f631": ":scream:",
+    "\U0001f632": ":astonished:",
+    "\U0001f633": ":flushed:",
+    "\U0001f634": ":sleeping:",
+    "\U0001f635": ":dizzy_face:",
+    "\U0001f636": ":no_mouth:",
+    "\U0001f637": ":mask:",
     # Gestures
-    '\U0001F44D': ':thumbsup:',
-    '\U0001F44E': ':thumbsdown:',
-    '\U0001F44B': ':wave:',
-    '\U0001F44F': ':clap:',
-    '\U0001F64F': ':pray:',
+    "\U0001f44d": ":thumbsup:",
+    "\U0001f44e": ":thumbsdown:",
+    "\U0001f44b": ":wave:",
+    "\U0001f44f": ":clap:",
+    "\U0001f64f": ":pray:",
     # Hearts
-    '\u2764': ':heart:',
-    '\U0001F494': ':broken_heart:',
-    '\U0001F495': ':two_hearts:',
-    '\U0001F496': ':sparkling_heart:',
-    '\U0001F497': ':heartpulse:',
-    '\U0001F498': ':cupid:',
-    '\U0001F499': ':blue_heart:',
-    '\U0001F49A': ':green_heart:',
-    '\U0001F49B': ':yellow_heart:',
-    '\U0001F49C': ':purple_heart:',
+    "\u2764": ":heart:",
+    "\U0001f494": ":broken_heart:",
+    "\U0001f495": ":two_hearts:",
+    "\U0001f496": ":sparkling_heart:",
+    "\U0001f497": ":heartpulse:",
+    "\U0001f498": ":cupid:",
+    "\U0001f499": ":blue_heart:",
+    "\U0001f49a": ":green_heart:",
+    "\U0001f49b": ":yellow_heart:",
+    "\U0001f49c": ":purple_heart:",
     # Common symbols
-    '\U0001F4A1': ':bulb:',
-    '\U0001F4A5': ':boom:',
-    '\U0001F4AF': ':100:',
-    '\U0001F525': ':fire:',
-    '\u2B50': ':star:',
-    '\U0001F31F': ':star2:',
-    '\U0001F389': ':tada:',
-    '\U0001F388': ':balloon:',
-    '\U0001F381': ':gift:',
-    '\U0001F3C6': ':trophy:',
+    "\U0001f4a1": ":bulb:",
+    "\U0001f4a5": ":boom:",
+    "\U0001f4af": ":100:",
+    "\U0001f525": ":fire:",
+    "\u2b50": ":star:",
+    "\U0001f31f": ":star2:",
+    "\U0001f389": ":tada:",
+    "\U0001f388": ":balloon:",
+    "\U0001f381": ":gift:",
+    "\U0001f3c6": ":trophy:",
     # Checks and marks
-    '\u2705': ':white_check_mark:',
-    '\u274C': ':x:',
-    '\u2714': ':heavy_check_mark:',
-    '\u2716': ':heavy_multiplication_x:',
-    '\u26A0': ':warning:',
+    "\u2705": ":white_check_mark:",
+    "\u274c": ":x:",
+    "\u2714": ":heavy_check_mark:",
+    "\u2716": ":heavy_multiplication_x:",
+    "\u26a0": ":warning:",
     # Arrows
-    '\u27A1': ':arrow_right:',
-    '\u2B05': ':arrow_left:',
-    '\u2B06': ':arrow_up:',
-    '\u2B07': ':arrow_down:',
+    "\u27a1": ":arrow_right:",
+    "\u2b05": ":arrow_left:",
+    "\u2b06": ":arrow_up:",
+    "\u2b07": ":arrow_down:",
 }
 
 
@@ -183,9 +186,9 @@ def get_non_bmp_characters(text: str) -> list:
     for i, char in enumerate(text):
         if ord(char) > 0xFFFF:
             try:
-                name = unicodedata.name(char, 'UNKNOWN')
+                name = unicodedata.name(char, "UNKNOWN")
             except ValueError:
-                name = 'UNKNOWN'
+                name = "UNKNOWN"
             non_bmp.append((char, i, ord(char), name))
     return non_bmp
 
@@ -200,10 +203,10 @@ def remove_non_bmp(text: str) -> str:
     Returns:
         Text with non-BMP characters removed
     """
-    return ''.join(c for c in text if ord(c) <= 0xFFFF)
+    return "".join(c for c in text if ord(c) <= 0xFFFF)
 
 
-def replace_non_bmp(text: str, replacement: str = '\uFFFD') -> str:
+def replace_non_bmp(text: str, replacement: str = "\ufffd") -> str:
     """
     Replace non-BMP characters with a placeholder.
 
@@ -214,10 +217,10 @@ def replace_non_bmp(text: str, replacement: str = '\uFFFD') -> str:
     Returns:
         Text with non-BMP characters replaced
     """
-    return ''.join(c if ord(c) <= 0xFFFF else replacement for c in text)
+    return "".join(c if ord(c) <= 0xFFFF else replacement for c in text)
 
 
-def transliterate_non_bmp(text: str, fallback: str = '') -> str:
+def transliterate_non_bmp(text: str, fallback: str = "") -> str:
     """
     Attempt to transliterate non-BMP characters to ASCII-safe text representations.
 
@@ -242,20 +245,20 @@ def transliterate_non_bmp(text: str, fallback: str = '') -> str:
                 name = unicodedata.name(char, None)
                 if name:
                     # Convert name to a shorter form
-                    short_name = name.lower().replace(' ', '_')
-                    result.append(f':{short_name}:')
+                    short_name = name.lower().replace(" ", "_")
+                    result.append(f":{short_name}:")
                 else:
                     result.append(fallback)
             except ValueError:
                 result.append(fallback)
-    return ''.join(result)
+    return "".join(result)
 
 
 def handle_non_bmp(
     text: str,
     handling: NonBMPHandling = NonBMPHandling.REMOVE,
-    replacement: str = '\uFFFD',
-    transliterate_fallback: str = ''
+    replacement: str = "\ufffd",
+    transliterate_fallback: str = "",
 ) -> str:
     """
     Handle non-BMP characters according to the specified strategy.
@@ -283,9 +286,8 @@ def handle_non_bmp(
     elif handling == NonBMPHandling.RAISE:
         non_bmp = get_non_bmp_characters(text)
         if non_bmp:
-            char_info = ', '.join(
-                f"'{c}' (U+{cp:04X}, {name})"
-                for c, _, cp, name in non_bmp[:5]
+            char_info = ", ".join(
+                f"'{c}' (U+{cp:04X}, {name})" for c, _, cp, name in non_bmp[:5]
             )
             if len(non_bmp) > 5:
                 char_info += f", ... and {len(non_bmp) - 5} more"
@@ -299,8 +301,7 @@ def handle_non_bmp(
 
 
 def handle_newlines(
-    text: str,
-    handling: NewlineHandling = NewlineHandling.SPACE
+    text: str, handling: NewlineHandling = NewlineHandling.SPACE
 ) -> str:
     """
     Handle newline characters according to the specified strategy.
@@ -316,19 +317,18 @@ def handle_newlines(
         return text
     elif handling == NewlineHandling.SPACE:
         # Replace all newline variants with space
-        return re.sub(r'[\r\n]+', ' ', text)
+        return re.sub(r"[\r\n]+", " ", text)
     elif handling == NewlineHandling.REMOVE:
-        return re.sub(r'[\r\n]+', '', text)
+        return re.sub(r"[\r\n]+", "", text)
     elif handling == NewlineHandling.NORMALIZE:
         # Convert \r\n and \r to just \n
-        return text.replace('\r\n', '\n').replace('\r', '\n')
+        return text.replace("\r\n", "\n").replace("\r", "\n")
     else:
         raise ValueError(f"Unknown NewlineHandling: {handling}")
 
 
 def handle_whitespace(
-    text: str,
-    handling: WhitespaceHandling = WhitespaceHandling.NORMALIZE
+    text: str, handling: WhitespaceHandling = WhitespaceHandling.NORMALIZE
 ) -> str:
     """
     Handle whitespace according to the specified strategy.
@@ -344,12 +344,12 @@ def handle_whitespace(
         return text
     elif handling == WhitespaceHandling.NORMALIZE:
         # Collapse multiple spaces/tabs to single space (preserving newlines)
-        return re.sub(r'[^\S\n]+', ' ', text)
+        return re.sub(r"[^\S\n]+", " ", text)
     elif handling == WhitespaceHandling.STRIP:
         return text.strip()
     elif handling == WhitespaceHandling.FULL:
         # Both normalize and strip
-        text = re.sub(r'[^\S\n]+', ' ', text)
+        text = re.sub(r"[^\S\n]+", " ", text)
         return text.strip()
     else:
         raise ValueError(f"Unknown WhitespaceHandling: {handling}")
@@ -368,15 +368,13 @@ def remove_control_characters(text: str, keep_whitespace: bool = True) -> str:
     """
     if keep_whitespace:
         # Remove control chars except space, tab, newline, carriage return
-        return ''.join(
-            c for c in text
-            if not unicodedata.category(c).startswith('C') or c in ' \t\n\r'
+        return "".join(
+            c
+            for c in text
+            if not unicodedata.category(c).startswith("C") or c in " \t\n\r"
         )
     else:
-        return ''.join(
-            c for c in text
-            if not unicodedata.category(c).startswith('C')
-        )
+        return "".join(c for c in text if not unicodedata.category(c).startswith("C"))
 
 
 def sanitize_input_text_for_webdriver(
@@ -385,9 +383,9 @@ def sanitize_input_text_for_webdriver(
     newline_handling: NewlineHandling = NewlineHandling.SPACE,
     whitespace_handling: WhitespaceHandling = WhitespaceHandling.NORMALIZE,
     remove_control_chars: bool = True,
-    non_bmp_replacement: str = '\uFFFD',
-    transliterate_fallback: str = '',
-    custom_sanitizer: Optional[Callable[[str], str]] = None
+    non_bmp_replacement: str = "\ufffd",
+    transliterate_fallback: str = "",
+    custom_sanitizer: Optional[Callable[[str], str]] = None,
 ) -> str:
     """
     Comprehensive text sanitization for WebDriver input.
@@ -424,7 +422,7 @@ def sanitize_input_text_for_webdriver(
         text,
         handling=non_bmp_handling,
         replacement=non_bmp_replacement,
-        transliterate_fallback=transliterate_fallback
+        transliterate_fallback=transliterate_fallback,
     )
 
     # Step 2: Remove control characters (if enabled)
@@ -462,7 +460,7 @@ def sanitize_input_text_for_webdriver_strict(text: str) -> str:
         non_bmp_handling=NonBMPHandling.REMOVE,
         newline_handling=NewlineHandling.SPACE,
         whitespace_handling=WhitespaceHandling.FULL,
-        remove_control_chars=True
+        remove_control_chars=True,
     )
 
 
@@ -484,5 +482,5 @@ def sanitize_input_text_for_webdriver_preserve_formatting(text: str) -> str:
         non_bmp_handling=NonBMPHandling.REMOVE,
         newline_handling=NewlineHandling.NORMALIZE,
         whitespace_handling=WhitespaceHandling.KEEP,
-        remove_control_chars=True
+        remove_control_chars=True,
     )

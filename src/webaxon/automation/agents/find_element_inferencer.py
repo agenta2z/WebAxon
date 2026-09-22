@@ -1,11 +1,7 @@
 """
 FindElementInferencer - One-inference agent for finding HTML elements via LLM.
 
-Inherits from ``TemplatedInferencerBase`` for template + LLM machinery and
-holds a ``base_inferencer`` collaborator (composition) so the actual LLM
-call can target any concrete inferencer (e.g. ``ClaudeApiInferencer``).
-
-Adds on top:
+This inferencer extends TemplatedInferencer to add:
 1. Pre-processing: HTML extraction and sanitization with __id__ injection
 2. Post-processing: Parse element ID from LLM response and map back to element
 
@@ -34,28 +30,26 @@ Example with HTML string:
 """
 
 import re
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, TYPE_CHECKING, Union
 
-from attr import attrs, attrib, Factory
+from agent_foundation.common.inferencers.templated_inferencer import TemplatedInferencer
+from attr import attrib, attrs, Factory
 from bs4 import BeautifulSoup
-
-from agent_foundation.common.inferencers.inferencer_base import InferencerBase
-from agent_foundation.common.inferencers.templated_inferencer_base import (
-    TemplatedInferencerBase,
-)
 
 if TYPE_CHECKING:
     from webaxon.automation.web_driver import WebDriver
+from webaxon.automation.backends.selenium.element_selection import (
+    add_unique_index_to_elements,
+)
+from webaxon.html_utils.element_identification import (
+    add_unique_index_to_html,
+    ATTR_NAME_INCREMENTAL_ID,
+    elements_to_xpath,
+)
 from webaxon.html_utils.sanitization import (
     clean_html,
     DEFAULT_HTML_CLEAN_ATTRIBUTES_TO_KEEP_WITH_INCREMENTAL_ID,
 )
-from webaxon.html_utils.element_identification import (
-    ATTR_NAME_INCREMENTAL_ID,
-    add_unique_index_to_html,
-    elements_to_xpath,
-)
-from webaxon.automation.backends.selenium.element_selection import add_unique_index_to_elements
 
 
 @attrs
@@ -72,6 +66,7 @@ class FindElementInferenceConfig:
         options: Optional hints for element finding passed to LLM template.
             Examples: ['static'] for cacheable elements, ['visible'] for visible only.
     """
+
     inject_unique_index_to_elements: bool = attrib(default=True)
     options: Optional[List[str]] = attrib(default=None)
 
@@ -96,7 +91,9 @@ def _parse_element_id(response: Any) -> str:
     text = str(response).strip()
 
     # Try to extract from <TargetElementID> tags (take the last match)
-    tag_matches = re.findall(r'<TargetElementID>\s*(.+?)\s*</TargetElementID>', text, re.IGNORECASE)
+    tag_matches = re.findall(
+        r"<TargetElementID>\s*(.+?)\s*</TargetElementID>", text, re.IGNORECASE
+    )
     if tag_matches:
         content = tag_matches[-1].strip()  # Take the last match
         # Check for explicit not found
@@ -106,7 +103,7 @@ def _parse_element_id(response: Any) -> str:
         if content.isdigit():
             return content
         # Try to extract numeric ID from content
-        num_match = re.search(r'\d+', content)
+        num_match = re.search(r"\d+", content)
         if num_match:
             return num_match.group()
 
@@ -115,7 +112,7 @@ def _parse_element_id(response: Any) -> str:
         raise ValueError("Element not found for the given description")
 
     # Fallback: Extract numeric ID (the __id__ value)
-    match = re.search(r'\d+', text)
+    match = re.search(r"\d+", text)
     if match:
         return match.group()
 
@@ -127,11 +124,11 @@ def _parse_element_id(response: Any) -> str:
 
 
 @attrs
-class FindElementInferencer(TemplatedInferencerBase):
+class FindElementInferencer(TemplatedInferencer):
     """
     One-inference agent for finding HTML elements via LLM.
 
-    Extends ``TemplatedInferencerBase`` to add:
+    Extends TemplatedInferencer to add:
     - Pre-processing: HTML extraction and sanitization with __id__ injection
     - Post-processing: Parse element ID and map back to element (via __id__ or xpath)
 
@@ -140,10 +137,10 @@ class FindElementInferencer(TemplatedInferencerBase):
         xpath = inferencer("<html>...</html>", description="submit button")
 
     Attributes:
-        base_inferencer: Any InferencerBase subclass for the actual LLM call.
-        template_manager: TemplateManager with "find_element" template (inherited).
-        template_key: Template key to render (defaults to ``"find_element"``).
-        max_html_length: Maximum HTML characters to send to LLM (None = no limit).
+        base_inferencer: Any InferencerBase subclass for LLM calls (inherited)
+        template_manager: TemplateManager with "find_element" template (inherited)
+        max_html_length: Maximum HTML characters to send to LLM (None = no limit)
+        default_template_key: Template key to use (default "find_element")
 
     Example:
         >>> inferencer = FindElementInferencer(
@@ -158,39 +155,9 @@ class FindElementInferencer(TemplatedInferencerBase):
         >>> config = FindElementInferenceConfig(inject_unique_index_to_elements=False)
         >>> xpath = inferencer(html_source=driver, description="button", inference_config=config)
     """
-    base_inferencer: Optional[InferencerBase] = attrib(default=None)
+
     max_html_length: int = attrib(default=None)
-    # Override the inherited ``template_key`` default — this inferencer always
-    # renders the bundled ``find_element`` template unless the caller chooses
-    # otherwise via the keyword arg on ``__call__``.
-    template_key: str = attrib(default="find_element")
-
-    # ------------------------------------------------------------------
-    # InferencerBase abstract-method satisfaction.
-    #
-    # FindElementInferencer's public API is the custom ``__call__`` /
-    # ``infer`` below, which bypasses the InferencerBase pipeline and
-    # routes through ``_find_with_dom_injection`` / ``_find_with_xpath_mapping``
-    # directly. ``_infer`` / ``_ainfer`` exist only so the class is
-    # instantiable (the abstract methods on InferencerBase). If anything
-    # ever calls them through the standard pipeline, they delegate to the
-    # composed ``base_inferencer``.
-    # ------------------------------------------------------------------
-
-    def _infer(self, inference_input, inference_config=None, **kwargs):
-        return self.base_inferencer(
-            inference_input, inference_config=inference_config, **kwargs
-        )
-
-    async def _ainfer(self, inference_input, inference_config=None, **kwargs):
-        ainfer = getattr(self.base_inferencer, "ainfer", None)
-        if ainfer is not None:
-            return await ainfer(
-                inference_input, inference_config=inference_config, **kwargs
-            )
-        return self.base_inferencer(
-            inference_input, inference_config=inference_config, **kwargs
-        )
+    default_template_key: str = attrib(default="find_element")
 
     def __call__(
         self,
@@ -202,19 +169,16 @@ class FindElementInferencer(TemplatedInferencerBase):
         *,
         html_source: Union[str, "WebDriver"] = None,
         description: str = None,
-        **kwargs
+        **kwargs,
     ) -> str:
         """
         Find element matching description and return its locator.
 
-        Custom call signature with domain-specific keyword-only parameters
-        for element finding. The leading positional-friendly args
-        (``template_key``, ``feed``, ``inference_config``, ``active_template_*``)
-        are kept for backward compatibility with the wrapper-era API; the
-        keyword-only ``html_source`` / ``description`` are the modern path.
+        This method follows the base TemplatedInferencer signature while adding
+        domain-specific keyword-only parameters for element finding.
 
         Args:
-            template_key: Template key (default: self.template_key).
+            template_key: Template key (default: self.default_template_key).
             feed: Feed dict for template. If html_source/description provided,
                   they override feed values.
             inference_config: FindElementInferenceConfig with:
@@ -258,20 +222,26 @@ class FindElementInferencer(TemplatedInferencerBase):
 
         if isinstance(html_source, str):
             # HTML string provided - always use xpath mapping
-            return self._find_with_xpath_mapping(html_source, description, options, **kwargs)
+            return self._find_with_xpath_mapping(
+                html_source, description, options, **kwargs
+            )
         else:
             # WebDriver provided
             if config.inject_unique_index_to_elements:
-                return self._find_with_dom_injection(html_source, description, options, **kwargs)
+                return self._find_with_dom_injection(
+                    html_source, description, options, **kwargs
+                )
             else:
-                return self._find_with_xpath_mapping(html_source.page_source, description, options, **kwargs)
+                return self._find_with_xpath_mapping(
+                    html_source.page_source, description, options, **kwargs
+                )
 
     def _find_with_dom_injection(
         self,
         webdriver: "WebDriver",
         description: str,
         options: Optional[List[str]] = None,
-        **kwargs
+        **kwargs,
     ) -> str:
         """
         Find element by injecting __id__ into live browser DOM.
@@ -289,33 +259,35 @@ class FindElementInferencer(TemplatedInferencerBase):
             The __id__ attribute value for direct lookup
         """
         # Inject __id__ into live browser DOM
-        add_unique_index_to_elements(webdriver._backend._driver, index_name=ATTR_NAME_INCREMENTAL_ID)
+        add_unique_index_to_elements(
+            webdriver._backend._driver, index_name=ATTR_NAME_INCREMENTAL_ID
+        )
 
         # Get and sanitize HTML (now has __id__ in both DOM and extracted HTML)
         raw_html = webdriver.page_source
         sanitized = clean_html(
             raw_html,
-            attributes_to_keep=DEFAULT_HTML_CLEAN_ATTRIBUTES_TO_KEEP_WITH_INCREMENTAL_ID
+            attributes_to_keep=DEFAULT_HTML_CLEAN_ATTRIBUTES_TO_KEEP_WITH_INCREMENTAL_ID,
         )
         if self.max_html_length is not None and len(sanitized) > self.max_html_length:
-            sanitized = sanitized[:self.max_html_length] + "\n... [truncated]"
+            sanitized = sanitized[: self.max_html_length] + "\n... [truncated]"
 
-        # Render the prompt and dispatch to the composed base inferencer.
-        prompt = self.template_manager(
-            self.template_key,
-            feed={"html": sanitized, "description": description, "options": options or []},
+        # Call LLM to find element
+        response = super().__call__(
+            self.default_template_key,
+            feed={
+                "html": sanitized,
+                "description": description,
+                "options": options or [],
+            },
+            **kwargs,
         )
-        response = self.base_inferencer(prompt, **kwargs)
 
         # Return __id__ directly (exists in live DOM)
         return _parse_element_id(response)
 
     def _find_with_xpath_mapping(
-        self,
-        html: str,
-        description: str,
-        options: Optional[List[str]] = None,
-        **kwargs
+        self, html: str, description: str, options: Optional[List[str]] = None, **kwargs
     ) -> str:
         """
         Find element by injecting __id__ only in extracted HTML, return xpath.
@@ -335,28 +307,34 @@ class FindElementInferencer(TemplatedInferencerBase):
             XPath string to locate the element
         """
         # Add __id__ to extracted HTML only (not in browser DOM)
-        html_with_ids = add_unique_index_to_html(html, index_name=ATTR_NAME_INCREMENTAL_ID)
+        html_with_ids = add_unique_index_to_html(
+            html, index_name=ATTR_NAME_INCREMENTAL_ID
+        )
 
         # Sanitize the HTML (preserves __id__)
         sanitized = clean_html(
             html_with_ids,
-            attributes_to_keep=DEFAULT_HTML_CLEAN_ATTRIBUTES_TO_KEEP_WITH_INCREMENTAL_ID
+            attributes_to_keep=DEFAULT_HTML_CLEAN_ATTRIBUTES_TO_KEEP_WITH_INCREMENTAL_ID,
         )
         if self.max_html_length is not None and len(sanitized) > self.max_html_length:
-            sanitized = sanitized[:self.max_html_length] + "\n... [truncated]"
+            sanitized = sanitized[: self.max_html_length] + "\n... [truncated]"
 
-        # Render the prompt and dispatch to the composed base inferencer.
-        prompt = self.template_manager(
-            self.template_key,
-            feed={"html": sanitized, "description": description, "options": options or []},
+        # Call LLM to find element
+        response = super().__call__(
+            self.default_template_key,
+            feed={
+                "html": sanitized,
+                "description": description,
+                "options": options or [],
+            },
+            **kwargs,
         )
-        response = self.base_inferencer(prompt, **kwargs)
 
         # Parse the __id__ from LLM response
         element_id = _parse_element_id(response)
 
         # Find the element in BeautifulSoup by __id__
-        soup = BeautifulSoup(html_with_ids, 'html.parser')
+        soup = BeautifulSoup(html_with_ids, "html.parser")
         element = soup.find(attrs={ATTR_NAME_INCREMENTAL_ID: element_id})
 
         if element is None:
@@ -366,7 +344,7 @@ class FindElementInferencer(TemplatedInferencerBase):
         xpath = elements_to_xpath(
             elements=element,
             html_context=html_with_ids,
-            exclude_attrs=(ATTR_NAME_INCREMENTAL_ID,)
+            exclude_attrs=(ATTR_NAME_INCREMENTAL_ID,),
         )
 
         return xpath
@@ -381,13 +359,13 @@ class FindElementInferencer(TemplatedInferencerBase):
         *,
         html_source: Union[str, "WebDriver"] = None,
         description: str = None,
-        **kwargs
+        **kwargs,
     ) -> str:
         """
         Alias for __call__.
 
         Args:
-            template_key: Template key (default: self.template_key).
+            template_key: Template key (default: self.default_template_key).
             feed: Feed dict for template.
             inference_config: FindElementInferenceConfig with inference options.
             active_template_type: Override template type for this call.
@@ -407,5 +385,5 @@ class FindElementInferencer(TemplatedInferencerBase):
             active_template_root_space=active_template_root_space,
             html_source=html_source,
             description=description,
-            **kwargs
+            **kwargs,
         )

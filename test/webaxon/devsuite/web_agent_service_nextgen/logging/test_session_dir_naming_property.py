@@ -8,16 +8,13 @@ match the pattern {session_id}_{YYYYMMDD_HHMMSS} or {session_id}_{YYYYMMDD_HHMMS
 for disambiguated names.
 """
 
-import resolve_path  # noqa: F401 - must be first import
-
 import re
 import shutil
 import tempfile
 from pathlib import Path
 
-from hypothesis import given, settings, HealthCheck
-from hypothesis import strategies as st
-
+import resolve_path  # noqa: F401 - must be first import
+from hypothesis import given, HealthCheck, settings, strategies as st
 from rich_python_utils.service_utils.session_management import (
     SessionLogger as SessionLogManager,
 )
@@ -35,9 +32,7 @@ session_ids = st.text(
 session_counts = st.integers(min_value=1, max_value=8)
 
 # Directory name pattern: {session_id}_{YYYYMMDD_HHMMSS} or {session_id}_{YYYYMMDD_HHMMSS}_{N}
-DIR_NAME_PATTERN = re.compile(
-    r"^.+_\d{8}_\d{6}(_\d+)?$"
-)
+DIR_NAME_PATTERN = re.compile(r"^.+_\d{8}_\d{6}(_\d+)?$")
 
 
 class TestSessionDirNamingProperty:

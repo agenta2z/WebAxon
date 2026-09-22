@@ -4,12 +4,15 @@ This module provides AgentSession, which extends the generic SessionBase with
 WebAgent-specific runtime state (agent instance, thread, interactive interface)
 and a narrowed info type.
 """
+
 import threading
 from typing import Optional
 
-from attr import attrs, attrib
-from agent_foundation.agents.prompt_based_agents.prompt_based_planning_agent import PromptBasedActionPlanningAgent
+from agent_foundation.agents.prompt_based_agents.prompt_based_planning_agent import (
+    PromptBasedActionPlanningAgent,
+)
 from agent_foundation.ui.queue_interactive import QueueInteractive
+from attr import attrib, attrs
 from rich_python_utils.service_utils.session_management import SessionBase
 
 from .agent_session_info import AgentSessionInfo
@@ -27,6 +30,7 @@ class AgentSession(SessionBase):
 
     Runtime attrs are set after construction via property setters.
     """
+
     _info: AgentSessionInfo = attrib(kw_only=True)
 
     # Runtime state (not in constructor — set after creation via properties)

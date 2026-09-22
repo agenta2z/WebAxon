@@ -23,9 +23,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional
 
-from rich_python_utils.datetime_utils.common import timestamp
-
 from agent_foundation.ui.queue_interactive import QueueInteractive
+from rich_python_utils.datetime_utils.common import timestamp
 
 from .agent_runner import AgentRunner
 
@@ -173,11 +172,14 @@ class RegularAgentAdapter:
         if data:
             user_message = f"{task_description}\n\nInput data: {json.dumps(data)}"
 
-        self._queue_service.put(input_queue_id, {
-            "user_input": user_message,
-            "session_id": session_id,
-            "timestamp": timestamp(),
-        })
+        self._queue_service.put(
+            input_queue_id,
+            {
+                "user_input": user_message,
+                "session_id": session_id,
+                "timestamp": timestamp(),
+            },
+        )
 
         # 9. Run agent in a background thread so we can poll responses
         #    concurrently.  We use AgentRunner.run_agent_in_thread as the
@@ -195,7 +197,9 @@ class RegularAgentAdapter:
 
         # 10. Poll shared response queue for agent output
         self._consume_agent_responses(
-            response_queue_id, input_queue_id, session_id,
+            response_queue_id,
+            input_queue_id,
+            session_id,
         )
 
         # 11. Wait for agent thread to finish
@@ -263,8 +267,11 @@ class RegularAgentAdapter:
                 break
 
         # Inject empty message to unblock agent's get_user_input()
-        self._queue_service.put(input_queue_id, {
-            "user_input": "",
-            "session_id": session_id,
-            "timestamp": timestamp(),
-        })
+        self._queue_service.put(
+            input_queue_id,
+            {
+                "user_input": "",
+                "session_id": session_id,
+                "timestamp": timestamp(),
+            },
+        )

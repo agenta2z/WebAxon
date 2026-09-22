@@ -5,7 +5,7 @@ This script demonstrates how to set up and execute the Google search example
 using PromptBasedActionAgent for task execution (same infrastructure as web_agent_service.py).
 
 Components:
-- FindElementInferencer: One-inference agent for LLM-based element finding (extends TemplatedInferencerBase)
+- FindElementInferencer: One-inference agent for LLM-based element finding (extends TemplatedInferencer)
 - create_action_agent: Factory function for creating action agents with default templates
 
 Prerequisites:
@@ -30,19 +30,26 @@ import sys
 script_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, script_dir)
 
-from agent_foundation.common.inferencers.api_inferencers.claude_api_inferencer import ClaudeApiInferencer
+from agent_foundation.common.inferencers.api_inferencers.claude_api_inferencer import (
+    ClaudeApiInferencer,
+)
+from create_google_search_action_graph_with_monitor_and_agent import (
+    create_google_search_action_graph,
+)
+from rich_python_utils.string_utils.formatting.handlebars_format import (
+    format_template as handlebars_format,
+)
 from rich_python_utils.string_utils.formatting.template_manager import TemplateManager
-from rich_python_utils.string_utils.formatting.handlebars_format import format_template as handlebars_format
-
+from webaxon.automation.agents import (
+    create_action_agent,
+    FindElementInferenceConfig,
+    FindElementInferencer,
+)
 from webaxon.automation.web_driver import WebDriver
-from webaxon.automation.agents import FindElementInferencer, FindElementInferenceConfig, create_action_agent
-
-from create_google_search_action_graph_with_monitor_and_agent import create_google_search_action_graph
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 _logger = logging.getLogger(__name__)
 
@@ -51,7 +58,7 @@ def main():
     """Run the Google search ActionGraph with PromptBasedActionAgent."""
 
     # Check for API key
-    if not os.environ.get('ANTHROPIC_API_KEY'):
+    if not os.environ.get("ANTHROPIC_API_KEY"):
         _logger.error("ANTHROPIC_API_KEY environment variable not set!")
         _logger.error("Please set it: export ANTHROPIC_API_KEY='your-key-here'")
         sys.exit(1)
@@ -82,7 +89,7 @@ def main():
     # 4. Create agents
     _logger.info("Creating agents...")
 
-    # Find element inferencer (extends TemplatedInferencerBase)
+    # Find element inferencer (extends TemplatedInferencer)
     # Note: webdriver is passed at call time, not construction time
     find_element_inferencer = FindElementInferencer(
         base_inferencer=reasoner,
@@ -101,7 +108,7 @@ def main():
                 inject_unique_index_to_elements=True,  # Inject __id__ into live DOM
                 options=options,
             ),
-            **kwargs
+            **kwargs,
         )
 
     # Action agent using the new factory from webaxon.automation.agents
@@ -117,22 +124,23 @@ def main():
     # 'find_element_agent' → called when TargetSpec strategy="agent"
     # 'agent' → called for action type="agent"
     action_executor = {
-        'default': webdriver,
-        'find_element_agent': find_element_agent,
-        'agent': action_agent,
+        "default": webdriver,
+        "find_element_agent": find_element_agent,
+        "agent": action_agent,
     }
 
     # 6. Create ActionGraph with configured executor
     _logger.info("Creating ActionGraph...")
     graph = create_google_search_action_graph(
-        action_executor=action_executor,
-        search_query="anthropic claude AI"
+        action_executor=action_executor, search_query="anthropic claude AI"
     )
 
     # 7. Execute the graph
     _logger.info("Starting ActionGraph execution...")
     _logger.info("The monitor will wait for you to type in the search box.")
-    _logger.info("After value changes and stabilizes (5 seconds), it will execute the search.")
+    _logger.info(
+        "After value changes and stabilizes (5 seconds), it will execute the search."
+    )
     _logger.info("Press Ctrl+C to stop the continuous monitoring loop.")
 
     try:

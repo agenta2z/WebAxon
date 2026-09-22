@@ -10,6 +10,7 @@ import warnings
 from typing import Any, Optional, Tuple, TYPE_CHECKING
 
 from webaxon.automation.backends.types import ElementDimensionInfo
+
 from .shims import PlaywrightElementShim
 
 if TYPE_CHECKING:
@@ -18,7 +19,9 @@ if TYPE_CHECKING:
 _logger = logging.getLogger(__name__)
 
 
-def get_body_html(backend: 'PlaywrightBackend', return_dynamic_contents: bool = True) -> str:
+def get_body_html(
+    backend: "PlaywrightBackend", return_dynamic_contents: bool = True
+) -> str:
     """Get the body HTML of the current page.
 
     Args:
@@ -33,12 +36,14 @@ def get_body_html(backend: 'PlaywrightBackend', return_dynamic_contents: bool = 
     return backend._page.content()
 
 
-def get_body_text(backend: 'PlaywrightBackend') -> str:
+def get_body_text(backend: "PlaywrightBackend") -> str:
     """Return the visible text content of the page body via document.body.innerText."""
     return backend._page.evaluate("document.body.innerText")
 
 
-def get_element_dimension_info(backend: 'PlaywrightBackend', element: Any) -> ElementDimensionInfo:
+def get_element_dimension_info(
+    backend: "PlaywrightBackend", element: Any
+) -> ElementDimensionInfo:
     """Get comprehensive dimension information about an element.
 
     Args:
@@ -90,20 +95,22 @@ def get_element_dimension_info(backend: 'PlaywrightBackend', element: Any) -> El
     """)
 
     return ElementDimensionInfo(
-        width=result['offsetWidth'],
-        height=result['offsetHeight'],
-        client_width=result['clientWidth'],
-        client_height=result['clientHeight'],
-        scroll_width=result['scrollWidth'],
-        scroll_height=result['scrollHeight'],
-        is_scrollable_x=result['isScrollableX'],
-        is_scrollable_y=result['isScrollableY'],
-        overflow_x=result['overflowX'],
-        overflow_y=result['overflowY'],
+        width=result["offsetWidth"],
+        height=result["offsetHeight"],
+        client_width=result["clientWidth"],
+        client_height=result["clientHeight"],
+        scroll_width=result["scrollWidth"],
+        scroll_height=result["scrollHeight"],
+        is_scrollable_x=result["isScrollableX"],
+        is_scrollable_y=result["isScrollableY"],
+        overflow_x=result["overflowX"],
+        overflow_y=result["overflowY"],
     )
 
 
-def get_element_scrollability(backend: 'PlaywrightBackend', element: Any) -> Tuple[bool, bool]:
+def get_element_scrollability(
+    backend: "PlaywrightBackend", element: Any
+) -> Tuple[bool, bool]:
     """Check if element is scrollable in X and Y directions.
 
     Args:
@@ -137,11 +144,11 @@ def is_element_stale(element: Any) -> bool:
 
 
 def solve_scrollable_child(
-    backend: 'PlaywrightBackend',
+    backend: "PlaywrightBackend",
     element: Any,
-    strategy: str = 'first_largest_scrollable',
-    implementation: str = 'javascript',
-    direction: Optional[str] = None
+    strategy: str = "first_largest_scrollable",
+    implementation: str = "javascript",
+    direction: Optional[str] = None,
 ) -> Any:
     """Find the actual scrollable child element within an element hierarchy.
 
@@ -174,8 +181,8 @@ def solve_scrollable_child(
         locator = element
 
     # Determine direction check
-    check_x = direction is None or direction.capitalize() in ('Left', 'Right')
-    check_y = direction is None or direction.capitalize() in ('Up', 'Down')
+    check_x = direction is None or direction.capitalize() in ("Left", "Right")
+    check_y = direction is None or direction.capitalize() in ("Up", "Down")
 
     # JavaScript to find scrollable child based on strategy
     js_code = """
@@ -337,10 +344,10 @@ def solve_scrollable_child(
             as_element = element_handle.as_element()
             if as_element:
                 # Assign a unique attribute and then query for it
-                unique_attr = f'_pw_scroll_child_{id(element_handle)}'
+                unique_attr = f"_pw_scroll_child_{id(element_handle)}"
                 backend._page.evaluate(
                     "(args) => args[0].setAttribute(args[1], 'true')",
-                    [as_element, unique_attr]
+                    [as_element, unique_attr],
                 )
 
                 # Now find the element by this attribute
@@ -349,7 +356,7 @@ def solve_scrollable_child(
                 # Clean up the attribute
                 backend._page.evaluate(
                     "(args) => args[0].removeAttribute(args[1])",
-                    [as_element, unique_attr]
+                    [as_element, unique_attr],
                 )
 
                 # Return wrapped in shim if original was wrapped
@@ -362,10 +369,12 @@ def solve_scrollable_child(
         warnings.warn(
             f"Could not find scrollable child element{direction_str} using strategy '{strategy}'. "
             f"Returning original element.",
-            UserWarning
+            UserWarning,
         )
         return element
 
     except Exception as e:
-        _logger.warning(f"solve_scrollable_child failed: {e}, returning original element")
+        _logger.warning(
+            f"solve_scrollable_child failed: {e}, returning original element"
+        )
         return element

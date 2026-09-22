@@ -15,7 +15,7 @@ Validates: Requirements 16.1, 16.2, 16.3, 16.4
 import sys
 from pathlib import Path
 
-PIVOT_FOLDER_NAME = 'test'
+PIVOT_FOLDER_NAME = "test"
 current_file = Path(__file__).resolve()
 current_path = current_file.parent
 while current_path.name != PIVOT_FOLDER_NAME and current_path.parent != current_path:
@@ -30,100 +30,104 @@ if src_dir.exists() and str(src_dir) not in sys.path:
     sys.path.insert(0, str(src_dir))
 
 projects_root = webagent_root.parent
-for path_item in [projects_root / "SciencePythonUtils" / "src", projects_root / "ScienceModelingTools" / "src"]:
+for path_item in [
+    projects_root / "SciencePythonUtils" / "src",
+    projects_root / "ScienceModelingTools" / "src",
+]:
     if path_item.exists() and str(path_item) not in sys.path:
         sys.path.insert(0, str(path_item))
 
-import pytest
-from urllib.parse import urlparse, parse_qs, unquote
-from hypothesis import given, strategies as st, settings, assume
+from urllib.parse import parse_qs, unquote, urlparse
 
-from webaxon.url_utils.search_urls.google_search_url import create_search_url as google_create_url
-from webaxon.url_utils.search_urls.bing_search_url import create_search_url as bing_create_url
+import pytest
+from hypothesis import assume, given, settings, strategies as st
+from webaxon.url_utils.search_urls.bing_search_url import (
+    create_search_url as bing_create_url,
+)
+from webaxon.url_utils.search_urls.google_search_url import (
+    create_search_url as google_create_url,
+)
 
 
 # =============================================================================
 # Property 11: Search URL Generation
 # =============================================================================
 
+
 class TestGoogleSearchURLGeneration:
     """Tests for Google search URL generation."""
 
-    @given(query=st.text(min_size=1, max_size=100, alphabet=st.characters(
-        whitelist_categories=('Lu', 'Ll', 'Nd', 'Zs'),
-        min_codepoint=32, max_codepoint=126
-    )).filter(lambda x: x.strip()))
+    @given(
+        query=st.text(
+            min_size=1,
+            max_size=100,
+            alphabet=st.characters(
+                whitelist_categories=("Lu", "Ll", "Nd", "Zs"),
+                min_codepoint=32,
+                max_codepoint=126,
+            ),
+        ).filter(lambda x: x.strip())
+    )
     @settings(max_examples=50)
     def test_google_url_contains_query(self, query):
         """Generated Google URL should contain the search query."""
         url = google_create_url(query=query)
 
         parsed = urlparse(url)
-        assert parsed.netloc == 'www.google.com'
-        assert parsed.path == '/search'
+        assert parsed.netloc == "www.google.com"
+        assert parsed.path == "/search"
 
         # Query should be in the 'q' parameter
         params = parse_qs(parsed.query)
-        assert 'q' in params
+        assert "q" in params
 
     def test_google_url_with_date_range(self):
         """Google URL with date range should contain tbs parameter."""
         url = google_create_url(
-            query="test query",
-            start_date="2023-01-01",
-            end_date="2023-12-31"
+            query="test query", start_date="2023-01-01", end_date="2023-12-31"
         )
 
         parsed = urlparse(url)
         params = parse_qs(parsed.query)
 
         # Should have tbs parameter for date filtering
-        assert 'tbs' in params
+        assert "tbs" in params
 
         # tbs should contain date information
-        tbs_value = unquote(params['tbs'][0])
-        assert 'cdr' in tbs_value  # Custom date range indicator
+        tbs_value = unquote(params["tbs"][0])
+        assert "cdr" in tbs_value  # Custom date range indicator
 
     def test_google_url_with_start_date_only(self):
         """Google URL with only start_date should work."""
-        url = google_create_url(
-            query="test query",
-            start_date="2023-06-01"
-        )
+        url = google_create_url(query="test query", start_date="2023-06-01")
 
         parsed = urlparse(url)
         params = parse_qs(parsed.query)
 
-        assert 'tbs' in params
-        tbs_value = unquote(params['tbs'][0])
-        assert 'cd_min' in tbs_value
+        assert "tbs" in params
+        tbs_value = unquote(params["tbs"][0])
+        assert "cd_min" in tbs_value
 
     def test_google_url_with_end_date_only(self):
         """Google URL with only end_date should work."""
-        url = google_create_url(
-            query="test query",
-            end_date="2023-12-31"
-        )
+        url = google_create_url(query="test query", end_date="2023-12-31")
 
         parsed = urlparse(url)
         params = parse_qs(parsed.query)
 
-        assert 'tbs' in params
-        tbs_value = unquote(params['tbs'][0])
-        assert 'cd_max' in tbs_value
+        assert "tbs" in params
+        tbs_value = unquote(params["tbs"][0])
+        assert "cd_max" in tbs_value
 
     def test_google_url_with_sites(self):
         """Google URL with site restrictions should include site: operators."""
-        url = google_create_url(
-            query="test query",
-            sites=["example.com", "test.org"]
-        )
+        url = google_create_url(query="test query", sites=["example.com", "test.org"])
 
         parsed = urlparse(url)
         params = parse_qs(parsed.query)
 
-        q_value = unquote(params['q'][0])
-        assert 'site:example.com' in q_value or 'site%3Aexample.com' in params['q'][0]
+        q_value = unquote(params["q"][0])
+        assert "site:example.com" in q_value or "site%3Aexample.com" in params["q"][0]
 
     def test_google_url_empty_query_raises_error(self):
         """Empty query should raise ValueError."""
@@ -143,100 +147,90 @@ class TestGoogleSearchURLGeneration:
         """End date before start date should raise ValueError."""
         with pytest.raises(ValueError) as exc_info:
             google_create_url(
-                query="test",
-                start_date="2023-12-31",
-                end_date="2023-01-01"
+                query="test", start_date="2023-12-31", end_date="2023-01-01"
             )
 
         assert "earlier" in str(exc_info.value).lower()
 
     def test_google_url_with_extra_params(self):
         """Extra parameters should be included in URL."""
-        url = google_create_url(
-            query="test query",
-            hl="en",
-            safe="active"
-        )
+        url = google_create_url(query="test query", hl="en", safe="active")
 
         parsed = urlparse(url)
         params = parse_qs(parsed.query)
 
-        assert 'hl' in params
-        assert params['hl'][0] == 'en'
-        assert 'safe' in params
-        assert params['safe'][0] == 'active'
+        assert "hl" in params
+        assert params["hl"][0] == "en"
+        assert "safe" in params
+        assert params["safe"][0] == "active"
 
 
 class TestBingSearchURLGeneration:
     """Tests for Bing search URL generation."""
 
-    @given(query=st.text(min_size=1, max_size=100, alphabet=st.characters(
-        whitelist_categories=('Lu', 'Ll', 'Nd', 'Zs'),
-        min_codepoint=32, max_codepoint=126
-    )).filter(lambda x: x.strip()))
+    @given(
+        query=st.text(
+            min_size=1,
+            max_size=100,
+            alphabet=st.characters(
+                whitelist_categories=("Lu", "Ll", "Nd", "Zs"),
+                min_codepoint=32,
+                max_codepoint=126,
+            ),
+        ).filter(lambda x: x.strip())
+    )
     @settings(max_examples=50)
     def test_bing_url_contains_query(self, query):
         """Generated Bing URL should contain the search query."""
         url = bing_create_url(query=query)
 
         parsed = urlparse(url)
-        assert parsed.netloc == 'www.bing.com'
-        assert parsed.path == '/search'
+        assert parsed.netloc == "www.bing.com"
+        assert parsed.path == "/search"
 
         # Query should be in the 'q' parameter
         params = parse_qs(parsed.query)
-        assert 'q' in params
+        assert "q" in params
 
     def test_bing_url_with_date_range(self):
         """Bing URL with date range should contain filters parameter."""
         url = bing_create_url(
-            query="test query",
-            start_date="2023-01-01",
-            end_date="2023-12-31"
+            query="test query", start_date="2023-01-01", end_date="2023-12-31"
         )
 
         parsed = urlparse(url)
         params = parse_qs(parsed.query)
 
         # Bing uses 'filters' parameter for date filtering
-        assert 'filters' in params
+        assert "filters" in params
 
     def test_bing_url_with_start_date_only(self):
         """Bing URL with only start_date should work."""
-        url = bing_create_url(
-            query="test query",
-            start_date="2023-06-01"
-        )
+        url = bing_create_url(query="test query", start_date="2023-06-01")
 
         parsed = urlparse(url)
         params = parse_qs(parsed.query)
 
-        assert 'filters' in params
+        assert "filters" in params
 
     def test_bing_url_with_end_date_only(self):
         """Bing URL with only end_date should work."""
-        url = bing_create_url(
-            query="test query",
-            end_date="2023-12-31"
-        )
+        url = bing_create_url(query="test query", end_date="2023-12-31")
 
         parsed = urlparse(url)
         params = parse_qs(parsed.query)
 
-        assert 'filters' in params
+        assert "filters" in params
 
     def test_bing_url_with_sites(self):
         """Bing URL with site restrictions should include site: operators."""
-        url = bing_create_url(
-            query="test query",
-            sites=["example.com", "test.org"]
-        )
+        url = bing_create_url(query="test query", sites=["example.com", "test.org"])
 
         parsed = urlparse(url)
         params = parse_qs(parsed.query)
 
-        q_value = unquote(params['q'][0])
-        assert 'site:' in q_value or 'site%3A' in params['q'][0]
+        q_value = unquote(params["q"][0])
+        assert "site:" in q_value or "site%3A" in params["q"][0]
 
     def test_bing_url_empty_query_raises_error(self):
         """Empty query should raise ValueError."""
@@ -256,35 +250,36 @@ class TestBingSearchURLGeneration:
         """End date before start date should raise ValueError."""
         with pytest.raises(ValueError) as exc_info:
             bing_create_url(
-                query="test",
-                start_date="2023-12-31",
-                end_date="2023-01-01"
+                query="test", start_date="2023-12-31", end_date="2023-01-01"
             )
 
         assert "earlier" in str(exc_info.value).lower()
 
     def test_bing_url_with_extra_params(self):
         """Extra parameters should be included in URL."""
-        url = bing_create_url(
-            query="test query",
-            setlang="en",
-            form="QBLH"
-        )
+        url = bing_create_url(query="test query", setlang="en", form="QBLH")
 
         parsed = urlparse(url)
         params = parse_qs(parsed.query)
 
-        assert 'setlang' in params
-        assert params['setlang'][0] == 'en'
+        assert "setlang" in params
+        assert params["setlang"][0] == "en"
 
 
 class TestSearchURLCrossProviderConsistency:
     """Tests for consistency across search providers."""
 
-    @given(query=st.text(min_size=1, max_size=50, alphabet=st.characters(
-        whitelist_categories=('Lu', 'Ll', 'Nd'),
-        min_codepoint=48, max_codepoint=122
-    )).filter(lambda x: x.strip()))
+    @given(
+        query=st.text(
+            min_size=1,
+            max_size=50,
+            alphabet=st.characters(
+                whitelist_categories=("Lu", "Ll", "Nd"),
+                min_codepoint=48,
+                max_codepoint=122,
+            ),
+        ).filter(lambda x: x.strip())
+    )
     @settings(max_examples=30)
     def test_both_providers_include_query(self, query):
         """Both Google and Bing URLs should include the query."""
@@ -297,8 +292,8 @@ class TestSearchURLCrossProviderConsistency:
         google_params = parse_qs(google_parsed.query)
         bing_params = parse_qs(bing_parsed.query)
 
-        assert 'q' in google_params
-        assert 'q' in bing_params
+        assert "q" in google_params
+        assert "q" in bing_params
 
     def test_both_providers_reject_empty_query(self):
         """Both providers should reject empty queries."""
@@ -319,10 +314,14 @@ class TestSearchURLCrossProviderConsistency:
     def test_both_providers_reject_invalid_date_range(self):
         """Both providers should reject end < start."""
         with pytest.raises(ValueError):
-            google_create_url(query="test", start_date="2024-01-01", end_date="2023-01-01")
+            google_create_url(
+                query="test", start_date="2024-01-01", end_date="2023-01-01"
+            )
 
         with pytest.raises(ValueError):
-            bing_create_url(query="test", start_date="2024-01-01", end_date="2023-01-01")
+            bing_create_url(
+                query="test", start_date="2024-01-01", end_date="2023-01-01"
+            )
 
 
 class TestSearchURLSpecialCharacters:
@@ -331,12 +330,12 @@ class TestSearchURLSpecialCharacters:
     def test_google_handles_spaces(self):
         """Google should handle spaces in queries."""
         url = google_create_url(query="hello world test")
-        assert '+' in url or '%20' in url
+        assert "+" in url or "%20" in url
 
     def test_bing_handles_spaces(self):
         """Bing should handle spaces in queries."""
         url = bing_create_url(query="hello world test")
-        assert '+' in url or '%20' in url
+        assert "+" in url or "%20" in url
 
     def test_google_handles_special_chars(self):
         """Google should handle special characters in queries."""

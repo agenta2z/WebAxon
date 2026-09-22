@@ -19,7 +19,10 @@ import sys
 # Constants
 # =============================================================================
 PROJECT_ROOT_MARKER = "WebAgent"  # Folder name to search for when finding project root
-PROJECTS_ROOT_PACKAGES = ["SciencePythonUtils", "ScienceModelingTools"]  # Sibling packages
+PROJECTS_ROOT_PACKAGES = [
+    "SciencePythonUtils",
+    "ScienceModelingTools",
+]  # Sibling packages
 
 
 # =============================================================================
@@ -27,6 +30,7 @@ PROJECTS_ROOT_PACKAGES = ["SciencePythonUtils", "ScienceModelingTools"]  # Sibli
 # =============================================================================
 try:
     import goodtime_automation_bundle  # noqa: F401 - registers modules in sys.modules
+
     _BUNDLE_MODE = True
 except ImportError:
     _BUNDLE_MODE = False

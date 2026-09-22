@@ -82,6 +82,7 @@ _UUID_RE = re.compile(
 
 # ── Pretty-print helpers ─────────────────────────────────────────────
 
+
 def _header(title: str) -> None:
     width = 72
     print()
@@ -98,7 +99,8 @@ def _kv(key: str, value, indent: int = 2) -> None:
     prefix = " " * indent
     if isinstance(value, str) and len(value) > 80:
         wrapped = textwrap.fill(
-            value, width=68,
+            value,
+            width=68,
             initial_indent="",
             subsequent_indent=prefix + "  ",
         )
@@ -136,6 +138,7 @@ def _is_uuid(s: str) -> bool:
 
 # ── LLM mode selection ───────────────────────────────────────────────
 
+
 def _select_llm_mode() -> str:
     """Interactive menu: choose mock or real LLM."""
     # Support command-line flags for non-interactive use
@@ -153,6 +156,7 @@ def _select_llm_mode() -> str:
 
 # ── Mock LLM ─────────────────────────────────────────────────────────
 
+
 def mock_llm_fn(prompt: str) -> str:
     """Two-phase mock LLM (no real API calls).
 
@@ -160,35 +164,44 @@ def mock_llm_fn(prompt: str) -> str:
     Phase 2 (generation): Returns the expected updated content.
     """
     if "Determine Input Mode" in prompt:
-        return json.dumps({
-            "input_mode": "instruction",
-            "action": "replace",
-            "confidence": 0.95,
-            "reasoning": (
-                'User says change "shopping procedure" to '
-                '"price-checking procedure" -- this is an editing instruction.'
-            ),
-            "merge_strategy": "append",
-            "updated_domain": None,
-            "updated_tags": [
-                "grocery", "price-checking", "workflow",
-                "login", "pricing", "comparison",
-            ],
-            "clear_tags": False,
-            "changes_summary": (
-                "Renamed procedure from shopping to price-checking and "
-                "updated step 3 to reflect price-comparison workflow."
-            ),
-        })
+        return json.dumps(
+            {
+                "input_mode": "instruction",
+                "action": "replace",
+                "confidence": 0.95,
+                "reasoning": (
+                    'User says change "shopping procedure" to '
+                    '"price-checking procedure" -- this is an editing instruction.'
+                ),
+                "merge_strategy": "append",
+                "updated_domain": None,
+                "updated_tags": [
+                    "grocery",
+                    "price-checking",
+                    "workflow",
+                    "login",
+                    "pricing",
+                    "comparison",
+                ],
+                "clear_tags": False,
+                "changes_summary": (
+                    "Renamed procedure from shopping to price-checking and "
+                    "updated step 3 to reflect price-comparison workflow."
+                ),
+            }
+        )
     elif "Apply the user's instruction" in prompt:
-        return json.dumps({
-            "generated_content": EXPECTED_GENERATED_CONTENT,
-        })
+        return json.dumps(
+            {
+                "generated_content": EXPECTED_GENERATED_CONTENT,
+            }
+        )
     else:
         raise RuntimeError(f"Unexpected LLM call: {prompt[:120]}...")
 
 
 # ── Real LLM ─────────────────────────────────────────────────────────
+
 
 def _make_real_llm_fn() -> Callable[[str], str]:
     """Create a real LLM function via ClaudeApiInferencer + Claude API."""
@@ -303,6 +316,7 @@ def _apply_piece_id_rename(
 
 # ── Core test ─────────────────────────────────────────────────────────
 
+
 def _run_e2e_test(mode: str = "mock", interactive: bool = False):
     """Core end-to-end test.
 
@@ -310,7 +324,7 @@ def _run_e2e_test(mode: str = "mock", interactive: bool = False):
         mode: "mock" or "real" LLM.
         interactive: If True, prompt human for piece_id review.
     """
-    use_real_llm = (mode == "real")
+    use_real_llm = mode == "real"
     assert PIECES_DIR.is_dir(), f"Mock store not found: {PIECES_DIR}"
 
     # ── 1. Choose LLM function ────────────────────────────────────
@@ -371,7 +385,11 @@ def _run_e2e_test(mode: str = "mock", interactive: bool = False):
 
     _section("EXECUTING UPDATE")
     phase_label = "real" if use_real_llm else "mock"
-    print(f"  Phase 1: Intent classification  ({phase_label} LLM) ... ", end="", flush=True)
+    print(
+        f"  Phase 1: Intent classification  ({phase_label} LLM) ... ",
+        end="",
+        flush=True,
+    )
 
     results = updater.update_by_content(
         USER_INSTRUCTION,
@@ -428,7 +446,10 @@ def _run_e2e_test(mode: str = "mock", interactive: bool = False):
         # ── 8. Piece ID review (interactive only) ─────────────────
         if interactive:
             suggested_id = _review_piece_id(
-                new_piece_id, new_piece.content, llm_fn, use_real_llm,
+                new_piece_id,
+                new_piece.content,
+                llm_fn,
+                use_real_llm,
             )
             if suggested_id:
                 _apply_piece_id_rename(PIECES_DIR, new_piece_id, suggested_id)
@@ -444,39 +465,51 @@ def _run_e2e_test(mode: str = "mock", interactive: bool = False):
         _section("ASSERTIONS")
 
         checks = [
-            ("Update succeeded",
-             result.success is True),
-            ("Instruction text NOT stored as content",
-             "change the" not in new_piece.content.lower()),
-            ("Content mentions 'price-checking'",
-             "price-checking" in new_piece.content.lower()),
-            ("Old piece is deactivated (is_active=False)",
-             old_piece.is_active is False),
-            ("Old piece content unchanged",
-             old_piece.content == original_content),
-            ("New piece supersedes old piece",
-             new_piece.supersedes == ORIGINAL_PIECE_ID),
-            ("Version bumped 1 -> 2",
-             new_piece.version == 2),
-            ("New piece has 'add' history record",
-             len(new_piece.history) >= 1
-             and new_piece.history[0].operation == "add"),
-            ("Old piece has 'delete' history record",
-             any(r.operation == "delete" for r in old_piece.history)),
+            ("Update succeeded", result.success is True),
+            (
+                "Instruction text NOT stored as content",
+                "change the" not in new_piece.content.lower(),
+            ),
+            (
+                "Content mentions 'price-checking'",
+                "price-checking" in new_piece.content.lower(),
+            ),
+            (
+                "Old piece is deactivated (is_active=False)",
+                old_piece.is_active is False,
+            ),
+            ("Old piece content unchanged", old_piece.content == original_content),
+            (
+                "New piece supersedes old piece",
+                new_piece.supersedes == ORIGINAL_PIECE_ID,
+            ),
+            ("Version bumped 1 -> 2", new_piece.version == 2),
+            (
+                "New piece has 'add' history record",
+                len(new_piece.history) >= 1 and new_piece.history[0].operation == "add",
+            ),
+            (
+                "Old piece has 'delete' history record",
+                any(r.operation == "delete" for r in old_piece.history),
+            ),
         ]
 
         # Mock-only: exact content match
         if not use_real_llm:
-            checks.append((
-                "New content matches expected (mock LLM)",
-                new_piece.content == EXPECTED_GENERATED_CONTENT,
-            ))
+            checks.append(
+                (
+                    "New content matches expected (mock LLM)",
+                    new_piece.content == EXPECTED_GENERATED_CONTENT,
+                )
+            )
 
         disk_files = list((PIECES_DIR / "_default").glob("*.json"))
-        checks.append((
-            f"Disk has {len(disk_files)} files in _default/ (old + new)",
-            len(disk_files) >= 2,
-        ))
+        checks.append(
+            (
+                f"Disk has {len(disk_files)} files in _default/ (old + new)",
+                len(disk_files) >= 2,
+            )
+        )
 
         for label, passed in checks:
             status = "PASS" if passed else "FAIL"
@@ -514,8 +547,7 @@ def _run_e2e_test(mode: str = "mock", interactive: bool = False):
         restored = store2.get_by_id(ORIGINAL_PIECE_ID)
         gone = store2.get_by_id(new_piece_id)
         renamed_gone = (
-            store2.get_by_id(renamed_piece_id) is None
-            if renamed_piece_id else True
+            store2.get_by_id(renamed_piece_id) is None if renamed_piece_id else True
         )
 
         restored_ok = (
@@ -527,9 +559,7 @@ def _run_e2e_test(mode: str = "mock", interactive: bool = False):
         gone_ok = gone is None
         renamed_ok = renamed_gone
 
-        disk_after = sorted(
-            f.name for f in (PIECES_DIR / "_default").glob("*.json")
-        )
+        disk_after = sorted(f.name for f in (PIECES_DIR / "_default").glob("*.json"))
 
         print()
         print(f"  Original piece restored:   {'OK' if restored_ok else 'FAILED'}")
@@ -547,6 +577,7 @@ def _run_e2e_test(mode: str = "mock", interactive: bool = False):
 
 
 # ── Pytest entry point ────────────────────────────────────────────────
+
 
 def test_kb_update_instruction_mode_e2e():
     """Pytest: runs with mock LLM, non-interactive (no human prompts)."""

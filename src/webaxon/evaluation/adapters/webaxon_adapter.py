@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import Optional
 
 from webaxon.evaluation.protocol import EvalAgentAdapter, EvalResult
+
 from .trajectory_capture import capture as capture_trajectory
 
 logger = logging.getLogger(__name__)
@@ -62,9 +63,7 @@ class WebAxonAdapter:
         self._tmp_dir = tempfile.mkdtemp(prefix="webaxon_eval_")
 
         # Build ServiceConfig
-        from webaxon.devsuite.web_agent_service_nextgen.core.config import (
-            ServiceConfig,
-        )
+        from webaxon.devsuite.web_agent_service_nextgen.core.config import ServiceConfig
 
         self._config = ServiceConfig()
         self._config.debug_mode_service = True
@@ -81,12 +80,13 @@ class WebAxonAdapter:
 
         self._queue_service = StorageBasedQueueService(root_path=self._tmp_dir)
 
+        from rich_python_utils.string_utils.formatting.handlebars_format import (
+            format_template as handlebars_template_format,
+        )
+
         # Build TemplateManager (mirrors WebAgentService._create_template_manager)
         from webaxon.devsuite.web_agent_service_nextgen.agents.template_manager import (
             TemplateManagerWrapper,
-        )
-        from rich_python_utils.string_utils.formatting.handlebars_format import (
-            format_template as handlebars_template_format,
         )
 
         template_dir = self._testcase_root / self._config.template_dir
@@ -113,9 +113,7 @@ class WebAxonAdapter:
         )
 
         # Service log dir is required by AgentSessionManager
-        service_log_dir = (
-            self._testcase_root / self._config.log_root_path
-        )
+        service_log_dir = self._testcase_root / self._config.log_root_path
         service_log_dir.mkdir(parents=True, exist_ok=True)
 
         self._session_manager = AgentSessionManager(
@@ -129,6 +127,7 @@ class WebAxonAdapter:
             from webaxon.devsuite.web_agent_service_nextgen.agents.meta_agent_adapter import (
                 MetaAgentAdapter,
             )
+
             self._adapter = MetaAgentAdapter(
                 agent_factory=self._agent_factory,
                 session_manager=self._session_manager,
@@ -136,12 +135,13 @@ class WebAxonAdapter:
                 config=self._config,
             )
         else:
-            from webaxon.devsuite.web_agent_service_nextgen.agents.regular_agent_adapter import (
-                RegularAgentAdapter,
-            )
             from webaxon.devsuite.web_agent_service_nextgen.agents.agent_runner import (
                 AgentRunner,
             )
+            from webaxon.devsuite.web_agent_service_nextgen.agents.regular_agent_adapter import (
+                RegularAgentAdapter,
+            )
+
             agent_runner = AgentRunner(config=self._config)
             self._adapter = RegularAgentAdapter(
                 agent_factory=self._agent_factory,
@@ -246,7 +246,9 @@ class WebAxonAdapter:
         captured_webdriver = None
         captured_screenshot_dir = None
 
-        def patched_create_agent(interactive, logger, agent_type=None, template_version=""):
+        def patched_create_agent(
+            interactive, logger, agent_type=None, template_version=""
+        ):
             agent = original_create(
                 interactive=interactive,
                 logger=logger,
@@ -259,6 +261,7 @@ class WebAxonAdapter:
                 from webaxon.automation.web_agent_actors.common import (
                     _create_web_actor_visit_url_base_action,
                 )
+
                 agent.base_action = _create_web_actor_visit_url_base_action(start_url)
 
             # Hook 2: Set max_num_loops
@@ -271,12 +274,12 @@ class WebAxonAdapter:
                 # planning_agent.actor = master_action_agent (direct callable)
                 master_action_agent = agent.actor
                 # master_action_agent.actor = MultiActionExecutor({'default': webdriver, ...})
-                webdriver = master_action_agent.actor.resolve('default')
+                webdriver = master_action_agent.actor.resolve("default")
 
                 # Determine screenshot destination: session_dir/screenshots/ (persistent)
                 # or trajectory_dir (ephemeral, original behavior)
                 screenshot_dest = trajectory_dir
-                if self._save_screenshots_to_session and hasattr(logger, 'session_dir'):
+                if self._save_screenshots_to_session and hasattr(logger, "session_dir"):
                     session_screenshot_dir = logger.session_dir / "screenshots"
                     session_screenshot_dir.mkdir(parents=True, exist_ok=True)
                     screenshot_dest = session_screenshot_dir
@@ -302,7 +305,9 @@ class WebAxonAdapter:
             self._agent_factory.create_agent = original_create
 
         self._last_webdriver = captured_webdriver
-        self._last_screenshot_dir = Path(captured_screenshot_dir) if captured_screenshot_dir else None
+        self._last_screenshot_dir = (
+            Path(captured_screenshot_dir) if captured_screenshot_dir else None
+        )
         return result
 
     def _cleanup_run_resources(self) -> None:

@@ -10,6 +10,7 @@ from typing import Any, List, Mapping, Optional, Tuple, TYPE_CHECKING
 from webaxon.automation.backends.exceptions import ElementNotFoundError
 from webaxon.automation.schema import TargetStrategy
 from webaxon.html_utils.element_identification import ATTR_NAME_INCREMENTAL_ID
+
 from .shims import PlaywrightElementShim
 
 if TYPE_CHECKING:
@@ -19,11 +20,11 @@ _logger = logging.getLogger(__name__)
 
 
 def find_element_by_xpath(
-    backend: 'PlaywrightBackend',
-    tag_name: Optional[str] = '*',
+    backend: "PlaywrightBackend",
+    tag_name: Optional[str] = "*",
     attributes: Optional[Mapping[str, Any]] = None,
     text: Optional[str] = None,
-    immediate_text: Optional[str] = None
+    immediate_text: Optional[str] = None,
 ) -> Any:
     """Find element using XPath with tag, attributes, and text filters.
 
@@ -41,6 +42,7 @@ def find_element_by_xpath(
         ElementNotFoundError: If element is not found
     """
     from webaxon.html_utils.element_identification import get_xpath
+
     xpath = get_xpath(
         tag_name=tag_name,
         attributes=attributes,
@@ -53,18 +55,18 @@ def find_element_by_xpath(
         return PlaywrightElementShim(locator, backend._page)
     except Exception as e:
         raise ElementNotFoundError(
-            strategy='xpath',
+            strategy="xpath",
             target=f"tag={tag_name}, attributes={attributes}, text={text}",
             message=str(e),
         ) from e
 
 
 def find_elements_by_xpath(
-    backend: 'PlaywrightBackend',
-    tag_name: Optional[str] = '*',
+    backend: "PlaywrightBackend",
+    tag_name: Optional[str] = "*",
     attributes: Optional[Mapping[str, Any]] = None,
     text: Optional[str] = None,
-    immediate_text: Optional[str] = None
+    immediate_text: Optional[str] = None,
 ) -> List[Any]:
     """Find elements using XPath with tag, attributes, and text filters.
 
@@ -79,6 +81,7 @@ def find_elements_by_xpath(
         List of PlaywrightElementShim wrapping the found elements
     """
     from webaxon.html_utils.element_identification import get_xpath
+
     xpath = get_xpath(
         tag_name=tag_name,
         attributes=attributes,
@@ -87,16 +90,11 @@ def find_elements_by_xpath(
     )
     locators = backend._page.locator(f"xpath={xpath}")
     count = locators.count()
-    return [
-        PlaywrightElementShim(locators.nth(i), backend._page)
-        for i in range(count)
-    ]
+    return [PlaywrightElementShim(locators.nth(i), backend._page) for i in range(count)]
 
 
 def resolve_action_target(
-    backend: 'PlaywrightBackend',
-    strategy: str,
-    action_target: str
+    backend: "PlaywrightBackend", strategy: str, action_target: str
 ) -> Any:
     """Resolve element using explicit strategy.
 
@@ -112,10 +110,12 @@ def resolve_action_target(
         ElementNotFoundError: If element is not found
         NotImplementedError: If strategy is not supported
     """
-    _logger.debug(f"[resolve_action_target] strategy={strategy}, action_target={action_target}")
+    _logger.debug(
+        f"[resolve_action_target] strategy={strategy}, action_target={action_target}"
+    )
 
     # Normalize strategy
-    if hasattr(strategy, 'value'):
+    if hasattr(strategy, "value"):
         strategy = strategy.value
         _logger.debug(f"[resolve_action_target] Normalized strategy to: {strategy}")
 
@@ -125,33 +125,35 @@ def resolve_action_target(
             return find_element_by_unique_index(backend, action_target)
         elif strategy == TargetStrategy.ID.value:  # 'id'
             _logger.debug(f"[resolve_action_target] Using ID strategy")
-            return backend.find_element('id', action_target)
+            return backend.find_element("id", action_target)
         elif strategy == TargetStrategy.XPATH.value:  # 'xpath'
             _logger.debug(f"[resolve_action_target] Using XPATH strategy")
-            return backend.find_element('xpath', action_target)
-        elif strategy in (TargetStrategy.CSS.value, 'css_selector'):  # 'css'
-            return backend.find_element('css selector', action_target)
+            return backend.find_element("xpath", action_target)
+        elif strategy in (TargetStrategy.CSS.value, "css_selector"):  # 'css'
+            return backend.find_element("css selector", action_target)
         elif strategy == TargetStrategy.TEXT.value:  # 'text'
             locator = backend._page.locator(f"text={action_target}").first
             return PlaywrightElementShim(locator, backend._page)
         elif strategy == TargetStrategy.SOURCE.value:  # 'source'
-            return find_element_by_html(backend, action_target, always_return_single_element=True)
+            return find_element_by_html(
+                backend, action_target, always_return_single_element=True
+            )
         elif strategy == TargetStrategy.LITERAL.value:  # 'literal'
             return action_target
         elif strategy == TargetStrategy.DESCRIPTION.value:  # 'description'
             raise NotImplementedError(
                 "Description-based element resolution is not yet implemented"
             )
-        elif strategy == 'name':
-            return backend.find_element('name', action_target)
-        elif strategy in ('tag', 'tag_name'):
-            return backend.find_element('tag_name', action_target)
-        elif strategy in ('class', 'class_name'):
-            return backend.find_element('class_name', action_target)
-        elif strategy == 'link_text':
-            return backend.find_element('link_text', action_target)
-        elif strategy == 'partial_link_text':
-            return backend.find_element('partial_link_text', action_target)
+        elif strategy == "name":
+            return backend.find_element("name", action_target)
+        elif strategy in ("tag", "tag_name"):
+            return backend.find_element("tag_name", action_target)
+        elif strategy in ("class", "class_name"):
+            return backend.find_element("class_name", action_target)
+        elif strategy == "link_text":
+            return backend.find_element("link_text", action_target)
+        elif strategy == "partial_link_text":
+            return backend.find_element("partial_link_text", action_target)
         else:
             raise NotImplementedError(f"Unsupported strategy: {strategy}")
     except Exception as e:
@@ -165,8 +167,7 @@ def resolve_action_target(
 
 
 def add_unique_index_to_elements(
-    backend: 'PlaywrightBackend',
-    index_name: Optional[str] = None
+    backend: "PlaywrightBackend", index_name: Optional[str] = None
 ) -> None:
     """Inject unique ID attributes to all elements on the page.
 
@@ -187,9 +188,7 @@ def add_unique_index_to_elements(
 
 
 def find_element_by_unique_index(
-    backend: 'PlaywrightBackend',
-    index_value: str,
-    index_name: Optional[str] = None
+    backend: "PlaywrightBackend", index_value: str, index_name: Optional[str] = None
 ) -> Any:
     """Find element by framework-assigned unique index.
 
@@ -213,17 +212,17 @@ def find_element_by_unique_index(
         return PlaywrightElementShim(locator, backend._page)
     except Exception as e:
         raise ElementNotFoundError(
-            strategy='framework_id',
+            strategy="framework_id",
             target=index_value,
             message=str(e),
         ) from e
 
 
 def find_element_by_html(
-    backend: 'PlaywrightBackend',
+    backend: "PlaywrightBackend",
     target_element_html: str,
-    identifying_attributes: Tuple[str, ...] = ('id', 'aria-label', 'class'),
-    always_return_single_element: bool = False
+    identifying_attributes: Tuple[str, ...] = ("id", "aria-label", "class"),
+    always_return_single_element: bool = False,
 ) -> Optional[Any]:
     """Find element by HTML snippet.
 
@@ -238,15 +237,17 @@ def find_element_by_html(
     """
     from webaxon.html_utils.common import get_tag_text_and_attributes_from_element
 
-    tag_name, text, attributes = get_tag_text_and_attributes_from_element(target_element_html)
+    tag_name, text, attributes = get_tag_text_and_attributes_from_element(
+        target_element_html
+    )
 
     # Build selector from tag and attributes
-    selector = tag_name or '*'
+    selector = tag_name or "*"
     for attr in identifying_attributes:
         if attr in attributes:
             value = attributes[attr]
             if isinstance(value, list):
-                value = ' '.join(value)
+                value = " ".join(value)
             selector += f"[{attr}='{value}']"
 
     locators = backend._page.locator(selector)
@@ -258,6 +259,5 @@ def find_element_by_html(
         return PlaywrightElementShim(locators.first, backend._page)
     else:
         return [
-            PlaywrightElementShim(locators.nth(i), backend._page)
-            for i in range(count)
+            PlaywrightElementShim(locators.nth(i), backend._page) for i in range(count)
         ]

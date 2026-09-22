@@ -1,10 +1,14 @@
-from ..utils import encode_image
-from PIL import Image
-import re
 import asyncio
+import re
+
+from PIL import Image
+
+from ..utils import encode_image
+
 MAX_IMAGE = 50
 # Limit concurrent LLM requests to avoid connection pool exhaustion.
 _CONCURRENCY_LIMIT = 5
+
 
 async def identify_key_points(task, model):
     system_msg = """You are an expert tasked with analyzing a given task to identify the key points explicitly stated in the task description.
@@ -28,13 +32,12 @@ async def identify_key_points(task, model):
         {"role": "system", "content": system_msg},
         {
             "role": "user",
-            "content": [
-                {"type": "text", "text": text}
-            ],
-        }
+            "content": [{"type": "text", "text": text}],
+        },
     ]
     responses = await asyncio.to_thread(model.generate, messages)
     return responses[0]
+
 
 async def judge_image(task, image_path, key_points, model, semaphore):
     system_msg = """You are an expert evaluator tasked with determining whether an image contains information about the necessary steps to complete a task.
@@ -80,20 +83,27 @@ The snapshot of the web page is shown in the image."""
                 {"type": "text", "text": text},
                 {
                     "type": "image_url",
-                    "image_url": {"url": f"data:image/jpeg;base64,{jpg_base64_str}", "detail": "high"},
+                    "image_url": {
+                        "url": f"data:image/jpeg;base64,{jpg_base64_str}",
+                        "detail": "high",
+                    },
                 },
             ],
-        }
+        },
     ]
 
     async with semaphore:
         responses = await asyncio.to_thread(model.generate, messages)
     return responses[0]
 
+
 # Max chars of snapshot text to include (avoids token overflow; pricing tables etc. are usually early)
 _MAX_SNAPSHOT_TEXT_CHARS = 12000
 
-async def WebJudge_Online_Mind2Web_eval(task, last_actions, images_path, model, score_threshold, snapshot_texts=None):
+
+async def WebJudge_Online_Mind2Web_eval(
+    task, last_actions, images_path, model, score_threshold, snapshot_texts=None
+):
     system_msg = """You are an expert in evaluating the performance of a web navigation agent. The agent is designed to help a human user navigate a website to complete a task. Given the user's task, the agent's action history, key points for task completion, some potentially important web pages in the agent's trajectory and their reasons, your goal is to determine whether the agent has completed the task and achieved all requirements.
 
 Your response must strictly follow the following evaluation criteria!
@@ -123,7 +133,7 @@ Status: "success" or "failure"
     if snapshot_texts:
         # Use last snapshot (most relevant for final answer); truncate to avoid token overflow
         _, last_text = snapshot_texts[-1]
-        truncated = last_text[: _MAX_SNAPSHOT_TEXT_CHARS]
+        truncated = last_text[:_MAX_SNAPSHOT_TEXT_CHARS]
         if len(last_text) > _MAX_SNAPSHOT_TEXT_CHARS:
             truncated += "\n\n[... truncated ...]"
         snapshot_text_block = """
@@ -154,7 +164,10 @@ The potentially important snapshots of the webpage in the agent's trajectory and
         key_points = "\n".join(line.lstrip() for line in key_points.splitlines())
 
     semaphore = asyncio.Semaphore(_CONCURRENCY_LIMIT)
-    tasks = [judge_image(task, image_path, key_points, model, semaphore) for image_path in images_path]
+    tasks = [
+        judge_image(task, image_path, key_points, model, semaphore)
+        for image_path in images_path
+    ]
     image_responses = await asyncio.gather(*tasks)
 
     whole_content_img = []
@@ -163,16 +176,37 @@ The potentially important snapshots of the webpage in the agent's trajectory and
     # Pattern to extract score: look for "Score" keyword followed by a digit 1-5.
     score_after_keyword_re = re.compile(r"[Ss]core[^0-9]*([1-5])")
     # Pattern to strip trailing score line from thought text
-    _trailing_score_re = re.compile(r"\s*(?:\d+\.)?\s*\*{0,2}[Ss]core\*{0,2}\s*:?\s*\[?\d\]?\s*$")
+    _trailing_score_re = re.compile(
+        r"\s*(?:\d+\.)?\s*\*{0,2}[Ss]core\*{0,2}\s*:?\s*\[?\d\]?\s*$"
+    )
     for response, image_path in zip(image_responses, images_path):
         try:
             # Extract reasoning - try multiple formats
             if "**Reasoning**:" in response:
-                thought = response.split("**Reasoning**:")[-1].strip().lstrip("\n").split("\n\n")[0].replace('\n', ' ')
+                thought = (
+                    response.split("**Reasoning**:")[-1]
+                    .strip()
+                    .lstrip("\n")
+                    .split("\n\n")[0]
+                    .replace("\n", " ")
+                )
             elif "**Reasoning**" in response:
-                thought = response.split("**Reasoning**")[-1].strip().lstrip(":").lstrip("\n").split("\n\n")[0].replace('\n', ' ')
+                thought = (
+                    response.split("**Reasoning**")[-1]
+                    .strip()
+                    .lstrip(":")
+                    .lstrip("\n")
+                    .split("\n\n")[0]
+                    .replace("\n", " ")
+                )
             elif "Reasoning:" in response:
-                thought = response.split("Reasoning:")[-1].strip().lstrip("\n").split("\n\n")[0].replace('\n', ' ')
+                thought = (
+                    response.split("Reasoning:")[-1]
+                    .strip()
+                    .lstrip("\n")
+                    .split("\n\n")[0]
+                    .replace("\n", " ")
+                )
             else:
                 thought = ""
 
@@ -187,7 +221,9 @@ The potentially important snapshots of the webpage in the agent's trajectory and
             else:
                 score = "0"
                 if len(response) < 200:
-                    print(f"WARNING: Image judge response truncated ({len(response)} chars), no Score found — assigning 0")
+                    print(
+                        f"WARNING: Image judge response truncated ({len(response)} chars), no Score found — assigning 0"
+                    )
 
             record.append({"Response": response, "Score": int(score)})
         except Exception as e:
@@ -200,8 +236,11 @@ The potentially important snapshots of the webpage in the agent's trajectory and
             jpg_base64_str = encode_image(Image.open(image_path))
             whole_content_img.append(
                 {
-                    'type': 'image_url',
-                    'image_url': {"url": f"data:image/jpeg;base64,{jpg_base64_str}", "detail": "high"}
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/jpeg;base64,{jpg_base64_str}",
+                        "detail": "high",
+                    },
                 }
             )
             if thought != "":
@@ -219,9 +258,13 @@ Action History:
 {thoughts}{snapshot_text_block}"""
     text = prompt.format(
         task=task,
-        last_actions="\n".join(f"{i+1}. {action}" for i, action in enumerate(last_actions)),
+        last_actions="\n".join(
+            f"{i + 1}. {action}" for i, action in enumerate(last_actions)
+        ),
         key_points=key_points,
-        thoughts="\n".join(f"{i+1}. {thought}" for i, thought in enumerate(whole_thoughts)),
+        thoughts="\n".join(
+            f"{i + 1}. {thought}" for i, thought in enumerate(whole_thoughts)
+        ),
         snapshot_text_block=snapshot_text_block,
     )
 
@@ -229,9 +272,7 @@ Action History:
         {"role": "system", "content": system_msg},
         {
             "role": "user",
-            "content": [
-                {"type": "text", "text": text}]
-                + whole_content_img
-        }
+            "content": [{"type": "text", "text": text}] + whole_content_img,
+        },
     ]
     return messages, text, system_msg, record, key_points

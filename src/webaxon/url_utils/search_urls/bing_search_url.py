@@ -1,14 +1,14 @@
+from datetime import date, datetime
 from typing import Iterable, Optional, Union
-from urllib.parse import urlencode, quote_plus
-from datetime import datetime, date
+from urllib.parse import quote_plus, urlencode
 
 
 def create_search_url(
-        query: str,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
-        sites: Optional[Union[str, Iterable[str]]] = None,
-        **other_search_args
+    query: str,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    sites: Optional[Union[str, Iterable[str]]] = None,
+    **other_search_args,
 ) -> str:
     """
     Constructs a Bing search URL with optional date range, multiple site constraints,
@@ -102,7 +102,7 @@ def create_search_url(
     # Add site restrictions if specified
     if sites:
         if isinstance(sites, str):
-            sites = sites.split(',')
+            sites = sites.split(",")
         # Filter out empty sites and strip whitespace
         valid_sites = [site.strip() for site in sites if site.strip()]
         if valid_sites:
@@ -111,9 +111,7 @@ def create_search_url(
             search_query += f" {site_query}"
 
     # Construct URL parameters
-    params = {
-        "q": search_query
-    }
+    params = {"q": search_query}
 
     # Add date range if specified
     if start_epoch is not None or end_epoch is not None:
@@ -125,7 +123,7 @@ def create_search_url(
             filter_parts.append(f'ex1:"ez5_{start_epoch}_"')
         elif end_epoch is not None:
             filter_parts.append(f'ex1:"ez5__{end_epoch}"')
-        params["filters"] = ' '.join(filter_parts)
+        params["filters"] = " ".join(filter_parts)
 
     # Include any other custom search arguments provided
     if other_search_args:

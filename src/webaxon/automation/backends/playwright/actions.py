@@ -10,29 +10,30 @@ import logging
 import platform
 import random
 from time import sleep
-from typing import Any, List, Mapping, Optional, Sequence, Tuple, Union, TYPE_CHECKING
+from typing import Any, List, Mapping, Optional, Sequence, Tuple, TYPE_CHECKING, Union
 
 from webaxon.automation.backends.shared.click_types import (
-    OpenInNewTabMode,
-    NewTabClickStrategy,
-    NewTabClickResult,
-    NewTabFallbackMode,
     ClickImplementation,
-    DEFAULT_NEW_TAB_STRATEGY_ORDER,
     DEFAULT_CLICK_IMPLEMENTATION_ORDER,
+    DEFAULT_NEW_TAB_STRATEGY_ORDER,
+    NewTabClickResult,
+    NewTabClickStrategy,
+    NewTabFallbackMode,
+    OpenInNewTabMode,
     STRATEGY_TO_RESULT,
 )
 from webaxon.automation.backends.shared.scroll_constants import (
-    RELATIVE_DISTANCE_PERCENTAGES,
-    FIXED_DISTANCE_PIXELS,
     compute_scroll_delta,
+    FIXED_DISTANCE_PIXELS,
+    RELATIVE_DISTANCE_PERCENTAGES,
 )
 from webaxon.automation.backends.shared.text_sanitization import (
-    sanitize_input_text_for_webdriver,
-    NonBMPHandling,
     NewlineHandling,
+    NonBMPHandling,
+    sanitize_input_text_for_webdriver,
     WhitespaceHandling,
 )
+
 from .common import get_body_html, get_body_text
 from .shims import PlaywrightElementShim
 
@@ -43,17 +44,21 @@ _logger = logging.getLogger(__name__)
 
 
 def click_element(
-    backend: 'PlaywrightBackend',
+    backend: "PlaywrightBackend",
     element: Any,
     try_open_in_new_tab: Union[bool, OpenInNewTabMode] = False,
     wait_before_checking_new_tab: float = 0.5,
     additional_max_wait_for_tab_timeout: float = 5.0,
     only_enable_additional_wait_for_non_anchor_links: bool = True,
-    implementation: Union[ClickImplementation, Tuple[ClickImplementation, ...]] = DEFAULT_CLICK_IMPLEMENTATION_ORDER,
-    new_tab_strategy_order: Tuple[NewTabClickStrategy, ...] = DEFAULT_NEW_TAB_STRATEGY_ORDER,
+    implementation: Union[
+        ClickImplementation, Tuple[ClickImplementation, ...]
+    ] = DEFAULT_CLICK_IMPLEMENTATION_ORDER,
+    new_tab_strategy_order: Tuple[
+        NewTabClickStrategy, ...
+    ] = DEFAULT_NEW_TAB_STRATEGY_ORDER,
     return_strategy_result: bool = False,
     new_tab_fallback_to_normal_click: Union[bool, str, NewTabFallbackMode] = False,
-    **kwargs
+    **kwargs,
 ) -> Union[Optional[List[str]], Tuple[Optional[List[str]], NewTabClickResult]]:
     """Click an element, optionally opening in new tab.
 
@@ -97,7 +102,11 @@ def click_element(
 
     def _normal_click():
         """Perform a normal click using the configured implementation order."""
-        methods = (implementation,) if isinstance(implementation, ClickImplementation) else implementation
+        methods = (
+            (implementation,)
+            if isinstance(implementation, ClickImplementation)
+            else implementation
+        )
         last_exc = None
         for method in methods:
             try:
@@ -119,7 +128,9 @@ def click_element(
                 last_exc = exc
                 continue
         if last_exc is not None:
-            _logger.warning(f"All click implementations exhausted. Last exception: {last_exc}")
+            _logger.warning(
+                f"All click implementations exhausted. Last exception: {last_exc}"
+            )
 
     def _check_for_new_tabs() -> List[str]:
         """Check for newly opened tabs."""
@@ -131,6 +142,7 @@ def click_element(
     def _wait_for_new_tab() -> List[str]:
         """Wait for a new tab to appear with timeout."""
         import time
+
         start = time.time()
         while time.time() - start < additional_max_wait_for_tab_timeout:
             new = _check_for_new_tabs()
@@ -141,7 +153,11 @@ def click_element(
 
     # Normalize try_open_in_new_tab to OpenInNewTabMode
     if isinstance(try_open_in_new_tab, bool):
-        open_mode = OpenInNewTabMode.ENABLED if try_open_in_new_tab else OpenInNewTabMode.DISABLED
+        open_mode = (
+            OpenInNewTabMode.ENABLED
+            if try_open_in_new_tab
+            else OpenInNewTabMode.DISABLED
+        )
     else:
         open_mode = try_open_in_new_tab
 
@@ -157,7 +173,7 @@ def click_element(
     if open_mode == OpenInNewTabMode.ENABLED_FOR_NON_SAME_PAGE_INTERACTION:
         # Check if element is likely to navigate away
         href = locator.evaluate("el => el.href || el.getAttribute('href') || ''") or ""
-        if href.startswith('#') or not href:
+        if href.startswith("#") or not href:
             should_open_in_new_tab = False
     elif open_mode == OpenInNewTabMode.ENABLED_FOR_INTERACTABLE:
         # For Playwright, all clickable elements are interactable
@@ -172,18 +188,20 @@ def click_element(
     # Zero out additional wait for same-page elements (matches Selenium behavior)
     if only_enable_additional_wait_for_non_anchor_links:
         href = locator.evaluate("el => el.href || el.getAttribute('href') || ''") or ""
-        is_non_same_page = bool(href) and not href.startswith('#')
+        is_non_same_page = bool(href) and not href.startswith("#")
         if not is_non_same_page:
             additional_max_wait_for_tab_timeout = 0
 
     # Resolve new-tab fallback mode
     _use_text_fallback = (
         new_tab_fallback_to_normal_click is True
-        or new_tab_fallback_to_normal_click == NewTabFallbackMode.ENABLED_WHEN_NO_TEXT_CHANGE
+        or new_tab_fallback_to_normal_click
+        == NewTabFallbackMode.ENABLED_WHEN_NO_TEXT_CHANGE
         or new_tab_fallback_to_normal_click == "no_text_change"
     )
     _use_html_fallback = (
-        new_tab_fallback_to_normal_click == NewTabFallbackMode.ENABLED_WHEN_NO_HTML_CHANGE
+        new_tab_fallback_to_normal_click
+        == NewTabFallbackMode.ENABLED_WHEN_NO_HTML_CHANGE
         or new_tab_fallback_to_normal_click == "no_html_change"
     )
     _fallback_enabled = _use_text_fallback or _use_html_fallback
@@ -226,7 +244,7 @@ def click_element(
                         return null;
                     }
                 """)
-                if url and not url.startswith('#'):
+                if url and not url.startswith("#"):
                     # Open URL in new page using context
                     new_page = backend._context.new_page()
                     new_page.goto(url)
@@ -237,12 +255,16 @@ def click_element(
             elif strategy == NewTabClickStrategy.TARGET_BLANK:
                 # Only applies to <a> elements (matches Selenium behavior)
                 _tag_name = locator.evaluate("el => (el.tagName || '').toLowerCase()")
-                if _tag_name == 'a':
+                if _tag_name == "a":
                     # Set target='_blank' and click using the implementation sequence
                     original_target = locator.evaluate("el => el.target || ''")
                     locator.evaluate("el => el.target = '_blank'")
                     try:
-                        _methods = (implementation,) if isinstance(implementation, ClickImplementation) else implementation
+                        _methods = (
+                            (implementation,)
+                            if isinstance(implementation, ClickImplementation)
+                            else implementation
+                        )
                         for _method in _methods:
                             try:
                                 if _method == ClickImplementation.NATIVE:
@@ -269,7 +291,7 @@ def click_element(
 
             elif strategy == NewTabClickStrategy.MODIFIER_KEY:
                 # Ctrl/Cmd + Click
-                modifier = 'Meta' if platform.system() == 'Darwin' else 'Control'
+                modifier = "Meta" if platform.system() == "Darwin" else "Control"
                 locator.click(modifiers=[modifier])
                 sleep(wait_before_checking_new_tab)
                 new_handles = list(set(backend.window_handles) - old_handles)
@@ -285,7 +307,9 @@ def click_element(
                             if result.get("targetId"):
                                 # Wait for the new page to appear
                                 sleep(wait_before_checking_new_tab)
-                                new_handles = list(set(backend.window_handles) - old_handles)
+                                new_handles = list(
+                                    set(backend.window_handles) - old_handles
+                                )
                         except Exception as e:
                             _logger.debug(f"CDP_CREATE_TARGET failed: {e}")
 
@@ -293,9 +317,9 @@ def click_element(
                 # Middle mouse button click
                 box = locator.bounding_box()
                 if box:
-                    x = box['x'] + box['width'] / 2
-                    y = box['y'] + box['height'] / 2
-                    backend._page.mouse.click(x, y, button='middle')
+                    x = box["x"] + box["width"] / 2
+                    y = box["y"] + box["height"] / 2
+                    backend._page.mouse.click(x, y, button="middle")
                     sleep(wait_before_checking_new_tab)
                     new_handles = list(set(backend.window_handles) - old_handles)
 
@@ -324,7 +348,7 @@ def click_element(
         # All new-tab strategies failed — check if page is unchanged and fall back to normal click.
         sleep(wait_before_checking_new_tab)
         try:
-            url_changed = (backend._page.url != _fallback_url_before)
+            url_changed = backend._page.url != _fallback_url_before
         except Exception:
             url_changed = True
         if not url_changed:
@@ -341,13 +365,13 @@ def click_element(
 
 
 def input_text(
-    backend: 'PlaywrightBackend',
+    backend: "PlaywrightBackend",
     element: Any,
     text: str,
     clear_content: bool = False,
-    implementation: str = 'auto',
-    default_implementation: str = 'send_keys',
-    fast_implementation: str = 'send_keys_fast',
+    implementation: str = "auto",
+    default_implementation: str = "send_keys",
+    fast_implementation: str = "send_keys_fast",
     fast_threshold: int = 20,
     min_delay: float = 0.1,
     max_delay: float = 1.0,
@@ -356,7 +380,7 @@ def input_text(
     non_bmp_handling: NonBMPHandling = NonBMPHandling.REMOVE,
     newline_handling: NewlineHandling = NewlineHandling.SPACE,
     whitespace_handling: WhitespaceHandling = WhitespaceHandling.NORMALIZE,
-    **kwargs
+    **kwargs,
 ) -> None:
     """Input text into an element.
 
@@ -389,13 +413,17 @@ def input_text(
         locator = element
 
     # Auto mode: choose implementation based on text length
-    if implementation == 'auto':
-        implementation = default_implementation if len(text) <= fast_threshold else fast_implementation
+    if implementation == "auto":
+        implementation = (
+            default_implementation
+            if len(text) <= fast_threshold
+            else fast_implementation
+        )
 
     # Apply text sanitization
     if sanitize:
         if auto_sanitization:
-            if implementation in ('send_keys', 'send_keys_fast'):
+            if implementation in ("send_keys", "send_keys_fast"):
                 # Playwright's type() can handle non-BMP chars better than Selenium's send_keys
                 # but still sanitize newlines for single-line inputs
                 text = sanitize_input_text_for_webdriver(
@@ -403,7 +431,7 @@ def input_text(
                     non_bmp_handling=NonBMPHandling.KEEP,  # Playwright handles these natively
                     newline_handling=NewlineHandling.SPACE,
                     whitespace_handling=WhitespaceHandling.NORMALIZE,
-                    remove_control_chars=True
+                    remove_control_chars=True,
                 )
             else:  # javascript / fill()
                 # fill() handles everything natively
@@ -412,7 +440,7 @@ def input_text(
                     non_bmp_handling=NonBMPHandling.KEEP,
                     newline_handling=NewlineHandling.KEEP,
                     whitespace_handling=WhitespaceHandling.KEEP,
-                    remove_control_chars=True
+                    remove_control_chars=True,
                 )
         else:
             # Manual sanitization with user-specified options
@@ -421,11 +449,11 @@ def input_text(
                 non_bmp_handling=non_bmp_handling,
                 newline_handling=newline_handling,
                 whitespace_handling=whitespace_handling,
-                remove_control_chars=True
+                remove_control_chars=True,
             )
 
     # Execute based on implementation
-    if implementation == 'javascript':
+    if implementation == "javascript":
         # fill() is fastest - sets value directly
         if clear_content:
             locator.fill(text)
@@ -433,12 +461,12 @@ def input_text(
             # fill() always clears, so append current value
             current = locator.input_value()
             locator.fill(current + text)
-    elif implementation == 'send_keys_fast':
+    elif implementation == "send_keys_fast":
         # type() without delay - sends entire string but triggers keyboard events
         if clear_content:
             locator.clear()
         locator.type(text, delay=0)
-    elif implementation == 'send_keys':
+    elif implementation == "send_keys":
         # type() with random delay - most human-like
         if clear_content:
             locator.clear()
@@ -449,14 +477,14 @@ def input_text(
 
 
 def scroll_element(
-    backend: 'PlaywrightBackend',
+    backend: "PlaywrightBackend",
     element: Any,
-    direction: str = 'Down',
-    distance: str = 'Large',
-    implementation: str = 'javascript',
+    direction: str = "Down",
+    distance: str = "Large",
+    implementation: str = "javascript",
     relative_distance: bool = False,
     try_solve_scrollable_child: bool = False,
-    **kwargs
+    **kwargs,
 ) -> None:
     """Scroll an element or viewport.
 
@@ -483,7 +511,7 @@ def scroll_element(
     direction = direction.capitalize()
 
     # Calculate scroll distance
-    if relative_distance and distance in ('Small', 'Medium', 'Large'):
+    if relative_distance and distance in ("Small", "Medium", "Large"):
         # Relative distance: percentage of element's client dimensions
         percentage = RELATIVE_DISTANCE_PERCENTAGES[distance]
 
@@ -491,10 +519,10 @@ def scroll_element(
         dims = locator.evaluate("el => ({h: el.clientHeight, w: el.clientWidth})")
 
         # Use height for vertical scrolling, width for horizontal
-        if direction in ('Up', 'Down'):
-            scroll_amount = int(dims['h'] * percentage)
+        if direction in ("Up", "Down"):
+            scroll_amount = int(dims["h"] * percentage)
         else:  # Left, Right
-            scroll_amount = int(dims['w'] * percentage)
+            scroll_amount = int(dims["w"] * percentage)
     else:
         # Fixed distance in pixels
         try:
@@ -503,18 +531,25 @@ def scroll_element(
             scroll_amount = FIXED_DISTANCE_PIXELS.get(distance, 500)
 
             # Handle 'Half' and 'Full' - use viewport dimensions
-            if distance in ('Half', 'Full'):
-                viewport_size = backend._page.viewport_size or {'width': 1920, 'height': 1080}
-                if direction in ('Up', 'Down'):
-                    scroll_amount = viewport_size['height'] // (2 if distance == 'Half' else 1)
+            if distance in ("Half", "Full"):
+                viewport_size = backend._page.viewport_size or {
+                    "width": 1920,
+                    "height": 1080,
+                }
+                if direction in ("Up", "Down"):
+                    scroll_amount = viewport_size["height"] // (
+                        2 if distance == "Half" else 1
+                    )
                 else:  # Left, Right
-                    scroll_amount = viewport_size['width'] // (2 if distance == 'Half' else 1)
+                    scroll_amount = viewport_size["width"] // (
+                        2 if distance == "Half" else 1
+                    )
 
     # Calculate direction deltas using shared utility
     delta_x, delta_y = compute_scroll_delta(direction, scroll_amount)
 
     # Use JavaScript scrolling
-    if implementation == 'javascript':
+    if implementation == "javascript":
         locator.evaluate(f"el => el.scrollBy({delta_x}, {delta_y})")
     else:
         # Use mouse wheel
@@ -522,13 +557,12 @@ def scroll_element(
         box = locator.bounding_box()
         if box:
             backend._page.mouse.move(
-                box['x'] + box['width'] / 2,
-                box['y'] + box['height'] / 2
+                box["x"] + box["width"] / 2, box["y"] + box["height"] / 2
             )
             backend._page.mouse.wheel(delta_x, delta_y)
 
 
-def center_element_in_view(backend: 'PlaywrightBackend', element: Any) -> None:
+def center_element_in_view(backend: "PlaywrightBackend", element: Any) -> None:
     """Scroll element to center of viewport.
 
     Args:

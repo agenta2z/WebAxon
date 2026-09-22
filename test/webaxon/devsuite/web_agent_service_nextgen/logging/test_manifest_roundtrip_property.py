@@ -7,13 +7,10 @@ deserializing back via from_json() SHALL produce an equivalent ManifestFile.
 All fields SHALL be preserved including nested TurnEntry and ArtifactEntry objects.
 """
 
-import resolve_path  # noqa: F401 - must be first import
-
 import json
 
-from hypothesis import given, settings, HealthCheck
-from hypothesis import strategies as st
-
+import resolve_path  # noqa: F401 - must be first import
+from hypothesis import given, HealthCheck, settings, strategies as st
 from rich_python_utils.service_utils.session_management import (
     ArtifactEntry,
     SessionManifest as ManifestFile,

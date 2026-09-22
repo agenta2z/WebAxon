@@ -9,8 +9,12 @@ from pathlib import Path
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Calculate accuracy from evaluation results.")
-    ap.add_argument("--results_file", required=True, help="Path to the eval results JSON file.")
+    ap = argparse.ArgumentParser(
+        description="Calculate accuracy from evaluation results."
+    )
+    ap.add_argument(
+        "--results_file", required=True, help="Path to the eval results JSON file."
+    )
     args = ap.parse_args()
 
     results_file = Path(args.results_file)
@@ -38,13 +42,13 @@ def main():
         return
 
     accuracy = (successes / total) * 100
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"  FINAL ACCURACY: {accuracy:.2f}%")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"  Successes: {successes}")
     print(f"  Total:     {total}")
     print(f"  Failures:  {total - successes}")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
 
 if __name__ == "__main__":

@@ -10,8 +10,9 @@ not the CLI. The CLI simply connects and sends messages.
 Usage:
     python launch_cli.py [workspace_path] [--session-id SESSION_ID] [--queue-root-path PATH]
 """
-import sys
+
 import argparse
+import sys
 from pathlib import Path
 
 # Add source paths (same pattern as launch_service.py)
@@ -62,10 +63,16 @@ def main():
     args = parser.parse_args()
 
     if not args.testcase_root.exists() or not args.testcase_root.is_dir():
-        print(f"Error: testcase_root does not exist or is not a directory: {args.testcase_root}")
+        print(
+            f"Error: testcase_root does not exist or is not a directory: {args.testcase_root}"
+        )
         sys.exit(1)
 
-    client = CLIClient(args.testcase_root, session_id=args.session_id, queue_root_path=args.queue_root_path)
+    client = CLIClient(
+        args.testcase_root,
+        session_id=args.session_id,
+        queue_root_path=args.queue_root_path,
+    )
     client.run()
 
 

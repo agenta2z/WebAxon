@@ -17,7 +17,7 @@ Validates: Requirements 15.1, 15.2, 15.3, 15.4
 import sys
 from pathlib import Path
 
-PIVOT_FOLDER_NAME = 'test'
+PIVOT_FOLDER_NAME = "test"
 current_file = Path(__file__).resolve()
 current_path = current_file.parent
 while current_path.name != PIVOT_FOLDER_NAME and current_path.parent != current_path:
@@ -32,21 +32,28 @@ if src_dir.exists() and str(src_dir) not in sys.path:
     sys.path.insert(0, str(src_dir))
 
 projects_root = webagent_root.parent
-for path_item in [projects_root / "SciencePythonUtils" / "src", projects_root / "ScienceModelingTools" / "src"]:
+for path_item in [
+    projects_root / "SciencePythonUtils" / "src",
+    projects_root / "ScienceModelingTools" / "src",
+]:
     if path_item.exists() and str(path_item) not in sys.path:
         sys.path.insert(0, str(path_item))
 
-import pytest
-from unittest.mock import MagicMock, patch, call
-from hypothesis import given, strategies as st, settings, assume
 from typing import List, Tuple
+from unittest.mock import call, MagicMock, patch
+
+import pytest
+from hypothesis import assume, given, settings, strategies as st
 
 
 # =============================================================================
 # Test Fixtures
 # =============================================================================
 
-def create_mock_action_config(name: str, composite_steps: List[Tuple[str, int]], mode: str = "sequential"):
+
+def create_mock_action_config(
+    name: str, composite_steps: List[Tuple[str, int]], mode: str = "sequential"
+):
     """Create a mock action config for composite action testing."""
     mock_config = MagicMock()
     mock_config.name = name
@@ -69,6 +76,7 @@ def create_mock_elements(count: int):
 # Property 10: Composite Action Decomposition
 # =============================================================================
 
+
 class TestCompositeActionDecomposition:
     """
     Property 10: For any composite action with N steps, execute_composite_action
@@ -82,18 +90,19 @@ class TestCompositeActionDecomposition:
         mock_driver = MagicMock()
         elements = create_mock_elements(2)
         action_config = create_mock_action_config(
-            name="input_and_click",
-            composite_steps=[("input_text", 0), ("click", 1)]
+            name="input_and_click", composite_steps=[("input_text", 0), ("click", 1)]
         )
 
-        with patch('webaxon.automation.selenium.actions.execute_single_action') as mock_exec:
+        with patch(
+            "webaxon.automation.selenium.actions.execute_single_action"
+        ) as mock_exec:
             execute_composite_action(
                 driver=mock_driver,
                 elements=elements,
                 action_config=action_config,
-                action_args={'input_text_text': 'hello'},
+                action_args={"input_text_text": "hello"},
                 timeout=10,
-                additional_wait_time=1.0
+                additional_wait_time=1.0,
             )
 
             # Verify two calls were made
@@ -101,13 +110,13 @@ class TestCompositeActionDecomposition:
 
             # Verify first call was input_text on element 0
             first_call = mock_exec.call_args_list[0]
-            assert first_call[1]['action_type'] == 'input_text'
-            assert first_call[1]['element'] == elements[0]
+            assert first_call[1]["action_type"] == "input_text"
+            assert first_call[1]["element"] == elements[0]
 
             # Verify second call was click on element 1
             second_call = mock_exec.call_args_list[1]
-            assert second_call[1]['action_type'] == 'click'
-            assert second_call[1]['element'] == elements[1]
+            assert second_call[1]["action_type"] == "click"
+            assert second_call[1]["element"] == elements[1]
 
     def test_action_args_with_prefix_extracted_correctly(self):
         """Action args with prefix should be extracted for the correct step."""
@@ -116,23 +125,27 @@ class TestCompositeActionDecomposition:
         mock_driver = MagicMock()
         elements = create_mock_elements(2)
         action_config = create_mock_action_config(
-            name="input_and_submit",
-            composite_steps=[("input_text", 0), ("click", 1)]
+            name="input_and_submit", composite_steps=[("input_text", 0), ("click", 1)]
         )
 
-        with patch('webaxon.automation.selenium.actions.execute_single_action') as mock_exec:
+        with patch(
+            "webaxon.automation.selenium.actions.execute_single_action"
+        ) as mock_exec:
             execute_composite_action(
                 driver=mock_driver,
                 elements=elements,
                 action_config=action_config,
-                action_args={'input_text_text': 'test_input', 'input_text_clear_content': True},
+                action_args={
+                    "input_text_text": "test_input",
+                    "input_text_clear_content": True,
+                },
                 timeout=10,
-                additional_wait_time=1.0
+                additional_wait_time=1.0,
             )
 
             # First call should have extracted input_text args
             first_call = mock_exec.call_args_list[0]
-            step_args = first_call[1].get('action_args', {})
+            step_args = first_call[1].get("action_args", {})
             # The prefix should be stripped, so 'text' not 'input_text_text'
             assert step_args is not None
 
@@ -145,14 +158,12 @@ class TestCompositeActionDecomposition:
         action_config = create_mock_action_config(
             name="test_action",
             composite_steps=[("click", 0)],
-            mode="parallel"  # Unsupported mode
+            mode="parallel",  # Unsupported mode
         )
 
         with pytest.raises(ValueError) as exc_info:
             execute_composite_action(
-                driver=mock_driver,
-                elements=elements,
-                action_config=action_config
+                driver=mock_driver, elements=elements, action_config=action_config
             )
 
         assert "unsupported" in str(exc_info.value).lower()
@@ -165,17 +176,17 @@ class TestCompositeActionDecomposition:
         elements = create_mock_elements(1)  # Only 1 element
         action_config = create_mock_action_config(
             name="test_action",
-            composite_steps=[("click", 5)]  # Index 5 doesn't exist
+            composite_steps=[("click", 5)],  # Index 5 doesn't exist
         )
 
         with pytest.raises(ValueError) as exc_info:
             execute_composite_action(
-                driver=mock_driver,
-                elements=elements,
-                action_config=action_config
+                driver=mock_driver, elements=elements, action_config=action_config
             )
 
-        assert "element_index" in str(exc_info.value).lower() or "5" in str(exc_info.value)
+        assert "element_index" in str(exc_info.value).lower() or "5" in str(
+            exc_info.value
+        )
 
     def test_empty_composite_steps_raises_error(self):
         """Empty composite_steps should raise ValueError."""
@@ -184,16 +195,13 @@ class TestCompositeActionDecomposition:
         mock_driver = MagicMock()
         elements = create_mock_elements(1)
         action_config = create_mock_action_config(
-            name="test_action",
-            composite_steps=[]
+            name="test_action", composite_steps=[]
         )
         action_config.composite_steps = None  # Force it to be None
 
         with pytest.raises(ValueError) as exc_info:
             execute_composite_action(
-                driver=mock_driver,
-                elements=elements,
-                action_config=action_config
+                driver=mock_driver, elements=elements, action_config=action_config
             )
 
         assert "composite_steps" in str(exc_info.value).lower()
@@ -211,9 +219,7 @@ class TestCompositeActionDecomposition:
 
         with pytest.raises(ValueError) as exc_info:
             execute_composite_action(
-                driver=mock_driver,
-                elements=elements,
-                action_config=mock_config
+                driver=mock_driver, elements=elements, action_config=mock_config
             )
 
         assert "composite" in str(exc_info.value).lower()
@@ -232,17 +238,18 @@ class TestCompositeActionStepExecution:
         elements = create_mock_elements(num_steps)
         steps = [("click", i) for i in range(num_steps)]
         action_config = create_mock_action_config(
-            name="multi_click",
-            composite_steps=steps
+            name="multi_click", composite_steps=steps
         )
 
-        with patch('webaxon.automation.selenium.actions.execute_single_action') as mock_exec:
+        with patch(
+            "webaxon.automation.selenium.actions.execute_single_action"
+        ) as mock_exec:
             execute_composite_action(
                 driver=mock_driver,
                 elements=elements,
                 action_config=action_config,
                 timeout=10,
-                additional_wait_time=0.1
+                additional_wait_time=0.1,
             )
 
             assert mock_exec.call_count == num_steps
@@ -255,21 +262,23 @@ class TestCompositeActionStepExecution:
         elements = create_mock_elements(3)
         action_config = create_mock_action_config(
             name="triple_action",
-            composite_steps=[("click", 0), ("input_text", 1), ("click", 2)]
+            composite_steps=[("click", 0), ("input_text", 1), ("click", 2)],
         )
 
-        with patch('webaxon.automation.selenium.actions.execute_single_action') as mock_exec:
+        with patch(
+            "webaxon.automation.selenium.actions.execute_single_action"
+        ) as mock_exec:
             execute_composite_action(
                 driver=mock_driver,
                 elements=elements,
                 action_config=action_config,
                 timeout=10,
-                additional_wait_time=0.1
+                additional_wait_time=0.1,
             )
 
             for i, call_args in enumerate(mock_exec.call_args_list):
                 expected_element = elements[i]
-                actual_element = call_args[1]['element']
+                actual_element = call_args[1]["element"]
                 assert actual_element == expected_element
 
     def test_timeout_passed_to_each_step(self):
@@ -279,21 +288,22 @@ class TestCompositeActionStepExecution:
         mock_driver = MagicMock()
         elements = create_mock_elements(2)
         action_config = create_mock_action_config(
-            name="timed_action",
-            composite_steps=[("click", 0), ("click", 1)]
+            name="timed_action", composite_steps=[("click", 0), ("click", 1)]
         )
 
-        with patch('webaxon.automation.selenium.actions.execute_single_action') as mock_exec:
+        with patch(
+            "webaxon.automation.selenium.actions.execute_single_action"
+        ) as mock_exec:
             execute_composite_action(
                 driver=mock_driver,
                 elements=elements,
                 action_config=action_config,
                 timeout=30,
-                additional_wait_time=0.1
+                additional_wait_time=0.1,
             )
 
             for call_args in mock_exec.call_args_list:
-                assert call_args[1]['timeout'] == 30
+                assert call_args[1]["timeout"] == 30
 
 
 class TestCompositeActionArgumentExtraction:
@@ -302,6 +312,7 @@ class TestCompositeActionArgumentExtraction:
     def test_extract_action_specific_args_function_exists(self):
         """_extract_action_specific_args function should exist."""
         from webaxon.automation.selenium.actions import _extract_action_specific_args
+
         assert callable(_extract_action_specific_args)
 
     def test_extract_removes_prefix(self):
@@ -309,32 +320,29 @@ class TestCompositeActionArgumentExtraction:
         from webaxon.automation.selenium.actions import _extract_action_specific_args
 
         action_args = {
-            'input_text_text': 'hello',
-            'input_text_clear_content': True,
-            'click_force': False
+            "input_text_text": "hello",
+            "input_text_clear_content": True,
+            "click_force": False,
         }
 
-        result = _extract_action_specific_args('input_text', action_args)
+        result = _extract_action_specific_args("input_text", action_args)
 
         # Should extract 'text' and 'clear_content' (without 'input_text_' prefix)
-        assert 'text' in result or result == {} or result is None
+        assert "text" in result or result == {} or result is None
         # The function may return empty dict if no matches
 
     def test_unrelated_args_not_extracted(self):
         """Args for other action types should not be extracted."""
         from webaxon.automation.selenium.actions import _extract_action_specific_args
 
-        action_args = {
-            'click_force': True,
-            'scroll_direction': 'down'
-        }
+        action_args = {"click_force": True, "scroll_direction": "down"}
 
-        result = _extract_action_specific_args('input_text', action_args)
+        result = _extract_action_specific_args("input_text", action_args)
 
         # Should not include click or scroll args
         if result:
-            assert 'force' not in result
-            assert 'direction' not in result
+            assert "force" not in result
+            assert "direction" not in result
 
 
 class TestCompositeActionModeHandling:
@@ -347,17 +355,13 @@ class TestCompositeActionModeHandling:
         mock_driver = MagicMock()
         elements = create_mock_elements(1)
         action_config = create_mock_action_config(
-            name="test",
-            composite_steps=[("click", 0)],
-            mode="sequential"
+            name="test", composite_steps=[("click", 0)], mode="sequential"
         )
 
-        with patch('webaxon.automation.selenium.actions.execute_single_action'):
+        with patch("webaxon.automation.selenium.actions.execute_single_action"):
             # Should not raise
             execute_composite_action(
-                driver=mock_driver,
-                elements=elements,
-                action_config=action_config
+                driver=mock_driver, elements=elements, action_config=action_config
             )
 
     def test_old_enum_format_supported(self):
@@ -378,10 +382,8 @@ class TestCompositeActionModeHandling:
         del mock_composite.mode  # Remove mode attribute to simulate old format
         mock_config.composite_action = mock_composite
 
-        with patch('webaxon.automation.selenium.actions.execute_single_action'):
+        with patch("webaxon.automation.selenium.actions.execute_single_action"):
             # Should not raise
             execute_composite_action(
-                driver=mock_driver,
-                elements=elements,
-                action_config=mock_config
+                driver=mock_driver, elements=elements, action_config=mock_config
             )

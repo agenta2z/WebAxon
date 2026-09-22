@@ -11,17 +11,19 @@ import os
 import sys
 
 # Set UTF-8 encoding for Windows console
-if sys.platform == 'win32':
-    sys.stdout.reconfigure(encoding='utf-8')
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8")
 
 # Add src directories to path
 test_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.abspath(os.path.join(test_dir, '..', '..', '..', '..', '..'))
-sys.path.insert(0, os.path.join(project_root, 'src'))
+project_root = os.path.abspath(os.path.join(test_dir, "..", "..", "..", "..", ".."))
+sys.path.insert(0, os.path.join(project_root, "src"))
 
 # Add SciencePythonUtils to path (WebAgent depends on it)
-science_utils_root = os.path.abspath(os.path.join(project_root, '..', 'SciencePythonUtils'))
-sys.path.insert(0, os.path.join(science_utils_root, 'src'))
+science_utils_root = os.path.abspath(
+    os.path.join(project_root, "..", "SciencePythonUtils")
+)
+sys.path.insert(0, os.path.join(science_utils_root, "src"))
 
 from bs4 import BeautifulSoup
 from webaxon.html_utils.sanitization import clean_html
@@ -47,27 +49,31 @@ def test_default_behavior_removes_disabled_inputs():
 
     # Clean HTML with default parameters
     result = clean_html(html)
-    soup = BeautifulSoup(result, 'html.parser')
+    soup = BeautifulSoup(result, "html.parser")
 
     # Verify disabled inputs are removed
-    disabled_inputs = soup.find_all('input', attrs={'disabled': True})
-    assert len(disabled_inputs) == 0, f"Expected 0 disabled inputs, found {len(disabled_inputs)}"
+    disabled_inputs = soup.find_all("input", attrs={"disabled": True})
+    assert len(disabled_inputs) == 0, (
+        f"Expected 0 disabled inputs, found {len(disabled_inputs)}"
+    )
     print("✓ All disabled <input> elements removed")
 
     # Verify non-disabled input is kept
-    normal_inputs = soup.find_all('input')
-    assert len(normal_inputs) == 1, f"Expected 1 normal input, found {len(normal_inputs)}"
+    normal_inputs = soup.find_all("input")
+    assert len(normal_inputs) == 1, (
+        f"Expected 1 normal input, found {len(normal_inputs)}"
+    )
     print("✓ Non-disabled <input> elements preserved")
 
     # Verify disabled button is kept (by wildcard catch-all rule)
     # Note: clean_html removes the 'disabled' attribute (not in DEFAULT_HTML_CLEAN_ATTRIBUTES_TO_KEEP)
     # so we just check that the button element itself is preserved
-    buttons = soup.find_all('button')
+    buttons = soup.find_all("button")
     assert len(buttons) == 1, f"Expected 1 button element, found {len(buttons)}"
     print("✓ <button> elements preserved (wildcard catch-all rule)")
 
     # Verify disabled select is kept (by wildcard catch-all rule)
-    selects = soup.find_all('select')
+    selects = soup.find_all("select")
     assert len(selects) == 1, f"Expected 1 select element, found {len(selects)}"
     print("✓ <select> elements preserved (wildcard catch-all rule)")
 
@@ -89,16 +95,18 @@ def test_disable_all_disabled_element_removal():
 
     # Clean HTML with empty disabled element rule sets
     result = clean_html(html, disabled_element_rule_sets={})
-    soup = BeautifulSoup(result, 'html.parser')
+    soup = BeautifulSoup(result, "html.parser")
 
     # Verify disabled input is KEPT (no rules)
     # Note: clean_html removes the 'disabled' attribute, so just check element exists
-    inputs = soup.find_all('input')
-    assert len(inputs) == 1, f"Expected 1 input element (rules disabled), found {len(inputs)}"
+    inputs = soup.find_all("input")
+    assert len(inputs) == 1, (
+        f"Expected 1 input element (rules disabled), found {len(inputs)}"
+    )
     print("✓ <input> elements preserved when disabled_element_rule_sets={}")
 
     # Verify disabled button is kept
-    buttons = soup.find_all('button')
+    buttons = soup.find_all("button")
     assert len(buttons) == 1, f"Expected 1 button element, found {len(buttons)}"
     print("✓ <button> elements also preserved")
 
@@ -121,38 +129,41 @@ def test_custom_rules_remove_multiple_element_types():
 
     # Create custom rules to remove both inputs and buttons
     custom_rules = {
-        '__global__': [
+        "__global__": [
             {
-                'return': 'remove',
-                'tags': ('input', 'button'),
-                'rule-type': 'any-attribute-value-matches-pattern',
-                'attributes': ('disabled',),
-                'pattern': '*'
+                "return": "remove",
+                "tags": ("input", "button"),
+                "rule-type": "any-attribute-value-matches-pattern",
+                "attributes": ("disabled",),
+                "pattern": "*",
             },
             # Catch-all rule to keep other elements (prevents fallback to is_element_disabled)
-            {
-                'return': 'keep',
-                'tags': ('*',)
-            }
+            {"return": "keep", "tags": ("*",)},
         ]
     }
 
     result = clean_html(html, disabled_element_rule_sets=custom_rules)
-    soup = BeautifulSoup(result, 'html.parser')
+    soup = BeautifulSoup(result, "html.parser")
 
     # Verify disabled inputs removed
-    disabled_inputs = soup.find_all('input', attrs={'disabled': True})
-    assert len(disabled_inputs) == 0, f"Expected 0 disabled inputs, found {len(disabled_inputs)}"
+    disabled_inputs = soup.find_all("input", attrs={"disabled": True})
+    assert len(disabled_inputs) == 0, (
+        f"Expected 0 disabled inputs, found {len(disabled_inputs)}"
+    )
     print("✓ Disabled <input> elements removed")
 
     # Verify disabled buttons removed
-    disabled_buttons = soup.find_all('button', attrs={'disabled': True})
-    assert len(disabled_buttons) == 0, f"Expected 0 disabled buttons, found {len(disabled_buttons)}"
+    disabled_buttons = soup.find_all("button", attrs={"disabled": True})
+    assert len(disabled_buttons) == 0, (
+        f"Expected 0 disabled buttons, found {len(disabled_buttons)}"
+    )
     print("✓ Disabled <button> elements removed")
 
     # Verify disabled select is kept (not in rule)
-    disabled_selects = soup.find_all('select', attrs={'disabled': True})
-    assert len(disabled_selects) == 1, f"Expected 1 disabled select (not in rule), found {len(disabled_selects)}"
+    disabled_selects = soup.find_all("select", attrs={"disabled": True})
+    assert len(disabled_selects) == 1, (
+        f"Expected 1 disabled select (not in rule), found {len(disabled_selects)}"
+    )
     print("✓ Disabled <select> preserved (not in custom rule)")
 
     print()
@@ -167,44 +178,54 @@ def test_real_html_data():
     # Read real HTML test data
     test_data_path = os.path.join(
         project_root,
-        'test', 'webaxon', 'html_utils', 'sanitization',
-        'test_clean_html', 'test_data', 'google_join_waitlist.html'
+        "test",
+        "webaxon",
+        "html_utils",
+        "sanitization",
+        "test_clean_html",
+        "test_data",
+        "google_join_waitlist.html",
     )
 
-    with open(test_data_path, 'r', encoding='utf-8') as f:
+    with open(test_data_path, "r", encoding="utf-8") as f:
         html = f.read()
 
     # Add some disabled inputs to the HTML
     html_with_disabled = html.replace(
-        '<html',
+        "<html",
         '<input type="text" disabled class="test-disabled-input">'
         '<input type="email" class="test-normal-input">'
         '<button disabled class="test-disabled-button">TestButton</button>'
-        '<html'
+        "<html",
     )
 
     # Count before cleaning
-    soup_before = BeautifulSoup(html_with_disabled, 'html.parser')
-    disabled_inputs_before = soup_before.find_all('input', attrs={'disabled': True})
+    soup_before = BeautifulSoup(html_with_disabled, "html.parser")
+    disabled_inputs_before = soup_before.find_all("input", attrs={"disabled": True})
 
     # Clean HTML with default parameters
     result = clean_html(html_with_disabled)
-    soup = BeautifulSoup(result, 'html.parser')
+    soup = BeautifulSoup(result, "html.parser")
 
     # Verify disabled input is removed (count decreased by 1)
-    disabled_inputs_after = soup.find_all('input', attrs={'disabled': True})
-    assert len(disabled_inputs_after) < len(disabled_inputs_before), \
+    disabled_inputs_after = soup.find_all("input", attrs={"disabled": True})
+    assert len(disabled_inputs_after) < len(disabled_inputs_before), (
         f"Expected fewer disabled inputs after cleaning, before={len(disabled_inputs_before)}, after={len(disabled_inputs_after)}"
-    print(f"✓ Disabled <input> elements removed ({len(disabled_inputs_before)} -> {len(disabled_inputs_after)})")
+    )
+    print(
+        f"✓ Disabled <input> elements removed ({len(disabled_inputs_before)} -> {len(disabled_inputs_after)})"
+    )
 
     # Verify normal input is kept (type="email" should still exist)
-    normal_inputs = soup.find_all('input', attrs={'type': 'email'})
+    normal_inputs = soup.find_all("input", attrs={"type": "email"})
     assert len(normal_inputs) >= 1, "Expected normal input to be kept"
     print("✓ Normal <input type='email'> preserved")
 
     # Verify disabled button is kept (should have disabled attribute preserved)
-    disabled_button_with_text = soup.find('button', string='TestButton')
-    assert disabled_button_with_text is not None, "Expected disabled button with text 'TestButton' to be kept"
+    disabled_button_with_text = soup.find("button", string="TestButton")
+    assert disabled_button_with_text is not None, (
+        "Expected disabled button with text 'TestButton' to be kept"
+    )
     print("✓ Disabled <button>TestButton</button> preserved")
 
     print()
@@ -253,6 +274,6 @@ def run_all_tests():
         return True
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     success = run_all_tests()
     sys.exit(0 if success else 1)

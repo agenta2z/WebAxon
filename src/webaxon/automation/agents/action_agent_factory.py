@@ -14,14 +14,19 @@ Example:
     >>> agent = create_action_agent(webdriver=webdriver, reasoner=reasoner)
     >>> result = agent(user_input="Search for Python tutorials")
 """
+
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Optional, Set
+from typing import Any, Callable, Optional, Set, TYPE_CHECKING
 
 from agent_foundation.agents.agent_response import AgentResponseFormat
-from agent_foundation.agents.prompt_based_agents.prompt_based_action_agent import PromptBasedActionAgent
+from agent_foundation.agents.prompt_based_agents.prompt_based_action_agent import (
+    PromptBasedActionAgent,
+)
 from agent_foundation.common.inferencers.inferencer_base import InferencerBase
 from rich_python_utils.string_utils.formatting.common import KeyValueStringFormat
-from rich_python_utils.string_utils.formatting.handlebars_format import format_template as handlebars_format
+from rich_python_utils.string_utils.formatting.handlebars_format import (
+    format_template as handlebars_format,
+)
 from rich_python_utils.string_utils.formatting.template_manager import TemplateManager
 
 if TYPE_CHECKING:
@@ -31,10 +36,10 @@ if TYPE_CHECKING:
 _DEFAULT_TEMPLATES_PATH = Path(__file__).parent / "prompt_templates"
 
 # Default configuration (matching web_agent_service.py patterns)
-DEFAULT_RAW_RESPONSE_START_DELIMITER = '<StructuredResponse>'
-DEFAULT_RAW_RESPONSE_END_DELIMITER = '</StructuredResponse>'
+DEFAULT_RAW_RESPONSE_START_DELIMITER = "<StructuredResponse>"
+DEFAULT_RAW_RESPONSE_END_DELIMITER = "</StructuredResponse>"
 DEFAULT_RAW_RESPONSE_FORMAT = AgentResponseFormat.XML
-DEFAULT_ANCHOR_ACTION_TYPES = {'Search', 'ElementInteraction.BrowseLink'}
+DEFAULT_ANCHOR_ACTION_TYPES = {"Search", "ElementInteraction.BrowseLink"}
 
 
 def create_action_agent(
@@ -45,7 +50,7 @@ def create_action_agent(
     logger: Optional[Callable] = None,
     anchor_action_types: Optional[Set[str]] = None,
     debug_mode: bool = True,
-    **kwargs
+    **kwargs,
 ) -> PromptBasedActionAgent:
     """
     Create a PromptBasedActionAgent with sensible defaults.
@@ -90,19 +95,21 @@ def create_action_agent(
         anchor_action_types = DEFAULT_ANCHOR_ACTION_TYPES
 
     return PromptBasedActionAgent(
-        prompt_formatter=template_manager.switch(active_template_root_space='action_agent'),
+        prompt_formatter=template_manager.switch(
+            active_template_root_space="action_agent"
+        ),
         anchor_action_types=anchor_action_types,
         raw_response_start_delimiter=DEFAULT_RAW_RESPONSE_START_DELIMITER,
         raw_response_end_delimiter=DEFAULT_RAW_RESPONSE_END_DELIMITER,
         raw_response_format=DEFAULT_RAW_RESPONSE_FORMAT,
-        response_field_task_status_description='PlannedActions',
+        response_field_task_status_description="PlannedActions",
         use_conversational_user_input=True,
         input_string_formatter=KeyValueStringFormat.XML,
         response_string_formatter=KeyValueStringFormat.XML,
         reasoner=reasoner,
         interactive=interactive,
-        actor={'default': webdriver},
+        actor={"default": webdriver},
         logger=logger,
         debug_mode=debug_mode,
-        **kwargs
+        **kwargs,
     )

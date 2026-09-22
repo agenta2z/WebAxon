@@ -14,10 +14,7 @@ from typing import Any, Callable, Dict, List, Optional
 from agent_foundation.automation.meta_agent.evaluator import EvaluationRule
 from agent_foundation.automation.meta_agent.models import PipelineConfig
 from agent_foundation.automation.meta_agent.pipeline import MetaAgentPipeline
-from agent_foundation.automation.meta_agent.synthetic_data import (
-    SyntheticDataProvider,
-)
-
+from agent_foundation.automation.meta_agent.synthetic_data import SyntheticDataProvider
 from webaxon.automation.meta_agent.web_normalizer_config import WEB_ACTION_TYPE_MAP
 from webaxon.automation.meta_agent.web_target_converter import WebTargetConverter
 

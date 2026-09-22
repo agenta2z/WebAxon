@@ -46,8 +46,12 @@ def main():
         help="Output directory for results",
     )
     parser.add_argument("--skip", type=int, default=0, help="Skip first N easy tasks")
-    parser.add_argument("--max-tasks", type=int, default=0, help="Max tasks to run (0=all)")
-    parser.add_argument("--agent-timeout", type=int, default=300, help="Agent timeout in seconds")
+    parser.add_argument(
+        "--max-tasks", type=int, default=0, help="Max tasks to run (0=all)"
+    )
+    parser.add_argument(
+        "--agent-timeout", type=int, default=300, help="Agent timeout in seconds"
+    )
     parser.add_argument("--headless", action="store_true", help="Run browser headless")
     parser.add_argument(
         "--template-version",
@@ -57,7 +61,9 @@ def main():
     args = parser.parse_args()
 
     # Load easy tasks
-    tasks_path = _WEBAXON_ROOT / "data" / "online_mind2web" / "processed" / "tasks.jsonl"
+    tasks_path = (
+        _WEBAXON_ROOT / "data" / "online_mind2web" / "processed" / "tasks.jsonl"
+    )
     from webaxon.evaluation.tasks import EvaluationTask, load_tasks
 
     all_tasks = load_tasks(tasks_path)
@@ -65,15 +71,21 @@ def main():
     logger.info("Loaded %d easy tasks (of %d total)", len(easy_tasks), len(all_tasks))
 
     # Apply skip/limit
-    easy_tasks = easy_tasks[args.skip:]
+    easy_tasks = easy_tasks[args.skip :]
     if args.max_tasks > 0:
-        easy_tasks = easy_tasks[:args.max_tasks]
-    logger.info("Running %d tasks (skip=%d, max=%d)", len(easy_tasks), args.skip, args.max_tasks)
+        easy_tasks = easy_tasks[: args.max_tasks]
+    logger.info(
+        "Running %d tasks (skip=%d, max=%d)", len(easy_tasks), args.skip, args.max_tasks
+    )
 
     # Workspace
     workspace = (
-        _WEBAXON_ROOT / "src" / "webaxon" / "devsuite"
-        / "web_agent_service_nextgen" / "_workspace"
+        _WEBAXON_ROOT
+        / "src"
+        / "webaxon"
+        / "devsuite"
+        / "web_agent_service_nextgen"
+        / "_workspace"
     )
     if not workspace.is_dir():
         logger.error("Workspace not found: %s", workspace)
@@ -112,7 +124,9 @@ def main():
         # Check if already completed
         result_path = output_dir / task.task_id / "result.json"
         if result_path.exists():
-            logger.info("[%d/%d] SKIP (already done): %s", i, len(easy_tasks), task.task_id[:16])
+            logger.info(
+                "[%d/%d] SKIP (already done): %s", i, len(easy_tasks), task.task_id[:16]
+            )
             try:
                 existing = json.loads(result_path.read_text(encoding="utf-8"))
                 results.append(existing)
@@ -122,7 +136,11 @@ def main():
 
         logger.info(
             "[%d/%d] RUNNING: %s | %s | ref_len=%d",
-            i, len(easy_tasks), task.task_id[:16], task.task[:60], task.reference_length,
+            i,
+            len(easy_tasks),
+            task.task_id[:16],
+            task.task[:60],
+            task.reference_length,
         )
 
         task_start = time.time()
@@ -135,7 +153,11 @@ def main():
             if error:
                 logger.error(
                     "[%d/%d] AGENT CRASH after %.1fs: %s — %s",
-                    i, len(easy_tasks), duration, task.task_id[:16], error[:200],
+                    i,
+                    len(easy_tasks),
+                    duration,
+                    task.task_id[:16],
+                    error[:200],
                 )
                 # Stop on crash
                 logger.error("Stopping on first crash. Task: %s", task.task_id)
@@ -144,7 +166,9 @@ def main():
             else:
                 logger.info(
                     "[%d/%d] DONE in %.1fs | steps=%d | screenshots=%d | answer=%s",
-                    i, len(easy_tasks), duration,
+                    i,
+                    len(easy_tasks),
+                    duration,
                     result_dict.get("num_steps", 0),
                     result_dict.get("num_screenshots", 0),
                     answer,
@@ -155,7 +179,11 @@ def main():
             duration = time.time() - task_start
             logger.error(
                 "[%d/%d] EXCEPTION after %.1fs: %s — %s",
-                i, len(easy_tasks), duration, task.task_id[:16], exc,
+                i,
+                len(easy_tasks),
+                duration,
+                task.task_id[:16],
+                exc,
             )
             logger.error("Stopping on first exception. Task: %s", task.task_id)
             break
@@ -171,10 +199,15 @@ def main():
     print("\n" + "=" * 60)
     print(f"  EASY TASKS SUMMARY")
     print(f"  Completed: {len(results)} / {len(easy_tasks)}")
-    print(f"  Total time: {total_time:.1f}s ({total_time/60:.1f} min)")
+    print(f"  Total time: {total_time:.1f}s ({total_time / 60:.1f} min)")
     crashes = sum(1 for r in results if r.get("error"))
     print(f"  Crashes: {crashes}")
-    no_answer = sum(1 for r in results if not r.get("final_result_response") or r.get("final_result_response", "").startswith("Task not completed"))
+    no_answer = sum(
+        1
+        for r in results
+        if not r.get("final_result_response")
+        or r.get("final_result_response", "").startswith("Task not completed")
+    )
     print(f"  No answer: {no_answer}")
     with_answer = len(results) - crashes - no_answer
     print(f"  With answer: {with_answer}")

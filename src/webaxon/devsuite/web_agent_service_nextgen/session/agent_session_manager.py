@@ -3,10 +3,11 @@
 Extends the generic SessionManager with WebAgent-specific session creation,
 directory setup, and cleanup logic.
 """
-import time
-from typing import Optional, Any
 
-from attr import attrs, attrib
+import time
+from typing import Any, Optional
+
+from attr import attrib, attrs
 from rich_python_utils.io_utils.json_io import JsonLogger
 from rich_python_utils.path_utils.common import sanitize_filename
 from rich_python_utils.service_utils.session_management import (
@@ -15,8 +16,8 @@ from rich_python_utils.service_utils.session_management import (
 )
 from webaxon.devsuite.common import DebuggerLogTypes
 from webaxon.devsuite.constants import (
-    FOLDER_NAME_SERVICE_LOGS,
     FOLDER_NAME_AGENT_LOGS,
+    FOLDER_NAME_SERVICE_LOGS,
     LOG_FILE_EXT,
     SESSION_LOG_FILENAME,
 )
@@ -30,7 +31,7 @@ def _default_parts_file_namer(obj) -> str:
     """Extract log type from log_data dict for human-readable filenames."""
     if not isinstance(obj, dict):
         return None
-    log_type = obj.get('type', '')
+    log_type = obj.get("type", "")
     return sanitize_filename(str(log_type)) if log_type else None
 
 
@@ -44,10 +45,11 @@ class AgentSessionManager(SessionManager):
     - Agent/thread/interactive runtime field routing
     - DebuggerLogTypes for log type strings
     """
+
     _config: ServiceConfig = attrib(kw_only=True)
     _queue_service: Any = attrib(kw_only=True)
 
-    _RUNTIME_FIELDS = frozenset({'agent', 'agent_thread', 'interactive'})
+    _RUNTIME_FIELDS = frozenset({"agent", "agent_thread", "interactive"})
 
     def __attrs_post_init__(self):
         super().__attrs_post_init__()
@@ -67,12 +69,16 @@ class AgentSessionManager(SessionManager):
     # Session creation (abstract method implementation)
     # ------------------------------------------------------------------
 
-    def _create_session(self, session_id: str, session_type: str, **kwargs) -> AgentSession:
+    def _create_session(
+        self, session_id: str, session_type: str, **kwargs
+    ) -> AgentSession:
         """Create an AgentSession with full logging infrastructure."""
         current_time = time.time()
 
         # 1. Create session logger (structured output: turns, manifest)
-        agent_logs_dir = kwargs.get('base_log_dir') or (self._service_log_dir / FOLDER_NAME_AGENT_LOGS)
+        agent_logs_dir = kwargs.get("base_log_dir") or (
+            self._service_log_dir / FOLDER_NAME_AGENT_LOGS
+        )
         session_logger = SessionLogger(
             base_log_dir=agent_logs_dir,
             session_id=session_id,
@@ -84,7 +90,7 @@ class AgentSessionManager(SessionManager):
             JsonLogger(
                 file_path=str(session_logger.session_dir / SESSION_LOG_FILENAME),
                 append=True,
-                parts_key_path_root='item',
+                parts_key_path_root="item",
                 artifacts_as_parts=True,
             ),
         )
@@ -92,7 +98,9 @@ class AgentSessionManager(SessionManager):
         # 2. Create log directories (same timestamped name as session_logger)
         session_dir_name = session_logger.session_dir.name
 
-        session_service_log_dir = self._service_log_dir / FOLDER_NAME_SERVICE_LOGS / session_dir_name
+        session_service_log_dir = (
+            self._service_log_dir / FOLDER_NAME_SERVICE_LOGS / session_dir_name
+        )
         session_service_log_dir.mkdir(parents=True, exist_ok=True)
 
         # 3. Create pure data info
@@ -107,15 +115,17 @@ class AgentSessionManager(SessionManager):
 
         # 4. Create AgentSession — IS the Debuggable (no standalone Debugger)
         session = AgentSession(
-            id=f'agent_session_{session_id}',
-            log_name=f'AgentSession_{session_id}',
+            id=f"agent_session_{session_id}",
+            log_name=f"AgentSession_{session_id}",
             logger=[
                 print,
                 JsonLogger(
-                    file_path=str(session_service_log_dir / f'service_{session_id}{LOG_FILE_EXT}'),
+                    file_path=str(
+                        session_service_log_dir / f"service_{session_id}{LOG_FILE_EXT}"
+                    ),
                     append=True,
-                    space_ext_mode='move',
-                    parts_key_path_root='item',
+                    space_ext_mode="move",
+                    parts_key_path_root="item",
                 ),
             ],
             debug_mode=self._config.debug_mode_service,
@@ -134,10 +144,12 @@ class AgentSessionManager(SessionManager):
     def _on_before_cleanup(self, session: AgentSession) -> None:
         """WebAgent-specific cleanup: log thread status, clear runtime refs."""
         if session.agent_thread and session.agent_thread.is_alive():
-            session.log_info({
-                'type': DebuggerLogTypes.SESSION_CLEANUP,
-                'message': f'Agent thread still running for session {session.session_id}, marking for cleanup',
-            })
+            session.log_info(
+                {
+                    "type": DebuggerLogTypes.SESSION_CLEANUP,
+                    "message": f"Agent thread still running for session {session.session_id}, marking for cleanup",
+                }
+            )
 
         session.interactive = None
         session.agent = None

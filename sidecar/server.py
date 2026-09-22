@@ -21,17 +21,10 @@ from typing import Optional
 from aiohttp import web
 
 from .browser_tools import BrowserTools
-from .config import WebAxonSidecarConfig, load_openclaw_config
+from .config import load_openclaw_config, WebAxonSidecarConfig
 from .gateway_node import GatewayNode, GatewayNodeConfig
-from .remote_auth import (
-    AuthSessionManager,
-    detect_auth_wall,
-    setup_auth_routes,
-)
-from .oauth_auth import (
-    OAuthManager,
-    setup_oauth_routes,
-)
+from .oauth_auth import OAuthManager, setup_oauth_routes
+from .remote_auth import AuthSessionManager, detect_auth_wall, setup_auth_routes
 
 # Configure logging
 logging.basicConfig(
@@ -61,13 +54,15 @@ async def health_handler(request: web.Request) -> web.Response:
 
     status = "ok" if _browser_tools and _browser_tools.is_initialized else "starting"
 
-    return web.json_response({
-        "status": status,
-        "service": "webaxon-browser-sidecar",
-        "version": "0.1.0",
-        "backend": _browser_tools.backend_type if _browser_tools else "unknown",
-        "capabilities": ["browser", "automation", "agent"],
-    })
+    return web.json_response(
+        {
+            "status": status,
+            "service": "webaxon-browser-sidecar",
+            "version": "0.1.0",
+            "backend": _browser_tools.backend_type if _browser_tools else "unknown",
+            "capabilities": ["browser", "automation", "agent"],
+        }
+    )
 
 
 async def query_handler(request: web.Request) -> web.Response:
@@ -107,11 +102,13 @@ async def query_handler(request: web.Request) -> web.Response:
     async with _request_lock:
         try:
             result = await _browser_tools.run_task(task=query, start_url=start_url)
-            return web.json_response({
-                "ok": result.success,
-                "response": result.message,
-                "data": result.data,
-            })
+            return web.json_response(
+                {
+                    "ok": result.success,
+                    "response": result.message,
+                    "data": result.data,
+                }
+            )
         except Exception as e:
             logger.exception(f"Query execution failed: {e}")
             return web.json_response(
@@ -152,11 +149,13 @@ async def navigate_handler(request: web.Request) -> web.Response:
     async with _request_lock:
         try:
             result = await _browser_tools.navigate(url)
-            return web.json_response({
-                "ok": result.success,
-                "message": result.message,
-                "data": result.data,
-            })
+            return web.json_response(
+                {
+                    "ok": result.success,
+                    "message": result.message,
+                    "data": result.data,
+                }
+            )
         except Exception as e:
             logger.exception(f"Navigation failed: {e}")
             return web.json_response(
@@ -191,10 +190,12 @@ async def snapshot_handler(request: web.Request) -> web.Response:
             snapshot = await _browser_tools.get_snapshot(
                 include_screenshot=include_screenshot
             )
-            return web.json_response({
-                "ok": True,
-                "snapshot": snapshot,
-            })
+            return web.json_response(
+                {
+                    "ok": True,
+                    "snapshot": snapshot,
+                }
+            )
         except Exception as e:
             logger.exception(f"Snapshot failed: {e}")
             return web.json_response(
@@ -251,11 +252,13 @@ async def act_handler(request: web.Request) -> web.Response:
                 key=body.get("key"),
                 duration=body.get("duration"),
             )
-            return web.json_response({
-                "ok": result.success,
-                "message": result.message,
-                "data": result.data,
-            })
+            return web.json_response(
+                {
+                    "ok": result.success,
+                    "message": result.message,
+                    "data": result.data,
+                }
+            )
         except Exception as e:
             logger.exception(f"Action failed: {e}")
             return web.json_response(
@@ -304,22 +307,27 @@ async def screenshot_handler(request: web.Request) -> web.Response:
             if base64_data:
                 import base64 as b64
                 import tempfile
+
                 suffix = ".png" if img_type == "png" else ".jpg"
-                with tempfile.NamedTemporaryFile(delete=False, suffix=suffix, prefix="webaxon_screenshot_") as f:
+                with tempfile.NamedTemporaryFile(
+                    delete=False, suffix=suffix, prefix="webaxon_screenshot_"
+                ) as f:
                     f.write(b64.b64decode(base64_data))
                     path = f.name
 
-            return web.json_response({
-                "ok": result.success,
-                "message": result.message,
-                # OpenClaw format
-                "data": base64_data,
-                "path": path,
-                "mimeType": mime_type,
-                "url": result.data.get("url") if result.data else None,
-                # Legacy WebAxon format
-                "screenshot": base64_data,
-            })
+            return web.json_response(
+                {
+                    "ok": result.success,
+                    "message": result.message,
+                    # OpenClaw format
+                    "data": base64_data,
+                    "path": path,
+                    "mimeType": mime_type,
+                    "url": result.data.get("url") if result.data else None,
+                    # Legacy WebAxon format
+                    "screenshot": base64_data,
+                }
+            )
         except Exception as e:
             logger.exception(f"Screenshot failed: {e}")
             return web.json_response(
@@ -344,10 +352,12 @@ async def shutdown_handler(request: web.Request) -> web.Response:
     async with _request_lock:
         try:
             await _browser_tools.shutdown()
-            return web.json_response({
-                "ok": True,
-                "message": "Browser shutdown complete",
-            })
+            return web.json_response(
+                {
+                    "ok": True,
+                    "message": "Browser shutdown complete",
+                }
+            )
         except Exception as e:
             logger.exception(f"Shutdown failed: {e}")
             return web.json_response(
@@ -360,41 +370,54 @@ async def shutdown_handler(request: web.Request) -> web.Response:
 # These endpoints make the WebAxon sidecar a drop-in replacement for
 # OpenClaw's built-in browser control server.
 
+
 async def openclaw_status_handler(request: web.Request) -> web.Response:
     """GET / — Browser status (OpenClaw format)."""
     global _browser_tools
     running = _browser_tools is not None and _browser_tools._webdriver is not None
-    return web.json_response({
-        "running": running,
-        "backend": os.environ.get("WEBAXON_BACKEND", "selenium"),
-        "profiles": {"default": {"driver": "webaxon-sidecar"}},
-    })
+    return web.json_response(
+        {
+            "running": running,
+            "backend": os.environ.get("WEBAXON_BACKEND", "selenium"),
+            "profiles": {"default": {"driver": "webaxon-sidecar"}},
+        }
+    )
+
 
 async def openclaw_start_handler(request: web.Request) -> web.Response:
     """POST /start — Start browser (no-op, browser is always running)."""
-    return web.json_response({
-        "ok": True,
-        "message": "Browser is managed by WebAxon sidecar",
-    })
+    return web.json_response(
+        {
+            "ok": True,
+            "message": "Browser is managed by WebAxon sidecar",
+        }
+    )
+
 
 async def openclaw_stop_handler(request: web.Request) -> web.Response:
     """POST /stop — Stop browser (no-op for sidecar)."""
-    return web.json_response({
-        "ok": True,
-        "message": "Browser lifecycle managed by WebAxon sidecar",
-    })
+    return web.json_response(
+        {
+            "ok": True,
+            "message": "Browser lifecycle managed by WebAxon sidecar",
+        }
+    )
+
 
 async def openclaw_profiles_handler(request: web.Request) -> web.Response:
     """GET /profiles — List browser profiles."""
-    return web.json_response({
-        "profiles": {
-            "default": {
-                "driver": "webaxon-sidecar",
-                "status": "running",
+    return web.json_response(
+        {
+            "profiles": {
+                "default": {
+                    "driver": "webaxon-sidecar",
+                    "status": "running",
+                },
             },
-        },
-        "defaultProfile": "default",
-    })
+            "defaultProfile": "default",
+        }
+    )
+
 
 async def openclaw_tabs_open_handler(request: web.Request) -> web.Response:
     """POST /tabs/open — Open a new tab / navigate."""
@@ -411,13 +434,16 @@ async def openclaw_tabs_open_handler(request: web.Request) -> web.Response:
     async with _request_lock:
         try:
             result = await _browser_tools.navigate(url)
-            return web.json_response({
-                "ok": result.success,
-                "targetId": "default",
-                "url": url,
-            })
+            return web.json_response(
+                {
+                    "ok": result.success,
+                    "targetId": "default",
+                    "url": url,
+                }
+            )
         except Exception as e:
             return web.json_response({"ok": False, "error": str(e)}, status=500)
+
 
 async def openclaw_tabs_focus_handler(request: web.Request) -> web.Response:
     """POST /tabs/focus — Focus a tab (no-op for single-tab sidecar)."""
@@ -425,6 +451,7 @@ async def openclaw_tabs_focus_handler(request: web.Request) -> web.Response:
 
 
 # ── Remote Authentication Endpoints ──────────────────────────────────────────
+
 
 async def auth_inject_with_browser_handler(request: web.Request) -> web.Response:
     """Inject cookies from a completed auth session into the headless browser.
@@ -480,9 +507,9 @@ async def auth_inject_with_browser_handler(request: web.Request) -> web.Response
             # Step 1: Navigate to the target domain to set cookie context
             target_domain = session.target_domain
             target_url = session.target_url
-            scheme = "https" if any(
-                c.get("secure") for c in session.cookies
-            ) else "https"  # Default to https for internal sites
+            scheme = (
+                "https" if any(c.get("secure") for c in session.cookies) else "https"
+            )  # Default to https for internal sites
             domain_url = f"{scheme}://{target_domain}/"
 
             logger.info(f"Navigating to {domain_url} for cookie domain context")
@@ -507,25 +534,29 @@ async def auth_inject_with_browser_handler(request: web.Request) -> web.Response
             if navigate_after:
                 logger.info(f"Navigating to target URL: {target_url}")
                 result = await _browser_tools.navigate(target_url)
-                return web.json_response({
-                    "ok": True,
-                    "message": f"Injected {injected_count} cookies and navigated to {target_url}",
-                    "cookies_injected": injected_count,
-                    "current_url": result.data.get("url") if result.data else target_url,
-                    "page_title": result.data.get("title") if result.data else "",
-                })
+                return web.json_response(
+                    {
+                        "ok": True,
+                        "message": f"Injected {injected_count} cookies and navigated to {target_url}",
+                        "cookies_injected": injected_count,
+                        "current_url": result.data.get("url")
+                        if result.data
+                        else target_url,
+                        "page_title": result.data.get("title") if result.data else "",
+                    }
+                )
             else:
-                return web.json_response({
-                    "ok": True,
-                    "message": f"Injected {injected_count} cookies for {target_domain}",
-                    "cookies_injected": injected_count,
-                })
+                return web.json_response(
+                    {
+                        "ok": True,
+                        "message": f"Injected {injected_count} cookies for {target_domain}",
+                        "cookies_injected": injected_count,
+                    }
+                )
 
         except Exception as e:
             logger.exception(f"Cookie injection failed: {e}")
-            return web.json_response(
-                {"ok": False, "error": str(e)}, status=500
-            )
+            return web.json_response({"ok": False, "error": str(e)}, status=500)
 
 
 async def auth_poll_and_inject_handler(request: web.Request) -> web.Response:
@@ -570,19 +601,25 @@ async def auth_poll_and_inject_handler(request: web.Request) -> web.Response:
     while not session.is_completed and not session.is_expired:
         elapsed = asyncio.get_event_loop().time() - start
         if elapsed > timeout:
-            return web.json_response({
-                "ok": False,
-                "error": "Timed out waiting for authentication",
-                "elapsed_seconds": int(elapsed),
-            }, status=408)
+            return web.json_response(
+                {
+                    "ok": False,
+                    "error": "Timed out waiting for authentication",
+                    "elapsed_seconds": int(elapsed),
+                },
+                status=408,
+            )
         await asyncio.sleep(2)  # Poll every 2 seconds
         session = _auth_manager.get_session(session_id)
 
     if session.is_expired:
-        return web.json_response({
-            "ok": False,
-            "error": "Authentication session expired",
-        }, status=410)
+        return web.json_response(
+            {
+                "ok": False,
+                "error": "Authentication session expired",
+            },
+            status=410,
+        )
 
     # Session is completed — inject cookies
     # Reuse the inject handler logic by creating a fake request
@@ -615,21 +652,23 @@ async def auth_poll_and_inject_handler(request: web.Request) -> web.Response:
             current_title = result.data.get("title", "") if result.data else ""
             still_auth_wall = detect_auth_wall(current_url, current_title)
 
-            return web.json_response({
-                "ok": True,
-                "message": f"Injected {injected_count} cookies and navigated to {target_url}",
-                "cookies_injected": injected_count,
-                "current_url": current_url,
-                "page_title": current_title,
-                "authenticated": not still_auth_wall,
-                "warning": "Still on login page — cookies may not include HttpOnly auth tokens. Try the DevTools export method." if still_auth_wall else None,
-            })
+            return web.json_response(
+                {
+                    "ok": True,
+                    "message": f"Injected {injected_count} cookies and navigated to {target_url}",
+                    "cookies_injected": injected_count,
+                    "current_url": current_url,
+                    "page_title": current_title,
+                    "authenticated": not still_auth_wall,
+                    "warning": "Still on login page — cookies may not include HttpOnly auth tokens. Try the DevTools export method."
+                    if still_auth_wall
+                    else None,
+                }
+            )
 
         except Exception as e:
             logger.exception(f"Poll-and-inject failed: {e}")
-            return web.json_response(
-                {"ok": False, "error": str(e)}, status=500
-            )
+            return web.json_response({"ok": False, "error": str(e)}, status=500)
 
 
 def create_app(config: WebAxonSidecarConfig) -> web.Application:
@@ -661,8 +700,7 @@ def create_app(config: WebAxonSidecarConfig) -> web.Application:
 
     # Remote authentication endpoints
     sidecar_base_url = os.getenv(
-        "WEBAXON_BASE_URL",
-        f"http://{config.host}:{config.port}"
+        "WEBAXON_BASE_URL", f"http://{config.host}:{config.port}"
     )
     _auth_manager = setup_auth_routes(app, sidecar_base_url=sidecar_base_url)
 
@@ -707,7 +745,9 @@ async def on_startup(app: web.Application) -> None:
         asyncio.create_task(_connect_gateway_with_retry())
     else:
         logger.info("No OPENCLAW_GATEWAY_URL configured - running in HTTP-only mode")
-        logger.info("OpenClaw can call this sidecar at http://host.docker.internal:18800")
+        logger.info(
+            "OpenClaw can call this sidecar at http://host.docker.internal:18800"
+        )
 
 
 async def _connect_gateway_with_retry() -> None:
@@ -768,11 +808,19 @@ def main() -> None:
     import argparse
 
     parser = argparse.ArgumentParser(description="WebAxon Browser Sidecar Server")
-    parser.add_argument("--host", default="0.0.0.0", help="Host to bind to (0.0.0.0 for Docker access)")
+    parser.add_argument(
+        "--host", default="0.0.0.0", help="Host to bind to (0.0.0.0 for Docker access)"
+    )
     parser.add_argument("--port", type=int, default=18800, help="Port to bind to")
-    parser.add_argument("--headless", action="store_true", help="Run browser in headless mode")
-    parser.add_argument("--backend", default="selenium", choices=["playwright", "selenium"],
-                        help="Browser backend to use")
+    parser.add_argument(
+        "--headless", action="store_true", help="Run browser in headless mode"
+    )
+    parser.add_argument(
+        "--backend",
+        default="selenium",
+        choices=["playwright", "selenium"],
+        help="Browser backend to use",
+    )
     parser.add_argument("--debug", action="store_true", help="Enable debug mode")
     parser.add_argument("--workspace", help="Workspace directory path")
 

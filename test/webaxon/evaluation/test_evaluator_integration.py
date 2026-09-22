@@ -16,7 +16,6 @@ from pathlib import Path
 from typing import Dict, List
 
 import pytest
-
 from webaxon.evaluation.evaluator.utils import EvalLLMEngine
 from webaxon.evaluation.scoring import run_eval
 
@@ -25,6 +24,7 @@ from webaxon.evaluation.scoring import run_eval
 # Mock EvalLLMEngine
 # ---------------------------------------------------------------------------
 
+
 class MockEvalEngine:
     """A mock EvalLLMEngine that returns canned scores.
 
@@ -32,7 +32,9 @@ class MockEvalEngine:
     Returns "Status: Success" or "Status: Failure" based on configuration.
     """
 
-    def __init__(self, default_response: str = "Thoughts: Looks good.\nStatus: Success"):
+    def __init__(
+        self, default_response: str = "Thoughts: Looks good.\nStatus: Success"
+    ):
         self._default_response = default_response
         self.call_count = 0
 
@@ -49,6 +51,7 @@ assert isinstance(MockEvalEngine(), EvalLLMEngine)
 # Helpers — synthetic run directories
 # ---------------------------------------------------------------------------
 
+
 def _create_fake_png(path: Path) -> None:
     """Write a minimal valid PNG file (1x1 white pixel)."""
     # Minimal PNG: 8-byte signature + IHDR + IDAT + IEND
@@ -58,7 +61,11 @@ def _create_fake_png(path: Path) -> None:
 
     def _chunk(chunk_type: bytes, data: bytes) -> bytes:
         c = chunk_type + data
-        return struct.pack(">I", len(data)) + c + struct.pack(">I", zlib.crc32(c) & 0xFFFFFFFF)
+        return (
+            struct.pack(">I", len(data))
+            + c
+            + struct.pack(">I", zlib.crc32(c) & 0xFFFFFFFF)
+        )
 
     signature = b"\x89PNG\r\n\x1a\n"
     ihdr_data = struct.pack(">IIBBBBB", 1, 1, 8, 2, 0, 0, 0)  # 1x1 RGB
@@ -106,6 +113,7 @@ def _create_synthetic_run(
 # Tests
 # ---------------------------------------------------------------------------
 
+
 class TestSingleWorkerPipeline:
     """Verify basic pipeline works with num_worker=1."""
 
@@ -127,7 +135,9 @@ class TestSingleWorkerPipeline:
 
         # Check that eval results JSONL was written
         eval_dir = tmp_path / "runs_eval"
-        jsonl_path = eval_dir / "Autonomous_eval_score_threshold_3_auto_eval_results.json"
+        jsonl_path = (
+            eval_dir / "Autonomous_eval_score_threshold_3_auto_eval_results.json"
+        )
         assert jsonl_path.exists(), f"Expected JSONL at {jsonl_path}"
 
         lines = [l for l in jsonl_path.read_text().strip().split("\n") if l.strip()]
@@ -156,7 +166,9 @@ class TestSingleWorkerPipeline:
         )
 
         eval_dir = tmp_path / "runs_eval"
-        jsonl_path = eval_dir / "Autonomous_eval_score_threshold_3_auto_eval_results.json"
+        jsonl_path = (
+            eval_dir / "Autonomous_eval_score_threshold_3_auto_eval_results.json"
+        )
         lines = [l for l in jsonl_path.read_text().strip().split("\n") if l.strip()]
         assert len(lines) == 1
 
@@ -168,7 +180,9 @@ class TestSingleWorkerPipeline:
         """Multiple tasks are all evaluated."""
         runs_dir = tmp_path / "runs"
         for i in range(3):
-            _create_synthetic_run(runs_dir, f"task_{i:03d}", task_description=f"Task {i}")
+            _create_synthetic_run(
+                runs_dir, f"task_{i:03d}", task_description=f"Task {i}"
+            )
 
         factory = lambda: MockEvalEngine("Thoughts: OK.\nStatus: Success")
 
@@ -181,7 +195,9 @@ class TestSingleWorkerPipeline:
         )
 
         eval_dir = tmp_path / "runs_eval"
-        jsonl_path = eval_dir / "Autonomous_eval_score_threshold_3_auto_eval_results.json"
+        jsonl_path = (
+            eval_dir / "Autonomous_eval_score_threshold_3_auto_eval_results.json"
+        )
         lines = [l for l in jsonl_path.read_text().strip().split("\n") if l.strip()]
         assert len(lines) == 3
 
@@ -196,7 +212,9 @@ class TestMultiWorkerPipeline:
         """Multiple tasks evaluated with num_worker=2 using ThreadPool."""
         runs_dir = tmp_path / "runs"
         for i in range(4):
-            _create_synthetic_run(runs_dir, f"task_{i:03d}", task_description=f"Task {i}")
+            _create_synthetic_run(
+                runs_dir, f"task_{i:03d}", task_description=f"Task {i}"
+            )
 
         call_counts = []
 
@@ -215,7 +233,9 @@ class TestMultiWorkerPipeline:
 
         # Verify results were written for all tasks
         eval_dir = tmp_path / "runs_eval"
-        jsonl_path = eval_dir / "Autonomous_eval_score_threshold_3_auto_eval_results.json"
+        jsonl_path = (
+            eval_dir / "Autonomous_eval_score_threshold_3_auto_eval_results.json"
+        )
         lines = [l for l in jsonl_path.read_text().strip().split("\n") if l.strip()]
         assert len(lines) == 4
 
@@ -230,7 +250,9 @@ class TestMultiWorkerPipeline:
         """Each worker thread creates its own engine via the factory."""
         runs_dir = tmp_path / "runs"
         for i in range(4):
-            _create_synthetic_run(runs_dir, f"task_{i:03d}", task_description=f"Task {i}")
+            _create_synthetic_run(
+                runs_dir, f"task_{i:03d}", task_description=f"Task {i}"
+            )
 
         engines_created = []
 
@@ -253,7 +275,9 @@ class TestMultiWorkerPipeline:
 
         # All tasks should still be evaluated
         eval_dir = tmp_path / "runs_eval"
-        jsonl_path = eval_dir / "Autonomous_eval_score_threshold_3_auto_eval_results.json"
+        jsonl_path = (
+            eval_dir / "Autonomous_eval_score_threshold_3_auto_eval_results.json"
+        )
         lines = [l for l in jsonl_path.read_text().strip().split("\n") if l.strip()]
         assert len(lines) == 4
 
@@ -277,7 +301,9 @@ class TestEvalResultsJSONL:
         )
 
         eval_dir = tmp_path / "runs_eval"
-        jsonl_path = eval_dir / "Autonomous_eval_score_threshold_3_auto_eval_results.json"
+        jsonl_path = (
+            eval_dir / "Autonomous_eval_score_threshold_3_auto_eval_results.json"
+        )
         result = json.loads(jsonl_path.read_text().strip())
 
         # Required fields
@@ -310,7 +336,9 @@ class TestEvalResultsJSONL:
         )
 
         eval_dir = tmp_path / "runs_eval"
-        jsonl_path = eval_dir / "Autonomous_eval_score_threshold_3_auto_eval_results.json"
+        jsonl_path = (
+            eval_dir / "Autonomous_eval_score_threshold_3_auto_eval_results.json"
+        )
         result = json.loads(jsonl_path.read_text().strip())
 
         assert result["task"] == "Buy a laptop"
@@ -333,7 +361,9 @@ class TestEvalResultsJSONL:
             output_path=custom_output,
         )
 
-        jsonl_path = custom_output / "Autonomous_eval_score_threshold_3_auto_eval_results.json"
+        jsonl_path = (
+            custom_output / "Autonomous_eval_score_threshold_3_auto_eval_results.json"
+        )
         assert jsonl_path.exists()
 
 
@@ -367,7 +397,9 @@ class TestSanitizationIntegration:
 
         # Only the good task should be evaluated
         eval_dir = tmp_path / "runs_eval"
-        jsonl_path = eval_dir / "Autonomous_eval_score_threshold_3_auto_eval_results.json"
+        jsonl_path = (
+            eval_dir / "Autonomous_eval_score_threshold_3_auto_eval_results.json"
+        )
         lines = [l for l in jsonl_path.read_text().strip().split("\n") if l.strip()]
         assert len(lines) == 1
         assert json.loads(lines[0])["task_id"] == "task_good"

@@ -44,6 +44,7 @@ _SKIP_PATTERNS: List[str] = [
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _is_infra_failure(result_data: dict) -> bool:
     """Return *True* if the parsed result dict indicates an infrastructure failure."""
     final = result_data.get("final_result_response", "")
@@ -67,6 +68,7 @@ def _is_infra_failure(result_data: dict) -> bool:
 # ---------------------------------------------------------------------------
 # sanitize_runs
 # ---------------------------------------------------------------------------
+
 
 def sanitize_runs(
     runs_dir: Path,
@@ -113,7 +115,9 @@ def sanitize_runs(
         # Determine screenshot source: metadata.screenshot_dir (session logs)
         # or trajectory/ (original layout).  Backward compatible with old runs.
         screenshot_src_dir = task_dir / "trajectory"
-        meta_screenshot_dir = (result_data.get("metadata") or {}).get("screenshot_dir", "")
+        meta_screenshot_dir = (result_data.get("metadata") or {}).get(
+            "screenshot_dir", ""
+        )
         if meta_screenshot_dir and Path(meta_screenshot_dir).is_dir():
             screenshot_src_dir = Path(meta_screenshot_dir)
 
@@ -162,6 +166,7 @@ def sanitize_runs(
 # write_retry_tasks
 # ---------------------------------------------------------------------------
 
+
 def write_retry_tasks(
     excluded_ids: List[str],
     tasks_jsonl: Path,
@@ -174,8 +179,10 @@ def write_retry_tasks(
     """
     id_set = set(excluded_ids)
     written = 0
-    with tasks_jsonl.open("r", encoding="utf-8") as fin, \
-         output_path.open("w", encoding="utf-8") as fout:
+    with (
+        tasks_jsonl.open("r", encoding="utf-8") as fin,
+        output_path.open("w", encoding="utf-8") as fout,
+    ):
         for line in fin:
             if not line.strip():
                 continue
@@ -189,6 +196,7 @@ def write_retry_tasks(
 # ---------------------------------------------------------------------------
 # run_eval  —  orchestrate sanitization + evaluator invocation
 # ---------------------------------------------------------------------------
+
 
 def run_eval(
     runs_dir: Path,
@@ -225,7 +233,8 @@ def run_eval(
 
     # 2. Resolve output path
     resolved_output = (
-        str(output_path) if output_path is not None
+        str(output_path)
+        if output_path is not None
         else str(runs_dir.parent / f"{runs_dir.name}_eval")
     )
 

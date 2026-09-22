@@ -11,8 +11,8 @@ Usage:
 import time
 from pathlib import Path
 
-from webaxon.automation.web_driver import WebDriver, WebAutomationDrivers
 from create_google_search_action_graph import create_google_search_action_graph
+from webaxon.automation.web_driver import WebAutomationDrivers, WebDriver
 
 
 def run_google_search_action_graph():
@@ -21,10 +21,7 @@ def run_google_search_action_graph():
     file_url = f"file:///{html_path.as_posix()}"
 
     # Use headless=False to visually observe the execution
-    driver = WebDriver(
-        driver_type=WebAutomationDrivers.Chrome,
-        headless=False
-    )
+    driver = WebDriver(driver_type=WebAutomationDrivers.Chrome, headless=False)
 
     try:
         print(f"Navigating to: {file_url}")
@@ -32,8 +29,7 @@ def run_google_search_action_graph():
 
         print("Creating ActionGraph...")
         graph = create_google_search_action_graph(
-            action_executor=driver,
-            search_query="hello world"
+            action_executor=driver, search_query="hello world"
         )
 
         print("Executing ActionGraph...")

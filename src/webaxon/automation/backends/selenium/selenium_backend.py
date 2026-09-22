@@ -422,7 +422,8 @@ class SeleniumBackend(BackendAdapter):
     ) -> Optional[List[str]]:
         """Click an element, optionally opening in new tab."""
         from .actions import click_element as selenium_click_element
-        kwargs.setdefault('logger', self._logger)
+
+        kwargs.setdefault("logger", self._logger)
         return selenium_click_element(
             driver=self._driver,
             element=element,
@@ -741,9 +742,7 @@ class SeleniumBackend(BackendAdapter):
             try:
                 self._driver.add_cookie(selenium_cookie)
             except Exception as e:
-                _logger.warning(
-                    f"Failed to add cookie '{cookie.get('name')}': {e}"
-                )
+                _logger.warning(f"Failed to add cookie '{cookie.get('name')}': {e}")
 
     def delete_all_cookies(self) -> None:
         """Delete all cookies from the current browser session."""

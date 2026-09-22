@@ -17,9 +17,8 @@ from enum import Enum
 from threading import Event, Lock
 from typing import Any, Dict, Optional
 
-from rich_python_utils.datetime_utils.common import timestamp
-
 from agent_foundation.automation.meta_agent.errors import PipelineAborted
+from rich_python_utils.datetime_utils.common import timestamp
 
 logger = logging.getLogger(__name__)
 

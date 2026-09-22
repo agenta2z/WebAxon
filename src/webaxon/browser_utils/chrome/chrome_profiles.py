@@ -4,14 +4,15 @@ Chrome profile discovery and management utilities.
 Cross-platform support for Windows, macOS, and Linux.
 Provides functions to discover, enumerate, and copy Chrome profiles.
 """
+
 import json
 import logging
 import os
 import platform
 import shutil
 import tempfile
-from typing import List, Dict, Optional, Set
 from pathlib import Path
+from typing import Dict, List, Optional, Set
 
 _logger = logging.getLogger(__name__)
 
@@ -206,60 +207,60 @@ def remove_chrome_user_data_singleton_locks(
 def get_chrome_user_data_dir() -> Optional[str]:
     """
     Get the Chrome user data directory based on the operating system.
-    
+
     Returns:
         Path to Chrome user data directory, or None if not found.
-        
+
     Platform-specific paths:
         - Windows: %LOCALAPPDATA%\\Google\\Chrome\\User Data
         - macOS: ~/Library/Application Support/Google/Chrome
         - Linux: ~/.config/google-chrome
     """
     system = platform.system()
-    
+
     if system == "Windows":
         profile_path = os.path.expanduser(r"~\AppData\Local\Google\Chrome\User Data")
     elif system == "Darwin":  # macOS
         profile_path = os.path.expanduser("~/Library/Application Support/Google/Chrome")
     else:  # Linux
         profile_path = os.path.expanduser("~/.config/google-chrome")
-    
+
     return profile_path if os.path.exists(profile_path) else None
 
 
 def get_chrome_profile_name(profile_dir: str) -> str:
     """
     Get the user-friendly name for a profile from its Preferences file.
-    
+
     Args:
         profile_dir: Path to the profile directory
-        
+
     Returns:
         Profile name or directory name as fallback
     """
     try:
         prefs_file = os.path.join(profile_dir, "Preferences")
         if os.path.exists(prefs_file):
-            with open(prefs_file, 'r', encoding='utf-8') as f:
+            with open(prefs_file, "r", encoding="utf-8") as f:
                 prefs = json.load(f)
-                
+
                 # Try to get the profile name
-                profile_info = prefs.get('profile', {})
-                name = profile_info.get('name', '')
-                
+                profile_info = prefs.get("profile", {})
+                name = profile_info.get("name", "")
+
                 if name:
                     return name
-                
+
                 # Fallback to account info
-                account_info = prefs.get('account_info', [])
+                account_info = prefs.get("account_info", [])
                 if account_info and len(account_info) > 0:
-                    email = account_info[0].get('email', '')
+                    email = account_info[0].get("email", "")
                     if email:
                         return email
-    
+
     except Exception:
         pass
-    
+
     # Fallback to directory name
     return os.path.basename(profile_dir)
 
@@ -267,7 +268,7 @@ def get_chrome_profile_name(profile_dir: str) -> str:
 def get_available_chrome_profiles() -> List[Dict[str, str]]:
     """
     Discover all available Chrome profiles.
-    
+
     Returns:
         List of profile dictionaries with 'name' and 'directory' keys.
         Example:
@@ -279,37 +280,31 @@ def get_available_chrome_profiles() -> List[Dict[str, str]]:
     """
     profiles = []
     user_data_dir = get_chrome_user_data_dir()
-    
+
     if not user_data_dir:
         # No Chrome installation found, only offer temp profile
-        return [{'name': '🆕 New Temporary Profile', 'directory': ''}]
-    
+        return [{"name": "🆕 New Temporary Profile", "directory": ""}]
+
     try:
         # Check for Default profile
         default_profile = os.path.join(user_data_dir, "Default")
         if os.path.exists(default_profile):
             profile_name = get_chrome_profile_name(default_profile)
-            profiles.append({
-                'name': f'👤 {profile_name}',
-                'directory': 'Default'
-            })
-        
+            profiles.append({"name": f"👤 {profile_name}", "directory": "Default"})
+
         # Check for numbered profiles (Profile 1, Profile 2, etc.)
         for item in os.listdir(user_data_dir):
             item_path = os.path.join(user_data_dir, item)
             if os.path.isdir(item_path) and item.startswith("Profile "):
                 profile_name = get_chrome_profile_name(item_path)
-                profiles.append({
-                    'name': f'👤 {profile_name}',
-                    'directory': item
-                })
-    
+                profiles.append({"name": f"👤 {profile_name}", "directory": item})
+
     except Exception as e:
         print(f"Warning: Could not enumerate Chrome profiles: {e}")
-    
+
     # Always add temp profile option at the end
-    profiles.append({'name': '🆕 New Temporary Profile', 'directory': ''})
-    
+    profiles.append({"name": "🆕 New Temporary Profile", "directory": ""})
+
     return profiles
 
 
@@ -359,9 +354,7 @@ def copy_chrome_profile(
     if os.path.isdir(dest_profile):
         print(f"[Profile Copy] Reusing existing copy at {dest_profile}")
         _logger.info("Reusing existing profile copy at %s", dest_profile)
-        remove_chrome_user_data_singleton_locks(
-            dest_user_data_dir, profile_directory
-        )
+        remove_chrome_user_data_singleton_locks(dest_user_data_dir, profile_directory)
         return dest_user_data_dir
 
     print(f"[Profile Copy] Copying '{profile_directory}' profile...")
@@ -378,6 +371,7 @@ def copy_chrome_profile(
         return []
 
     import time as _time
+
     t0 = _time.monotonic()
 
     shutil.copytree(
@@ -402,9 +396,7 @@ def copy_chrome_profile(
         print(f"  Skipped heavy dirs: {', '.join(sorted(skipped_dirs))}")
     print(f"  Copied {copied_bytes / 1e6:.1f} MB in {elapsed:.1f}s")
 
-    remove_chrome_user_data_singleton_locks(
-        dest_user_data_dir, profile_directory
-    )
+    remove_chrome_user_data_singleton_locks(dest_user_data_dir, profile_directory)
 
     # Fix exit_type in Preferences to suppress "Chrome didn't shut down
     # correctly" restore bar.  Same fixup that undetected_chromedriver does.
@@ -428,7 +420,7 @@ def copy_chrome_profile(
 def get_chrome_profile_options_for_dropdown() -> List[Dict[str, str]]:
     """
     Get profile options formatted for Dash dropdown or similar UI components.
-    
+
     Returns:
         List of dicts with 'label' and 'value' keys for dropdown options.
         Example:
@@ -440,6 +432,6 @@ def get_chrome_profile_options_for_dropdown() -> List[Dict[str, str]]:
     """
     profiles = get_available_chrome_profiles()
     return [
-        {'label': profile['name'], 'value': profile['directory']}
+        {"label": profile["name"], "value": profile["directory"]}
         for profile in profiles
     ]

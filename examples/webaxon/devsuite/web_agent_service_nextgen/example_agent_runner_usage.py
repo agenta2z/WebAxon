@@ -2,34 +2,35 @@
 
 This script demonstrates how AgentRunner will be used in the service.
 """
-import resolve_path  # Sets up Python path for webaxon imports
+
 from unittest.mock import Mock
 
-from webaxon.devsuite.web_agent_service_nextgen.core.config import ServiceConfig
-from webaxon.devsuite.web_agent_service_nextgen.session import AgentSession, AgentSessionInfo
+import resolve_path  # Sets up Python path for webaxon imports
 from webaxon.devsuite.web_agent_service_nextgen.agents.agent_runner import AgentRunner
+from webaxon.devsuite.web_agent_service_nextgen.core.config import ServiceConfig
+from webaxon.devsuite.web_agent_service_nextgen.session import (
+    AgentSession,
+    AgentSessionInfo,
+)
 
 
 def example_production_mode():
     """Example: Running agent in production mode (async threads)."""
     print("\n=== Production Mode Example ===\n")
-    
+
     # Create config for production (async mode)
-    config = ServiceConfig(
-        synchronous_agent=False,
-        debug_mode_service=True
-    )
-    
+    config = ServiceConfig(synchronous_agent=False, debug_mode_service=True)
+
     # Create agent runner
     runner = AgentRunner(config)
-    
+
     # Create mock session (in real service, this comes from SessionManager)
     session = Mock(spec=AgentSession)
-    session.session_id = 'prod_session_123'
+    session.session_id = "prod_session_123"
     session.info = Mock(spec=AgentSessionInfo)
-    session.info.agent_type = 'DefaultAgent'
+    session.info.agent_type = "DefaultAgent"
     session.agent = Mock()
-    session.agent.run = Mock(return_value='completed')
+    session.agent.run = Mock(return_value="completed")
     session.interactive = Mock()
 
     # Create mock queue service
@@ -38,13 +39,13 @@ def example_production_mode():
     # Start agent in thread
     print("Starting agent in separate thread...")
     thread = runner.start_agent_thread(session, queue_service)
-    
+
     if thread:
         print(f"✓ Agent thread created: {thread.name}")
         print(f"  Thread is alive: {thread.is_alive()}")
         print(f"  Thread is daemon: {thread.daemon}")
         print("  Service can continue processing other requests...")
-        
+
         # Wait for completion
         thread.join(timeout=2.0)
         print(f"✓ Agent thread completed")
@@ -55,23 +56,20 @@ def example_production_mode():
 def example_debug_mode():
     """Example: Running agent in debug mode (synchronous)."""
     print("\n=== Debug Mode Example ===\n")
-    
+
     # Create config for debugging (sync mode)
-    config = ServiceConfig(
-        synchronous_agent=True,
-        debug_mode_service=True
-    )
-    
+    config = ServiceConfig(synchronous_agent=True, debug_mode_service=True)
+
     # Create agent runner
     runner = AgentRunner(config)
-    
+
     # Create mock session
     session = Mock(spec=AgentSession)
-    session.session_id = 'debug_session_456'
+    session.session_id = "debug_session_456"
     session.info = Mock(spec=AgentSessionInfo)
-    session.info.agent_type = 'DefaultAgent'
+    session.info.agent_type = "DefaultAgent"
     session.agent = Mock()
-    session.agent.run = Mock(return_value='completed')
+    session.agent.run = Mock(return_value="completed")
     session.interactive = Mock()
     session.info.last_agent_status = None
 
@@ -94,20 +92,20 @@ def example_debug_mode():
 def example_error_handling():
     """Example: Error handling during agent execution."""
     print("\n=== Error Handling Example ===\n")
-    
+
     # Create config
     config = ServiceConfig(synchronous_agent=False)
-    
+
     # Create agent runner
     runner = AgentRunner(config)
-    
+
     # Create mock session with failing agent
     session = Mock(spec=AgentSession)
-    session.session_id = 'error_session_789'
+    session.session_id = "error_session_789"
     session.info = Mock(spec=AgentSessionInfo)
-    session.info.agent_type = 'DefaultAgent'
+    session.info.agent_type = "DefaultAgent"
     session.agent = Mock()
-    session.agent.run = Mock(side_effect=RuntimeError('Simulated error'))
+    session.agent.run = Mock(side_effect=RuntimeError("Simulated error"))
     session.interactive = Mock()
     session.info.last_agent_status = None
 
@@ -132,7 +130,7 @@ def example_error_handling():
 def example_service_integration():
     """Example: How AgentRunner integrates with the service."""
     print("\n=== Service Integration Example ===\n")
-    
+
     print("In the WebAgentService main loop:")
     print("""
     # 1. SessionMonitor detects message waiting
@@ -158,7 +156,7 @@ def example_service_integration():
         else:
             print("Agent running synchronously (debug mode)")
     """)
-    
+
     print("\nKey benefits:")
     print("  • Clean separation of concerns")
     print("  • Easy to test in isolation")
@@ -171,16 +169,16 @@ def main():
     print("=" * 70)
     print("AgentRunner Usage Examples")
     print("=" * 70)
-    
+
     example_production_mode()
     example_debug_mode()
     example_error_handling()
     example_service_integration()
-    
+
     print("\n" + "=" * 70)
     print("Examples complete!")
     print("=" * 70)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

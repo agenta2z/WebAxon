@@ -13,7 +13,21 @@ import time
 from datetime import datetime, timezone
 
 import pytest
-
+from agent_foundation.knowledge.retrieval.knowledge_base import KnowledgeBase
+from agent_foundation.knowledge.retrieval.models.entity_metadata import EntityMetadata
+from agent_foundation.knowledge.retrieval.models.knowledge_piece import (
+    KnowledgePiece,
+    KnowledgeType,
+)
+from agent_foundation.knowledge.retrieval.stores.graph.graph_adapter import (
+    GraphServiceEntityGraphStore,
+)
+from agent_foundation.knowledge.retrieval.stores.metadata.keyvalue_adapter import (
+    KeyValueMetadataStore,
+)
+from agent_foundation.knowledge.retrieval.stores.pieces.retrieval_adapter import (
+    RetrievalKnowledgePieceStore,
+)
 from rich_python_utils.service_utils.data_operation_record import (
     DataOperationRecord,
     generate_operation_id,
@@ -30,22 +44,6 @@ from rich_python_utils.service_utils.keyvalue_service.memory_keyvalue_service im
 )
 from rich_python_utils.service_utils.retrieval_service.memory_retrieval_service import (
     MemoryRetrievalService,
-)
-
-from agent_foundation.knowledge.retrieval.knowledge_base import KnowledgeBase
-from agent_foundation.knowledge.retrieval.models.entity_metadata import EntityMetadata
-from agent_foundation.knowledge.retrieval.models.knowledge_piece import (
-    KnowledgePiece,
-    KnowledgeType,
-)
-from agent_foundation.knowledge.retrieval.stores.graph.graph_adapter import (
-    GraphServiceEntityGraphStore,
-)
-from agent_foundation.knowledge.retrieval.stores.metadata.keyvalue_adapter import (
-    KeyValueMetadataStore,
-)
-from agent_foundation.knowledge.retrieval.stores.pieces.retrieval_adapter import (
-    RetrievalKnowledgePieceStore,
 )
 
 
@@ -232,13 +230,15 @@ class TestGraphCRUDHistory:
     def test_add_existing_node_creates_update_record(self, stores):
         graph_store = stores[2]
         node1 = GraphNode(
-            node_id="n2", node_type="entity",
+            node_id="n2",
+            node_type="entity",
             properties={"key": "old"},
         )
         graph_store.add_node(node1)
 
         node2 = GraphNode(
-            node_id="n2", node_type="entity",
+            node_id="n2",
+            node_type="entity",
             properties={"key": "new"},
         )
         graph_store.add_node(node2)
@@ -253,9 +253,13 @@ class TestGraphCRUDHistory:
         graph_store = stores[2]
         graph_store.add_node(GraphNode(node_id="n3", node_type="entity"))
         graph_store.add_node(GraphNode(node_id="n4", node_type="entity"))
-        graph_store.add_relation(GraphEdge(
-            source_id="n3", target_id="n4", edge_type="knows",
-        ))
+        graph_store.add_relation(
+            GraphEdge(
+                source_id="n3",
+                target_id="n4",
+                edge_type="knows",
+            )
+        )
 
         result = graph_store.remove_node("n3")
         assert result is True
@@ -276,9 +280,13 @@ class TestGraphCRUDHistory:
         graph_store = stores[2]
         graph_store.add_node(GraphNode(node_id="n5", node_type="entity"))
         graph_store.add_node(GraphNode(node_id="n6", node_type="entity"))
-        graph_store.add_relation(GraphEdge(
-            source_id="n5", target_id="n6", edge_type="related",
-        ))
+        graph_store.add_relation(
+            GraphEdge(
+                source_id="n5",
+                target_id="n6",
+                edge_type="related",
+            )
+        )
 
         result = graph_store.remove_relation("n5", "n6", "related")
         assert result is True

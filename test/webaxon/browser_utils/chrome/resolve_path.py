@@ -3,10 +3,11 @@ Path resolution helper for browser_utils/chrome tests.
 
 Import this module at the top of test files before importing webaxon modules.
 """
+
 import sys
 from pathlib import Path
 
-PIVOT_FOLDER_NAME = 'test'
+PIVOT_FOLDER_NAME = "test"
 
 current_file = Path(__file__).resolve()
 current_path = current_file.parent

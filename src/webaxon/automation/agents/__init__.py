@@ -9,10 +9,10 @@ Components:
     - create_action_agent: Factory function for creating action agents with sensible defaults
 """
 
-from webaxon.automation.agents.find_element_inferencer import (
-    FindElementInferencer,
-    FindElementInferenceConfig,
-)
 from webaxon.automation.agents.action_agent_factory import create_action_agent
+from webaxon.automation.agents.find_element_inferencer import (
+    FindElementInferenceConfig,
+    FindElementInferencer,
+)
 
 __all__ = ["FindElementInferencer", "FindElementInferenceConfig", "create_action_agent"]

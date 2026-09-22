@@ -16,6 +16,7 @@ Run this script and visually verify:
 Usage:
     python test_styling_visual.py
 """
+
 import sys
 from pathlib import Path
 
@@ -26,6 +27,7 @@ sys.path.insert(0, str(project_root / "SciencePythonUtils" / "src"))
 sys.path.insert(0, str(project_root / "ScienceModelingTools" / "src"))
 
 from webaxon.devsuite.agent_debugger_nextgen.app import AgentDebuggerApp
+
 
 def main():
     """Launch the debugger to test Action Tester styling."""
@@ -83,25 +85,33 @@ def main():
     print()
     input("Press Enter to launch the debugger...")
     print()
-    
+
     # Create test directory
-    testcase_root = project_root / "WebAgent" / "test" / "devsuite" / "action_tester" / "_test_styling"
+    testcase_root = (
+        project_root
+        / "WebAgent"
+        / "test"
+        / "devsuite"
+        / "action_tester"
+        / "_test_styling"
+    )
     testcase_root.mkdir(parents=True, exist_ok=True)
-    
+
     # Launch app
     app = AgentDebuggerApp(
         testcase_root=testcase_root,
         title="Action Tester Styling Test",
         port=8050,
-        debug=True
+        debug=True,
     )
-    
+
     print("Launching debugger on http://localhost:8050")
     print("Navigate to the 'Action Tester' tab to test styling")
     print("Press Ctrl+C to stop the server")
     print()
-    
+
     app.run()
+
 
 if __name__ == "__main__":
     main()

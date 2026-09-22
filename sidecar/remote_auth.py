@@ -119,8 +119,7 @@ class AuthSessionManager:
         self.sessions[session_id] = session
 
         logger.info(
-            f"Created auth session {session_id} for domain {domain} "
-            f"(expires in {ttl}s)"
+            f"Created auth session {session_id} for domain {domain} (expires in {ttl}s)"
         )
         return session
 
@@ -165,9 +164,7 @@ class AuthSessionManager:
         session.status = "completed"
         session.completed_at = time.time()
 
-        logger.info(
-            f"Auth session {session_id} completed with {len(cookies)} cookies"
-        )
+        logger.info(f"Auth session {session_id} completed with {len(cookies)} cookies")
         return True
 
     def get_relay_url(self, session: AuthSession) -> str:
@@ -199,7 +196,8 @@ class AuthSessionManager:
     def _cleanup_expired(self):
         """Remove expired sessions."""
         expired = [
-            sid for sid, s in self.sessions.items()
+            sid
+            for sid, s in self.sessions.items()
             if s.is_expired and s.status != "completed"
         ]
         for sid in expired:
@@ -213,13 +211,24 @@ class AuthSessionManager:
 # Common patterns that indicate an authentication wall
 AUTH_WALL_INDICATORS = [
     # URL patterns
-    "login", "signin", "sign-in", "sign_in", "sso", "oauth",
-    "authenticate", "auth/realms", "okta.com", "auth0.com",
-    "microsoftonline.com/common/oauth", "accounts.google.com",
+    "login",
+    "signin",
+    "sign-in",
+    "sign_in",
+    "sso",
+    "oauth",
+    "authenticate",
+    "auth/realms",
+    "okta.com",
+    "auth0.com",
+    "microsoftonline.com/common/oauth",
+    "accounts.google.com",
     "id.atlassian.com",
     # Page content patterns
-    "Enter your password", "Sign in to continue",
-    "Log in to your account", "Authentication required",
+    "Enter your password",
+    "Sign in to continue",
+    "Log in to your account",
+    "Authentication required",
 ]
 
 
@@ -271,11 +280,13 @@ async def auth_request_handler(request: web.Request) -> web.Response:
     session = _auth_manager.create_session(target_url, ttl=ttl)
     instructions = _auth_manager.get_auth_instructions(session)
 
-    return web.json_response({
-        "ok": True,
-        "auth_session": session.to_dict(),
-        "instructions": instructions,
-    })
+    return web.json_response(
+        {
+            "ok": True,
+            "auth_session": session.to_dict(),
+            "instructions": instructions,
+        }
+    )
 
 
 async def auth_status_handler(request: web.Request) -> web.Response:
@@ -300,10 +311,12 @@ async def auth_status_handler(request: web.Request) -> web.Response:
             {"ok": False, "error": "Session not found"}, status=404
         )
 
-    return web.json_response({
-        "ok": True,
-        "auth_session": session.to_dict(),
-    })
+    return web.json_response(
+        {
+            "ok": True,
+            "auth_session": session.to_dict(),
+        }
+    )
 
 
 async def auth_cookies_handler(request: web.Request) -> web.Response:
@@ -362,7 +375,10 @@ async def auth_cookies_handler(request: web.Request) -> web.Response:
         )
     else:
         return web.json_response(
-            {"ok": False, "error": "Failed to complete session (expired or invalid token)"},
+            {
+                "ok": False,
+                "error": "Failed to complete session (expired or invalid token)",
+            },
             status=400,
             headers={"Access-Control-Allow-Origin": "*"},
         )
@@ -406,13 +422,15 @@ async def auth_inject_handler(request: web.Request) -> web.Response:
 
     # The actual injection is done by the caller (server.py)
     # We just return the cookies to inject
-    return web.json_response({
-        "ok": True,
-        "cookies": session.cookies,
-        "target_domain": session.target_domain,
-        "target_url": session.target_url,
-        "cookie_count": len(session.cookies),
-    })
+    return web.json_response(
+        {
+            "ok": True,
+            "cookies": session.cookies,
+            "target_domain": session.target_domain,
+            "target_url": session.target_url,
+            "cookie_count": len(session.cookies),
+        }
+    )
 
 
 async def auth_relay_handler(request: web.Request) -> web.Response:
@@ -455,9 +473,12 @@ def _generate_relay_html(
     else:
         sidecar_url = f"http://{sidecar_host}:18800"
 
-    return RELAY_HTML_TEMPLATE.replace("{{SESSION_ID}}", session_id).replace(
-        "{{TOKEN}}", token
-    ).replace("{{DOMAIN}}", domain).replace("{{SIDECAR_URL}}", sidecar_url)
+    return (
+        RELAY_HTML_TEMPLATE.replace("{{SESSION_ID}}", session_id)
+        .replace("{{TOKEN}}", token)
+        .replace("{{DOMAIN}}", domain)
+        .replace("{{SIDECAR_URL}}", sidecar_url)
+    )
 
 
 # ── Route Registration ────────────────────────────────────────────────────────

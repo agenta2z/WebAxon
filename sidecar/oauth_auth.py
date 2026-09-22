@@ -89,7 +89,9 @@ class OAuthSession:
     callback_mode: str  # "direct" or "manual"
     created_at: float = field(default_factory=time.time)
     expires_at: float = 0.0
-    status: str = "pending"  # pending | code_received | token_acquired | injected | expired
+    status: str = (
+        "pending"  # pending | code_received | token_acquired | injected | expired
+    )
     authorization_code: Optional[str] = None
     access_token: Optional[str] = None
     refresh_token: Optional[str] = None
@@ -219,9 +221,7 @@ class OAuthManager:
     def get_session_by_state(self, state: str) -> Optional[OAuthSession]:
         return self.sessions.get(f"state:{state}")
 
-    async def exchange_code_for_token(
-        self, session: OAuthSession, code: str
-    ) -> bool:
+    async def exchange_code_for_token(self, session: OAuthSession, code: str) -> bool:
         """Exchange an authorization code for access + refresh tokens.
 
         Args:
@@ -287,9 +287,7 @@ class OAuthManager:
             session.error = str(e)
             return False
 
-    async def _fetch_cloud_id(
-        self, session: OAuthSession, http_session=None
-    ):
+    async def _fetch_cloud_id(self, session: OAuthSession, http_session=None):
         """Fetch the cloud ID for the authenticated user's site."""
         import aiohttp as aiohttp_lib
 
@@ -362,16 +360,19 @@ async def oauth_start_handler(request: web.Request) -> web.Response:
     global _oauth_manager
 
     if not _oauth_manager or not _oauth_manager.is_configured:
-        return web.json_response({
-            "ok": False,
-            "error": "OAuth not configured. Set ATLASSIAN_OAUTH_CLIENT_ID and ATLASSIAN_OAUTH_CLIENT_SECRET.",
-            "setup_instructions": {
-                "step_1": "Go to https://developer.atlassian.com/console/myapps/",
-                "step_2": "Create an OAuth 2.0 (3LO) app",
-                "step_3": "Add callback URL: http://localhost:18800/oauth/callback",
-                "step_4": "Set ATLASSIAN_OAUTH_CLIENT_ID and ATLASSIAN_OAUTH_CLIENT_SECRET",
+        return web.json_response(
+            {
+                "ok": False,
+                "error": "OAuth not configured. Set ATLASSIAN_OAUTH_CLIENT_ID and ATLASSIAN_OAUTH_CLIENT_SECRET.",
+                "setup_instructions": {
+                    "step_1": "Go to https://developer.atlassian.com/console/myapps/",
+                    "step_2": "Create an OAuth 2.0 (3LO) app",
+                    "step_3": "Add callback URL: http://localhost:18800/oauth/callback",
+                    "step_4": "Set ATLASSIAN_OAUTH_CLIENT_ID and ATLASSIAN_OAUTH_CLIENT_SECRET",
+                },
             },
-        }, status=400)
+            status=400,
+        )
 
     try:
         body = await request.json()
@@ -397,15 +398,17 @@ async def oauth_start_handler(request: web.Request) -> web.Response:
 
     instructions = _oauth_manager.get_auth_instructions(session)
 
-    return web.json_response({
-        "ok": True,
-        "oauth_session": session.to_dict(),
-        "instructions": instructions,
-        "message": (
-            "🔐 Share this Atlassian auth URL with the user. "
-            "It works from any device or browser."
-        ),
-    })
+    return web.json_response(
+        {
+            "ok": True,
+            "oauth_session": session.to_dict(),
+            "instructions": instructions,
+            "message": (
+                "🔐 Share this Atlassian auth URL with the user. "
+                "It works from any device or browser."
+            ),
+        }
+    )
 
 
 async def oauth_callback_handler(request: web.Request) -> web.Response:
@@ -509,12 +512,16 @@ h1 {{ color: #3fb950; font-size: 22px; }}
 </style></head><body>
 <div class="container">
     <h1>✅ Authentication Successful!</h1>
-    {"<p class='auto'>✅ Token automatically acquired — the remote browser is being configured. You can close this tab.</p>" if auto_exchanged else f'''
+    {
+        "<p class='auto'>✅ Token automatically acquired — the remote browser is being configured. You can close this tab.</p>"
+        if auto_exchanged
+        else f'''
     <p>Your authorization code:</p>
     <div class="code" onclick="navigator.clipboard.writeText(this.textContent).then(()=>this.style.borderColor='#3fb950')">{code}</div>
     <p class="info">Click the code to copy it, then paste it back to complete authentication.</p>
     <p class="info">Or use: <code>curl -X POST {_oauth_manager.sidecar_base_url}/oauth/code -H "Content-Type: application/json" -d '{{"session_id":"{session.session_id if session else "YOUR_SESSION_ID"}","code":"{code}"}}'</code></p>
-    '''}
+    '''
+    }
 </div></body></html>"""
 
     return web.Response(text=html, content_type="text/html")
@@ -553,25 +560,32 @@ async def oauth_code_submit_handler(request: web.Request) -> web.Response:
         )
 
     if session.has_token:
-        return web.json_response({
-            "ok": True,
-            "message": "Token already acquired",
-            "oauth_session": session.to_dict(),
-        })
+        return web.json_response(
+            {
+                "ok": True,
+                "message": "Token already acquired",
+                "oauth_session": session.to_dict(),
+            }
+        )
 
     success = await _oauth_manager.exchange_code_for_token(session, code)
 
     if success:
-        return web.json_response({
-            "ok": True,
-            "message": "Token acquired successfully",
-            "oauth_session": session.to_dict(),
-        })
+        return web.json_response(
+            {
+                "ok": True,
+                "message": "Token acquired successfully",
+                "oauth_session": session.to_dict(),
+            }
+        )
     else:
-        return web.json_response({
-            "ok": False,
-            "error": session.error or "Token exchange failed",
-        }, status=500)
+        return web.json_response(
+            {
+                "ok": False,
+                "error": session.error or "Token exchange failed",
+            },
+            status=500,
+        )
 
 
 async def oauth_status_handler(request: web.Request) -> web.Response:
@@ -591,10 +605,12 @@ async def oauth_status_handler(request: web.Request) -> web.Response:
             {"ok": False, "error": "Session not found"}, status=404
         )
 
-    return web.json_response({
-        "ok": True,
-        "oauth_session": session.to_dict(),
-    })
+    return web.json_response(
+        {
+            "ok": True,
+            "oauth_session": session.to_dict(),
+        }
+    )
 
 
 async def oauth_poll_handler(request: web.Request) -> web.Response:
@@ -610,9 +626,7 @@ async def oauth_poll_handler(request: web.Request) -> web.Response:
     try:
         body = await request.json()
     except json.JSONDecodeError:
-        return web.json_response(
-            {"ok": False, "error": "Invalid JSON"}, status=400
-        )
+        return web.json_response({"ok": False, "error": "Invalid JSON"}, status=400)
 
     session_id = body.get("session_id")
     timeout = body.get("timeout", 300)
@@ -624,28 +638,44 @@ async def oauth_poll_handler(request: web.Request) -> web.Response:
         )
 
     start = asyncio.get_event_loop().time()
-    while not session.has_token and not session.is_expired and session.status != "error":
+    while (
+        not session.has_token and not session.is_expired and session.status != "error"
+    ):
         elapsed = asyncio.get_event_loop().time() - start
         if elapsed > timeout:
-            return web.json_response({
-                "ok": False, "error": "Timeout waiting for authentication",
-            }, status=408)
+            return web.json_response(
+                {
+                    "ok": False,
+                    "error": "Timeout waiting for authentication",
+                },
+                status=408,
+            )
         await asyncio.sleep(2)
 
     if session.has_token:
-        return web.json_response({
-            "ok": True,
-            "message": "Token acquired",
-            "oauth_session": session.to_dict(),
-        })
+        return web.json_response(
+            {
+                "ok": True,
+                "message": "Token acquired",
+                "oauth_session": session.to_dict(),
+            }
+        )
     elif session.status == "error":
-        return web.json_response({
-            "ok": False, "error": session.error,
-        }, status=500)
+        return web.json_response(
+            {
+                "ok": False,
+                "error": session.error,
+            },
+            status=500,
+        )
     else:
-        return web.json_response({
-            "ok": False, "error": "Session expired",
-        }, status=410)
+        return web.json_response(
+            {
+                "ok": False,
+                "error": "Session expired",
+            },
+            status=410,
+        )
 
 
 # ── Route Registration ────────────────────────────────────────────────────────

@@ -40,7 +40,7 @@ from agent_foundation.automation.schema.action_metadata import ActionMetadataReg
 def create_google_search_action_graph(
     action_executor,
     search_query: str = "test query",
-    url: str = "https://www.google.com"
+    url: str = "https://www.google.com",
 ):
     """
     Create an ActionGraph that demonstrates CONTINUOUS element-based monitoring.
@@ -69,14 +69,11 @@ def create_google_search_action_graph(
     graph = ActionGraph(
         action_executor=action_executor,
         action_metadata=ActionMetadataRegistry(),
-        debug_mode=True  # Enable debug logging to see graph_depth and self_loop_iteration
+        debug_mode=True,  # Enable debug logging to see graph_depth and self_loop_iteration
     )
 
     # Action 1: Visit Google homepage
-    graph.action(
-        "visit_url",
-        target=url
-    )
+    graph.action("visit_url", target=url)
 
     # Action 2: Monitor the search textarea for value changes (CONTINUOUS MODE)
     # - Monitors element on CURRENT tab (no new tab created)
@@ -100,28 +97,25 @@ def create_google_search_action_graph(
         event_confirmation_time=5,  # Debounce: wait 5 seconds to confirm change is stable
         interval=2,  # Check every 2 seconds
         continuous=True,  # Enable continuous monitoring loop
-        enable_auto_setup=True  # Must be True - see comment above
+        enable_auto_setup=True,  # Must be True - see comment above
     )
 
     # Action 3: Visit Google homepage on a new tab
     # This action only executes AFTER the monitor condition is met.
     # It automatically detects the current tab is under monitoring and opens a new one.
-    graph.action(
-        "visit_url",
-        target=url
-    )
+    graph.action("visit_url", target=url)
 
     # Action 4: Input text into search textarea
     graph.action(
         "input_text",
         target=TargetSpec(strategy="xpath", value="//textarea[@title='Search']"),
-        args={"text": search_query}
+        args={"text": search_query},
     )
 
     # Action 5: Click the Google Search button
     graph.action(
         "click",
-        target=TargetSpec(strategy="xpath", value="//input[@value='Google Search']")
+        target=TargetSpec(strategy="xpath", value="//input[@value='Google Search']"),
     )
 
     return graph

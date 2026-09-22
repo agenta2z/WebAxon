@@ -9,7 +9,7 @@ Protocols:
 - MonitorCapableDriver: Required interface for monitoring functionality
 """
 
-from typing import Any, Protocol, Union, runtime_checkable
+from typing import Any, Protocol, runtime_checkable, Union
 
 
 @runtime_checkable
@@ -34,9 +34,7 @@ class MonitorCapableDriver(Protocol):
         ...
 
     def resolve_action_target(
-        self,
-        strategy: Union[str, Any],
-        action_target: str
+        self, strategy: Union[str, Any], action_target: str
     ) -> Any:
         """
         Resolve element using strategy.

@@ -3,10 +3,8 @@
 Tests error handling for empty inputs, invalid flags, and missing required arguments.
 """
 
-import resolve_path  # Must be first import
-
 import pytest
-
+import resolve_path  # Must be first import
 from webaxon.devsuite.web_agent_service_nextgen.cli.kb_arg_parser import (
     parse_kb_add,
     parse_kb_del,
@@ -258,6 +256,8 @@ class TestKbReviewSpaces:
             parse_kb_review_spaces("--approve abc --reject def")
 
     def test_approve_with_uuid_style_id(self):
-        result = parse_kb_review_spaces("--approve 550e8400-e29b-41d4-a716-446655440000")
+        result = parse_kb_review_spaces(
+            "--approve 550e8400-e29b-41d4-a716-446655440000"
+        )
         assert result["mode"] == "approve"
         assert result["piece_id"] == "550e8400-e29b-41d4-a716-446655440000"

@@ -1,9 +1,13 @@
-from ..utils import encode_image
-from PIL import Image
-import re
 import asyncio
+import re
+
+from PIL import Image
+
+from ..utils import encode_image
+
 MAX_IMAGE = 50
 _CONCURRENCY_LIMIT = 5
+
 
 async def identify_key_points(task, input_image_paths, model):
     system_msg = """You are an expert tasked with analyzing a given task to identify the key points explicitly stated in the task description.
@@ -30,8 +34,11 @@ async def identify_key_points(task, input_image_paths, model):
             input_images_jpg_base64_str = encode_image(Image.open(input_image_path))
             input_images_msg.append(
                 {
-                    'type': 'image_url',
-                    'image_url': {"url": f"data:image/jpeg;base64,{input_images_jpg_base64_str}", "detail": "high"}
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/jpeg;base64,{input_images_jpg_base64_str}",
+                        "detail": "high",
+                    },
                 }
             )
 
@@ -39,15 +46,16 @@ async def identify_key_points(task, input_image_paths, model):
         {"role": "system", "content": system_msg},
         {
             "role": "user",
-            "content": [
-                {"type": "text", "text": text}
-            ] + input_images_msg,
-        }
+            "content": [{"type": "text", "text": text}] + input_images_msg,
+        },
     ]
     responses = await asyncio.to_thread(model.generate, messages)
     return responses[0]
 
-async def judge_image(task, input_image_paths, image_path, key_points, model, semaphore):
+
+async def judge_image(
+    task, input_image_paths, image_path, key_points, model, semaphore
+):
     system_msg = """You are an expert evaluator tasked with determining whether an image contains information about the necessary steps to complete a task.
 
 **Objective**: Analyze the provided image and decide if it shows essential steps or evidence required for completing the task. Use your reasoning to explain your decision before assigning a score.
@@ -74,7 +82,6 @@ Respond with:
 ### Reasoning**: [Your explanation]  
 ### Score**: [1-5]"""
 
-
     prompt = """**Task**: {task}
 
 **Key Points for Task Completion**: {key_points}
@@ -88,17 +95,23 @@ The snapshot of the web page is shown in the image."""
             input_images_jpg_base64_str = encode_image(Image.open(input_image_path))
             input_images_msg.append(
                 {
-                    'type': 'image_url',
-                    'image_url': {"url": f"data:image/jpeg;base64,{input_images_jpg_base64_str}", "detail": "high"}
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/jpeg;base64,{input_images_jpg_base64_str}",
+                        "detail": "high",
+                    },
                 }
             )
     messages = [{"role": "system", "content": system_msg}]
 
     if input_images_msg:
-        messages.append({
-            "role": "user",
-            "content": [{"type": "text", "text": "The input images are:"}] + input_images_msg
-        })
+        messages.append(
+            {
+                "role": "user",
+                "content": [{"type": "text", "text": "The input images are:"}]
+                + input_images_msg,
+            }
+        )
 
     jpg_base64_str = encode_image(Image.open(image_path))
     messages.append(
@@ -108,9 +121,12 @@ The snapshot of the web page is shown in the image."""
                 {"type": "text", "text": text},
                 {
                     "type": "image_url",
-                    "image_url": {"url": f"data:image/jpeg;base64,{jpg_base64_str}", "detail": "high"},
+                    "image_url": {
+                        "url": f"data:image/jpeg;base64,{jpg_base64_str}",
+                        "detail": "high",
+                    },
                 },
-            ]
+            ],
         }
     )
 
@@ -119,7 +135,15 @@ The snapshot of the web page is shown in the image."""
     return responses[0]
 
 
-async def WebJudge_general_eval(task, input_image_paths, action_thoughts, last_actions, images_path, model, score_threshold):
+async def WebJudge_general_eval(
+    task,
+    input_image_paths,
+    action_thoughts,
+    last_actions,
+    images_path,
+    model,
+    score_threshold,
+):
     system_msg = """You are an expert in evaluating the performance of a web navigation agent. The agent is designed to help a human user navigate a website to complete a task. Given the user's task, the agent's action history, key points for task completion, some potentially important web pages in the agent's trajectory and their reasons, your goal is to determine whether the agent has completed the task and achieved all requirements.
 
 Your response must strictly follow the following evaluation criteria!
@@ -145,7 +169,6 @@ Action History:
 The potentially important snapshots of the webpage in the agent's trajectory and their reasons:
 {thoughts}"""
 
-
     key_points = await identify_key_points(task, input_image_paths, model)
     key_points = key_points.replace("\n\n", "\n")
 
@@ -157,7 +180,10 @@ The potentially important snapshots of the webpage in the agent's trajectory and
         key_points = "\n".join(line.lstrip() for line in key_points.splitlines())
 
     semaphore = asyncio.Semaphore(_CONCURRENCY_LIMIT)
-    tasks = [judge_image(task, input_image_paths, image_path, key_points, model, semaphore) for image_path in images_path]
+    tasks = [
+        judge_image(task, input_image_paths, image_path, key_points, model, semaphore)
+        for image_path in images_path
+    ]
     image_responses = await asyncio.gather(*tasks)
 
     input_images_msg = []
@@ -167,17 +193,38 @@ The potentially important snapshots of the webpage in the agent's trajectory and
     # Pattern: look for "Score" keyword followed by a digit 1-5.
     score_after_keyword_re = re.compile(r"[Ss]core[^0-9]*([1-5])")
     # Pattern to strip trailing score line from thought text
-    _trailing_score_re = re.compile(r"\s*(?:\d+\.)?\s*\*{0,2}[Ss]core\*{0,2}\s*:?\s*\[?\d\]?\s*$")
+    _trailing_score_re = re.compile(
+        r"\s*(?:\d+\.)?\s*\*{0,2}[Ss]core\*{0,2}\s*:?\s*\[?\d\]?\s*$"
+    )
     for response, image_path in zip(image_responses, images_path):
         try:
             # Extract reasoning
             thought = ""
             if "### Reasoning" in response:
-                thought = response.split("### Reasoning")[-1].strip().lstrip(":").lstrip("\n").split("### Score")[0].replace('\n', ' ')
+                thought = (
+                    response.split("### Reasoning")[-1]
+                    .strip()
+                    .lstrip(":")
+                    .lstrip("\n")
+                    .split("### Score")[0]
+                    .replace("\n", " ")
+                )
             elif "**Reasoning**:" in response:
-                thought = response.split("**Reasoning**:")[-1].strip().lstrip("\n").split("\n\n")[0].replace('\n', ' ')
+                thought = (
+                    response.split("**Reasoning**:")[-1]
+                    .strip()
+                    .lstrip("\n")
+                    .split("\n\n")[0]
+                    .replace("\n", " ")
+                )
             elif "Reasoning:" in response:
-                thought = response.split("Reasoning:")[-1].strip().lstrip("\n").split("\n\n")[0].replace('\n', ' ')
+                thought = (
+                    response.split("Reasoning:")[-1]
+                    .strip()
+                    .lstrip("\n")
+                    .split("\n\n")[0]
+                    .replace("\n", " ")
+                )
 
             # Strip any leaked score text from the end of the thought
             if thought:
@@ -190,7 +237,9 @@ The potentially important snapshots of the webpage in the agent's trajectory and
             else:
                 score = "0"
                 if len(response) < 200:
-                    print(f"WARNING: Image judge response truncated ({len(response)} chars), no Score found — assigning 0")
+                    print(
+                        f"WARNING: Image judge response truncated ({len(response)} chars), no Score found — assigning 0"
+                    )
 
             record.append({"Response": response, "Score": int(score)})
         except Exception as e:
@@ -202,8 +251,11 @@ The potentially important snapshots of the webpage in the agent's trajectory and
             jpg_base64_str = encode_image(Image.open(image_path))
             whole_content_img.append(
                 {
-                    'type': 'image_url',
-                    'image_url': {"url": f"data:image/jpeg;base64,{jpg_base64_str}", "detail": "high"}
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/jpeg;base64,{jpg_base64_str}",
+                        "detail": "high",
+                    },
                 }
             )
             if thought != "":
@@ -220,31 +272,62 @@ Action History:
 {last_actions}"""
 
     if action_thoughts != None:
-        text = prompt.format(task=task, last_actions="\n".join(f"{i+1}. {action}. Reasoning: {action_thought}" for i, (action, action_thought) in enumerate(zip(last_actions, action_thoughts))), key_points=key_points, thoughts="\n".join(f"{i+1}. {thought}" for i, thought in enumerate(whole_thoughts)))
+        text = prompt.format(
+            task=task,
+            last_actions="\n".join(
+                f"{i + 1}. {action}. Reasoning: {action_thought}"
+                for i, (action, action_thought) in enumerate(
+                    zip(last_actions, action_thoughts)
+                )
+            ),
+            key_points=key_points,
+            thoughts="\n".join(
+                f"{i + 1}. {thought}" for i, thought in enumerate(whole_thoughts)
+            ),
+        )
 
     else:
-        text = prompt.format(task=task, last_actions="\n".join(f"{i+1}. {action}" for i, action in enumerate(last_actions)), key_points=key_points, thoughts="\n".join(f"{i+1}. {thought}" for i, thought in enumerate(whole_thoughts)))
+        text = prompt.format(
+            task=task,
+            last_actions="\n".join(
+                f"{i + 1}. {action}" for i, action in enumerate(last_actions)
+            ),
+            key_points=key_points,
+            thoughts="\n".join(
+                f"{i + 1}. {thought}" for i, thought in enumerate(whole_thoughts)
+            ),
+        )
 
     input_images_msg = []
     if input_image_paths is not None:
         for path in input_image_paths:
             input_images_jpg_base64_str = encode_image(Image.open(path))
-            input_images_msg.append({
-                "type": "image_url",
-                "image_url": {"url": f"data:image/jpeg;base64,{input_images_jpg_base64_str}", "detail": "high"}
-            })
+            input_images_msg.append(
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/jpeg;base64,{input_images_jpg_base64_str}",
+                        "detail": "high",
+                    },
+                }
+            )
 
     messages = [{"role": "system", "content": system_msg}]
 
     if input_images_msg:
-        messages.append({
-            "role": "user",
-            "content": [{"type": "text", "text": "The input images are:"}] + input_images_msg
-        })
+        messages.append(
+            {
+                "role": "user",
+                "content": [{"type": "text", "text": "The input images are:"}]
+                + input_images_msg,
+            }
+        )
 
-    messages.append({
-        "role": "user",
-        "content": [{"type": "text", "text": text}] + whole_content_img
-    })
+    messages.append(
+        {
+            "role": "user",
+            "content": [{"type": "text", "text": text}] + whole_content_img,
+        }
+    )
 
     return messages, text, system_msg, record, key_points

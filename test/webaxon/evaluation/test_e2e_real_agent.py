@@ -66,6 +66,7 @@ logger = logging.getLogger(__name__)
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture(scope="module")
 def workspace_path(request) -> Path:
     """Resolve the WebAxon workspace directory."""
@@ -132,9 +133,7 @@ def e2e_task():
 
 
 @pytest.fixture(scope="module")
-def agent_run_result(
-    workspace_path, e2e_output_dir, e2e_task, agent_type, headless
-):
+def agent_run_result(workspace_path, e2e_output_dir, e2e_task, agent_type, headless):
     """Run the real agent on the e2e task. Shared across tests in this module.
 
     This fixture is expensive (minutes), so it's module-scoped — the agent
@@ -172,6 +171,7 @@ def agent_run_result(
 # Tests — Agent Run
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.e2e
 @pytest.mark.timeout(600)
 class TestAgentRun:
@@ -189,17 +189,23 @@ class TestAgentRun:
         assert "final_result_response" in data
         assert "duration_seconds" in data
 
-    def test_trajectory_screenshots_captured(self, agent_run_result, e2e_output_dir, e2e_task):
+    def test_trajectory_screenshots_captured(
+        self, agent_run_result, e2e_output_dir, e2e_task
+    ):
         """Agent captures at least one trajectory screenshot."""
         # Screenshots may be in session_dir/screenshots/ (save_screenshots_to_session=True)
         # or in trajectory_dir (legacy).  Check metadata.screenshot_dir first.
-        screenshot_dir = (agent_run_result.get("metadata") or {}).get("screenshot_dir", "")
+        screenshot_dir = (agent_run_result.get("metadata") or {}).get(
+            "screenshot_dir", ""
+        )
         if screenshot_dir and Path(screenshot_dir).is_dir():
             screenshot_path = Path(screenshot_dir)
         else:
             screenshot_path = e2e_output_dir / e2e_task.task_id / "trajectory"
 
-        assert screenshot_path.exists(), f"Screenshot dir not found at {screenshot_path}"
+        assert screenshot_path.exists(), (
+            f"Screenshot dir not found at {screenshot_path}"
+        )
 
         screenshots = list(screenshot_path.glob("*_screenshot.png"))
         assert len(screenshots) >= 1, "Expected at least one screenshot"
@@ -224,12 +230,16 @@ class TestAgentRun:
         result_path = e2e_output_dir / e2e_task.task_id / "result.json"
         file_data = json.loads(result_path.read_text(encoding="utf-8"))
         assert file_data["task_id"] == agent_run_result["task_id"]
-        assert file_data["final_result_response"] == agent_run_result["final_result_response"]
+        assert (
+            file_data["final_result_response"]
+            == agent_run_result["final_result_response"]
+        )
 
 
 # ---------------------------------------------------------------------------
 # Tests — Evaluator
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.e2e
 @pytest.mark.timeout(300)
@@ -251,7 +261,9 @@ class TestEvaluator:
         if eval_inferencer == "claude":
             if not os.environ.get("ANTHROPIC_API_KEY"):
                 pytest.skip("ANTHROPIC_API_KEY not set")
-            from agent_foundation.common.inferencers.api_inferencers.claude_api_inferencer import ClaudeApiInferencer
+            from agent_foundation.common.inferencers.api_inferencers.claude_api_inferencer import (
+                ClaudeApiInferencer,
+            )
 
             model_id = eval_model or "claude-sonnet-4-5-20250929"
             engine_factory = lambda: InferencerEngine(
@@ -260,7 +272,9 @@ class TestEvaluator:
         else:
             if not os.environ.get("OPENAI_API_KEY"):
                 pytest.skip("OPENAI_API_KEY not set")
-            from agent_foundation.common.inferencers.api_inferencers.openai_api_inferencer import OpenaiApiInferencer
+            from agent_foundation.common.inferencers.api_inferencers.openai_api_inferencer import (
+                OpenaiApiInferencer,
+            )
 
             model_id = eval_model or "gpt-4o"
             engine_factory = lambda: InferencerEngine(

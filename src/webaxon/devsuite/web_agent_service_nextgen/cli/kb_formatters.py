@@ -63,7 +63,9 @@ def format_delete_results(results: list) -> str:
         return "No pieces deleted"
     successful = [r for r in results if r.get("success", False)]
     mode = results[0].get("mode", "soft") if results else "soft"
-    return f"Deleted {len(successful)} piece{'s' if len(successful) != 1 else ''} ({mode})"
+    return (
+        f"Deleted {len(successful)} piece{'s' if len(successful) != 1 else ''} ({mode})"
+    )
 
 
 def format_search_results(results: list) -> str:

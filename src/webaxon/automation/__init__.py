@@ -7,12 +7,8 @@ Provides browser automation capabilities including:
 - Selenium-based action implementations
 """
 
+from .monitor import create_monitor, MonitorCondition, MonitorConditionType
 from .web_driver import WebDriver
-from .monitor import (
-    MonitorCondition,
-    MonitorConditionType,
-    create_monitor,
-)
 
 __all__ = [
     "WebDriver",

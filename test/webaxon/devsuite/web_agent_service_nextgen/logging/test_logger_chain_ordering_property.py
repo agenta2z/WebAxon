@@ -13,15 +13,12 @@ The correct ordering is:
 3. Any additional backend loggers
 """
 
-import resolve_path  # noqa: F401 - must be first import
-
 import shutil
 import tempfile
 from pathlib import Path
 
-from hypothesis import given, settings, HealthCheck
-from hypothesis import strategies as st
-
+import resolve_path  # noqa: F401 - must be first import
+from hypothesis import given, HealthCheck, settings, strategies as st
 from rich_python_utils.service_utils.session_management import (
     SessionLogger as SessionLogManager,
 )
@@ -41,16 +38,18 @@ class_names = st.text(
 )
 
 # Artifact-worthy log types (excluding AgentState since it triggers turns)
-non_turn_artifact_types = st.sampled_from([
-    "ReasonerInput",
-    "ReasonerResponse",
-    "AgentResponse",
-    "AgentActionResults",
-    "AgentActionError",
-    "Screenshot",
-    "HtmlSnapshot",
-    "AgentNextActions",
-])
+non_turn_artifact_types = st.sampled_from(
+    [
+        "ReasonerInput",
+        "ReasonerResponse",
+        "AgentResponse",
+        "AgentActionResults",
+        "AgentActionError",
+        "Screenshot",
+        "HtmlSnapshot",
+        "AgentNextActions",
+    ]
+)
 
 # Number of non-AgentState artifacts per turn
 artifacts_per_turn = st.integers(min_value=1, max_value=5)
@@ -315,7 +314,9 @@ class TestLoggerChainOrderingProperty:
 
             # Start turn 1
             turn_logger({"type": "AgentState", "name": class_name, "item": "state1"})
-            artifact_logger({"type": "AgentState", "name": class_name, "item": "state1"})
+            artifact_logger(
+                {"type": "AgentState", "name": class_name, "item": "state1"}
+            )
 
             # Start turn 2 (correct order)
             turn_logger({"type": "AgentState", "name": class_name, "item": "state2"})

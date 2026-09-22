@@ -6,11 +6,12 @@ for click_element functionality, particularly for opening links in new tabs.
 """
 
 from enum import Enum
-from typing import Tuple, Mapping
+from typing import Mapping, Tuple
 
 
 class StrEnum(str, Enum):
     """String enum base class for Python < 3.11 compatibility."""
+
     pass
 
 
@@ -24,8 +25,9 @@ class OpenInNewTabMode(StrEnum):
             to navigate elsewhere (external links, non-anchor links).
         DISABLED: Normal click (no new tab).
     """
+
     ENABLED = "enabled"
-    ENABLED_FOR_INTERACTABLE = 'enabled_for_interactable'
+    ENABLED_FOR_INTERACTABLE = "enabled_for_interactable"
     ENABLED_FOR_NON_SAME_PAGE_INTERACTION = "enabled_for_non_same_page_interaction"
     DISABLED = "disabled"
 
@@ -42,11 +44,14 @@ class NewTabClickStrategy(StrEnum):
         CDP_CREATE_TARGET: Use CDP Target.createTarget (Chrome/Chromium only)
         MIDDLE_CLICK: Middle mouse button click
     """
-    URL_EXTRACT = "url_extract"          # Extract URL from element + window.open()
-    TARGET_BLANK = "target_blank"        # Set target='_blank' on element + click
-    MODIFIER_KEY = "modifier_key"        # Ctrl/Cmd + click
-    CDP_CREATE_TARGET = "cdp_create_target"  # CDP Target.createTarget (Chrome/Chromium only)
-    MIDDLE_CLICK = "middle_click"        # Middle mouse button click
+
+    URL_EXTRACT = "url_extract"  # Extract URL from element + window.open()
+    TARGET_BLANK = "target_blank"  # Set target='_blank' on element + click
+    MODIFIER_KEY = "modifier_key"  # Ctrl/Cmd + click
+    CDP_CREATE_TARGET = (
+        "cdp_create_target"  # CDP Target.createTarget (Chrome/Chromium only)
+    )
+    MIDDLE_CLICK = "middle_click"  # Middle mouse button click
 
 
 class NewTabClickResult(StrEnum):
@@ -60,6 +65,7 @@ class NewTabClickResult(StrEnum):
         SUCCESS_MIDDLE_CLICK: Middle click succeeded
         FAILED: All strategies failed
     """
+
     SUCCESS_URL_EXTRACT = "success_url_extract"
     SUCCESS_TARGET_BLANK = "success_target_blank"
     SUCCESS_MODIFIER_KEY = "success_modifier_key"
@@ -85,6 +91,7 @@ class NewTabFallbackMode(StrEnum):
             may skip fallback if strategies caused minor DOM changes.
         DISABLED: No fallback (current behavior).
     """
+
     ENABLED_WHEN_NO_TEXT_CHANGE = "no_text_change"
     ENABLED_WHEN_NO_HTML_CHANGE = "no_html_change"
     DISABLED = "disabled"
@@ -106,6 +113,7 @@ class ClickImplementation(StrEnum):
         EVENT_DISPATCH: new MouseEvent('click', {bubbles, cancelable, view})
             dispatched via dispatchEvent — synthetic MouseEvent via JS.
     """
+
     NATIVE = "native"
     JAVASCRIPT = "javascript"
     ACTION_CHAIN = "action_chain"

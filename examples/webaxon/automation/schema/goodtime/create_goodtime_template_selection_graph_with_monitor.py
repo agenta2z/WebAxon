@@ -84,7 +84,7 @@ def create_goodtime_template_selection_graph_with_monitor(
     graph = ActionGraph(
         action_executor=action_executor,
         action_metadata=ActionMetadataRegistry(),
-        debug_mode=True  # Enable debug logging to see graph_depth and self_loop_iteration
+        debug_mode=True,  # Enable debug logging to see graph_depth and self_loop_iteration
     )
 
     # =========================================================================
@@ -119,13 +119,13 @@ def create_goodtime_template_selection_graph_with_monitor(
         "monitor",
         target=TargetSpec(
             strategy="xpath",
-            value="(//a[contains(@class, '_Interview_1kmia_9') and (.//span[@class='pillText' and (text()='Queued' or text()='Pick Up')])])[1]"
+            value="(//a[contains(@class, '_Interview_1kmia_9') and (.//span[@class='pillText' and (text()='Queued' or text()='Pick Up')])])[1]",
         ),
         event_condition="element_present",  # Triggers when candidate appears
         event_confirmation_time=3,  # Debounce: wait 3 seconds to confirm
         interval=5,  # Check every 5 seconds
         continuous=True,  # Enable continuous monitoring loop
-        enable_auto_setup=True  # Must be True for Selenium
+        enable_auto_setup=True,  # Must be True for Selenium
     )
 
     # =========================================================================
@@ -134,10 +134,7 @@ def create_goodtime_template_selection_graph_with_monitor(
 
     # This action only executes AFTER the monitor condition is met.
     # It automatically detects the current tab is under monitoring and opens a new one.
-    graph.action(
-        "visit_url",
-        target=dashboard_url
-    )
+    graph.action("visit_url", target=dashboard_url)
 
     # =========================================================================
     # Step 4: Select Candidate
@@ -166,25 +163,19 @@ def create_goodtime_template_selection_graph_with_monitor(
         # If Queued candidate not found, click Pick Up pill to queue it, then retry
         with graph.action(
             "click",
-            target=TargetSpec(
-                strategy="xpath",
-                value=queued_candidate_xpath
-            ),
+            target=TargetSpec(strategy="xpath", value=queued_candidate_xpath),
             args={"try_open_in_new_tab": False},
             wait=wait,
         ).target_not_found(
             retry_after_handling=True,  # Retry clicking Queued candidate after queueing
             max_retries=3,
-            retry_delay=1.0
+            retry_delay=1.0,
         ):
             # Fallback: Click Pick Up pill to queue the candidate
             # After this, the retry will attempt to click the Queued candidate again
             graph.action(
                 "click",
-                target=TargetSpec(
-                    strategy="xpath",
-                    value=pickup_pill_xpath
-                ),
+                target=TargetSpec(strategy="xpath", value=pickup_pill_xpath),
                 args={"try_open_in_new_tab": False},
                 wait=wait,
             )
@@ -206,25 +197,19 @@ def create_goodtime_template_selection_graph_with_monitor(
         # If no Queued candidates, click Pick Up pill to queue one, then retry
         with graph.action(
             "click",
-            target=TargetSpec(
-                strategy="xpath",
-                value=first_queued_xpath
-            ),
+            target=TargetSpec(strategy="xpath", value=first_queued_xpath),
             args={"try_open_in_new_tab": False},
             wait=wait,
         ).target_not_found(
             retry_after_handling=True,  # Retry clicking first Queued candidate after queueing
             max_retries=3,
-            retry_delay=1.0
+            retry_delay=1.0,
         ):
             # Fallback: Click first Pick Up pill to queue a candidate
             # After this, the retry will attempt to click the first Queued candidate again
             graph.action(
                 "click",
-                target=TargetSpec(
-                    strategy="xpath",
-                    value=first_pickup_pill_xpath
-                ),
+                target=TargetSpec(strategy="xpath", value=first_pickup_pill_xpath),
                 args={"try_open_in_new_tab": False},
                 wait=wait,
             )
@@ -236,8 +221,7 @@ def create_goodtime_template_selection_graph_with_monitor(
     graph.action(
         "click",
         target=TargetSpec(
-            strategy="xpath",
-            value="//button[.//span[text()='Select Template']]"
+            strategy="xpath", value="//button[.//span[text()='Select Template']]"
         ),
         wait=wait,
     )
@@ -259,7 +243,7 @@ The notes contain TWO key pieces of information to match:
 2. Job level (look for 'Level of Job' - e.g., 'P40')
 
 Templates are listed in the 'TEMPLATES' section as <span> elements with names like
-'S/RS_UAT_Q4FY25_Backend Coding - Code Design P40'. For this ask, YOU MUST find one best template. DO NOT return 'NOT FOUND'."""
+'S/RS_UAT_Q4FY25_Backend Coding - Code Design P40'. For this ask, YOU MUST find one best template. DO NOT return 'NOT FOUND'.""",
         ),
         wait=wait,
     )
@@ -272,7 +256,7 @@ Templates are listed in the 'TEMPLATES' section as <span> elements with names li
         "click",
         target=TargetSpec(
             strategy="xpath",
-            value="//button[contains(@class, 'gui-btn-primary') and .//span[text()='Continue' or text()='Done']]"
+            value="//button[contains(@class, 'gui-btn-primary') and .//span[text()='Continue' or text()='Done']]",
         ),
         wait=wait,
     )
@@ -285,8 +269,7 @@ Templates are listed in the 'TEMPLATES' section as <span> elements with names li
     graph.action(
         "click",
         target=TargetSpec(
-            strategy="xpath",
-            value="//div[@data-test='email-template-name']"
+            strategy="xpath", value="//div[@data-test='email-template-name']"
         ),
         wait=wait,
     )
@@ -296,7 +279,7 @@ Templates are listed in the 'TEMPLATES' section as <span> elements with names li
         "click",
         target=TargetSpec(
             strategy="xpath",
-            value="//div[@role='option' and contains(., 'Request Availability')]"
+            value="//div[@role='option' and contains(., 'Request Availability')]",
         ),
         wait=False,
     )
@@ -309,7 +292,7 @@ Templates are listed in the 'TEMPLATES' section as <span> elements with names li
         "click",
         target=TargetSpec(
             strategy="xpath",
-            value="//div[@data-test='allow-candidate-suggest-times-checkbox']//label[not(contains(@class, '_labelChecked'))]"
+            value="//div[@data-test='allow-candidate-suggest-times-checkbox']//label[not(contains(@class, '_labelChecked'))]",
         ),
         no_action_if_target_not_found=True,
         wait=wait,
@@ -323,7 +306,7 @@ Templates are listed in the 'TEMPLATES' section as <span> elements with names li
         "click",
         target=TargetSpec(
             strategy="xpath",
-            value="//div[@data-test='share-itinerary-with-candidate-checkbox']//label[not(contains(@class, '_labelChecked'))]"
+            value="//div[@data-test='share-itinerary-with-candidate-checkbox']//label[not(contains(@class, '_labelChecked'))]",
         ),
         no_action_if_target_not_found=True,
         wait=wait,
@@ -337,8 +320,7 @@ Templates are listed in the 'TEMPLATES' section as <span> elements with names li
     graph.action(
         "click",
         target=TargetSpec(
-            strategy="xpath",
-            value="//div[@data-test='internal-calendar']"
+            strategy="xpath", value="//div[@data-test='internal-calendar']"
         ),
         wait=wait,
     )
@@ -351,7 +333,7 @@ Templates are listed in the 'TEMPLATES' section as <span> elements with names li
             value="""Find and click the internal calendar option in the dropdown.
 If there is only one calendar option available, select it.
 If there are multiple calendar options, select "Global R&D Interviews".
-The dropdown options should be visible after clicking the calendar selector."""
+The dropdown options should be visible after clicking the calendar selector.""",
         ),
         wait=wait,
     )
@@ -366,7 +348,7 @@ The dropdown options should be visible after clicking the calendar selector."""
         "click",
         target=TargetSpec(
             strategy="xpath",
-            value="//a[contains(@class, '_buttonTitle_') and contains(normalize-space(), 'Request Availability')]"
+            value="//a[contains(@class, '_buttonTitle_') and contains(normalize-space(), 'Request Availability')]",
         ),
         wait=wait,
     )

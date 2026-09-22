@@ -1,10 +1,18 @@
-from typing import Callable, Any, Sequence, Mapping
+from typing import Any, Callable, Mapping, Sequence
 
-from attr import attrs, attrib
-from .constants import DEFAULT_WEB_AGENT_TASK_INPUT_FIELD_NAME_USER_INPUT, DEFAULT_WEB_AGENT_TASK_INPUT_FIELD_NAME_ATTACHMENTS
 from agent_foundation.agents.agent_actor import AgentActor
-from agent_foundation.agents.prompt_based_agents.prompt_based_action_agent import PromptBasedActionAgent
-from agent_foundation.agents.prompt_based_agents.prompt_based_agent import PromptBasedAgent
+from agent_foundation.agents.prompt_based_agents.prompt_based_action_agent import (
+    PromptBasedActionAgent,
+)
+from agent_foundation.agents.prompt_based_agents.prompt_based_agent import (
+    PromptBasedAgent,
+)
+from attr import attrib, attrs
+
+from .constants import (
+    DEFAULT_WEB_AGENT_TASK_INPUT_FIELD_NAME_ATTACHMENTS,
+    DEFAULT_WEB_AGENT_TASK_INPUT_FIELD_NAME_USER_INPUT,
+)
 
 
 def _create_web_actor_visit_url_base_action(init_url: str) -> PromptBasedAgent:
@@ -41,9 +49,15 @@ def _create_web_actor_visit_url_base_action(init_url: str) -> PromptBasedAgent:
 @attrs
 class WebActor(AgentActor):
     init_url: str = attrib(default=None)
-    base_action_creator: Callable[[str], Any] = attrib(default=_create_web_actor_visit_url_base_action)
-    task_input_field_name_user_input: str = attrib(default=DEFAULT_WEB_AGENT_TASK_INPUT_FIELD_NAME_USER_INPUT)
-    task_input_field_name_attachments: str = attrib(default=DEFAULT_WEB_AGENT_TASK_INPUT_FIELD_NAME_ATTACHMENTS)
+    base_action_creator: Callable[[str], Any] = attrib(
+        default=_create_web_actor_visit_url_base_action
+    )
+    task_input_field_name_user_input: str = attrib(
+        default=DEFAULT_WEB_AGENT_TASK_INPUT_FIELD_NAME_USER_INPUT
+    )
+    task_input_field_name_attachments: str = attrib(
+        default=DEFAULT_WEB_AGENT_TASK_INPUT_FIELD_NAME_ATTACHMENTS
+    )
 
     def __attrs_post_init__(self):
         if not isinstance(self.actor, PromptBasedActionAgent):
@@ -52,17 +66,16 @@ class WebActor(AgentActor):
         if self.init_url:
             self.actor.base_action = self.base_action_creator(self.init_url)
 
-
     def get_actor_input(
-            self,
-            action_results: Sequence,
-            task_input: Any,
-            action_type: str,
-            action_target: str = None,
-            action_args: Mapping = None,
-            attachments: Sequence = None
+        self,
+        action_results: Sequence,
+        task_input: Any,
+        action_type: str,
+        action_target: str = None,
+        action_args: Mapping = None,
+        attachments: Sequence = None,
     ):
         return {
             self.task_input_field_name_user_input: action_target,
-            self.task_input_field_name_attachments: attachments
+            self.task_input_field_name_attachments: attachments,
         }

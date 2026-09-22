@@ -19,7 +19,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from .config import WebAxonSidecarConfig, ensure_workspace
+from .config import ensure_workspace, WebAxonSidecarConfig
 
 logger = logging.getLogger(__name__)
 
@@ -110,12 +110,13 @@ class BrowserTools:
 
         self._queue_service = StorageBasedQueueService(root_path=self._tmp_dir)
 
+        from rich_python_utils.string_utils.formatting.handlebars_format import (
+            format_template as handlebars_template_format,
+        )
+
         # Build TemplateManager
         from webaxon.devsuite.web_agent_service_nextgen.agents.template_manager import (
             TemplateManagerWrapper,
-        )
-        from rich_python_utils.string_utils.formatting.handlebars_format import (
-            format_template as handlebars_template_format,
         )
 
         template_dir = workspace_path / service_config.template_dir
@@ -149,12 +150,13 @@ class BrowserTools:
             service_log_dir=service_log_dir,
         )
 
+        from webaxon.devsuite.web_agent_service_nextgen.agents.agent_runner import (
+            AgentRunner,
+        )
+
         # Build RegularAgentAdapter for agentic tasks
         from webaxon.devsuite.web_agent_service_nextgen.agents.regular_agent_adapter import (
             RegularAgentAdapter,
-        )
-        from webaxon.devsuite.web_agent_service_nextgen.agents.agent_runner import (
-            AgentRunner,
         )
 
         agent_runner = AgentRunner(config=service_config)
@@ -195,7 +197,9 @@ class BrowserTools:
             self._webdriver = WebDriver(backend=backend)
         else:
             # Default to Selenium
-            from webaxon.automation.backends.selenium.driver_factory import WebAutomationDrivers
+            from webaxon.automation.backends.selenium.driver_factory import (
+                WebAutomationDrivers,
+            )
 
             # Use regular Chrome (not UndetectedChrome) for Docker compatibility
             self._webdriver = WebDriver(
@@ -306,7 +310,9 @@ class BrowserTools:
 
         if include_screenshot:
             screenshot = await self.take_screenshot()
-            snapshot["screenshot"] = screenshot.data.get("base64") if screenshot.success else None
+            snapshot["screenshot"] = (
+                screenshot.data.get("base64") if screenshot.success else None
+            )
 
         return snapshot
 
@@ -320,8 +326,8 @@ class BrowserTools:
         await self.initialize()
 
         try:
-            import tempfile
             import os
+            import tempfile
 
             # Use a temp file to capture screenshot
             with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as f:
@@ -375,6 +381,7 @@ class BrowserTools:
             element = None
             if element_id:
                 from webaxon.automation.schema import TargetStrategy
+
                 element = self._webdriver.resolve_action_target(
                     TargetStrategy.FRAMEWORK_ID, element_id
                 )
@@ -390,14 +397,18 @@ class BrowserTools:
 
             elif kind == "type":
                 if not text:
-                    return ActionResult(success=False, message="No text provided for type action")
+                    return ActionResult(
+                        success=False, message="No text provided for type action"
+                    )
                 await asyncio.to_thread(
                     self._webdriver.execute_single_action,
                     element=element,
                     action_type="input_text",
                     action_args={"text": text},
                 )
-                return ActionResult(success=True, message=f"Typed '{text}' into element {ref}")
+                return ActionResult(
+                    success=True, message=f"Typed '{text}' into element {ref}"
+                )
 
             elif kind == "scroll":
                 scroll_dir = direction or "Down"
@@ -418,7 +429,9 @@ class BrowserTools:
                     action_type="select_option",
                     action_args={"value": value},
                 )
-                return ActionResult(success=True, message=f"Selected '{value}' in element {ref}")
+                return ActionResult(
+                    success=True, message=f"Selected '{value}' in element {ref}"
+                )
 
             elif kind == "hover":
                 await asyncio.to_thread(
@@ -432,7 +445,7 @@ class BrowserTools:
                 key = kwargs.get("key", "Enter")
                 await asyncio.to_thread(
                     self._webdriver.execute_script,
-                    f"document.dispatchEvent(new KeyboardEvent('keydown', {{'key': '{key}'}}));"
+                    f"document.dispatchEvent(new KeyboardEvent('keydown', {{'key': '{key}'}}));",
                 )
                 return ActionResult(success=True, message=f"Pressed key '{key}'")
 
@@ -442,13 +455,17 @@ class BrowserTools:
                 return ActionResult(success=True, message=f"Waited {duration} seconds")
 
             else:
-                return ActionResult(success=False, message=f"Unknown action kind: {kind}")
+                return ActionResult(
+                    success=False, message=f"Unknown action kind: {kind}"
+                )
 
         except Exception as e:
             logger.error(f"Action execution failed: {e}")
             return ActionResult(success=False, message=f"Action failed: {e}")
 
-    async def run_task(self, task: str, start_url: Optional[str] = None) -> ActionResult:
+    async def run_task(
+        self, task: str, start_url: Optional[str] = None
+    ) -> ActionResult:
         """
         Run a full agentic task.
 
@@ -475,7 +492,9 @@ class BrowserTools:
             # Inject start_url as base_action in the agent
             original_create = self._agent_factory.create_agent
 
-            def patched_create_agent(interactive, logger, agent_type=None, template_version=""):
+            def patched_create_agent(
+                interactive, logger, agent_type=None, template_version=""
+            ):
                 agent = original_create(
                     interactive=interactive,
                     logger=logger,
@@ -488,7 +507,10 @@ class BrowserTools:
                     from webaxon.automation.web_agent_actors.common import (
                         _create_web_actor_visit_url_base_action,
                     )
-                    agent.base_action = _create_web_actor_visit_url_base_action(start_url)
+
+                    agent.base_action = _create_web_actor_visit_url_base_action(
+                        start_url
+                    )
 
                 # Set max_num_loops
                 if self.config.max_steps > 0:
@@ -501,8 +523,17 @@ class BrowserTools:
 
             def capture_output(run_num, resp_dict):
                 import sys
-                print(f"[webaxon-capture] Agent output #{len(agent_responses)}: keys={list(resp_dict.keys()) if isinstance(resp_dict, dict) else type(resp_dict)}", file=sys.stderr, flush=True)
-                print(f"[webaxon-capture] Full response: {resp_dict}", file=sys.stderr, flush=True)
+
+                print(
+                    f"[webaxon-capture] Agent output #{len(agent_responses)}: keys={list(resp_dict.keys()) if isinstance(resp_dict, dict) else type(resp_dict)}",
+                    file=sys.stderr,
+                    flush=True,
+                )
+                print(
+                    f"[webaxon-capture] Full response: {resp_dict}",
+                    file=sys.stderr,
+                    flush=True,
+                )
                 agent_responses.append(resp_dict)
 
             self._adapter._agent_output_callback = capture_output
@@ -523,9 +554,11 @@ class BrowserTools:
             final_response = ""
 
             # Also drain any remaining responses from the queue
-            if self._queue_service and hasattr(self._config, 'response_queue_id'):
+            if self._queue_service and hasattr(self._config, "response_queue_id"):
                 for _ in range(100):  # safety limit
-                    leftover = self._queue_service.get(self._config.response_queue_id, blocking=False)
+                    leftover = self._queue_service.get(
+                        self._config.response_queue_id, blocking=False
+                    )
                     if leftover is None:
                         break
                     if isinstance(leftover, dict):
@@ -533,7 +566,12 @@ class BrowserTools:
 
             # Find the best response — last non-trivial 'response' value
             for resp in reversed(agent_responses):
-                content = resp.get("response", "") or resp.get("answer", "") or resp.get("content", "") or resp.get("message", "")
+                content = (
+                    resp.get("response", "")
+                    or resp.get("answer", "")
+                    or resp.get("content", "")
+                    or resp.get("message", "")
+                )
                 # Handle list responses (agent may send [reasoning, answer])
                 if isinstance(content, list):
                     content = " ".join(str(c) for c in content if c)
@@ -543,23 +581,44 @@ class BrowserTools:
 
             # Parse result
             import sys
-            print(f"[webaxon-capture] Total captured responses: {len(agent_responses)}", file=sys.stderr, flush=True)
-            print(f"[webaxon-capture] Final response length: {len(final_response)}", file=sys.stderr, flush=True)
+
+            print(
+                f"[webaxon-capture] Total captured responses: {len(agent_responses)}",
+                file=sys.stderr,
+                flush=True,
+            )
+            print(
+                f"[webaxon-capture] Final response length: {len(final_response)}",
+                file=sys.stderr,
+                flush=True,
+            )
             if agent_responses:
                 for i, r in enumerate(agent_responses[-3:]):
                     resp_preview = str(r.get("response", ""))[:200]
-                    print(f"[webaxon-capture] Response[-{len(agent_responses)-i}]: {resp_preview}", file=sys.stderr, flush=True)
+                    print(
+                        f"[webaxon-capture] Response[-{len(agent_responses) - i}]: {resp_preview}",
+                        file=sys.stderr,
+                        flush=True,
+                    )
 
-            success = result is not None and hasattr(result, 'session_dir')
-            message = final_response if final_response else ("Task completed" if success else "Task failed")
+            success = result is not None and hasattr(result, "session_dir")
+            message = (
+                final_response
+                if final_response
+                else ("Task completed" if success else "Task failed")
+            )
 
             return ActionResult(
                 success=success,
                 message=message,
                 data={
-                    "session_dir": str(result.session_dir) if hasattr(result, 'session_dir') else None,
+                    "session_dir": str(result.session_dir)
+                    if hasattr(result, "session_dir")
+                    else None,
                     "response_count": len(agent_responses),
-                } if result else None,
+                }
+                if result
+                else None,
             )
         except Exception as e:
             logger.error(f"Task execution failed: {e}")
@@ -578,12 +637,14 @@ class BrowserTools:
 
         for match in re.finditer(pattern, html, re.DOTALL):
             tag, element_id, content = match.groups()
-            refs.append({
-                "ref": f"e{element_id}",
-                "tag": tag,
-                "id": element_id,
-                "text": content.strip()[:100] if content else "",
-            })
+            refs.append(
+                {
+                    "ref": f"e{element_id}",
+                    "tag": tag,
+                    "id": element_id,
+                    "text": content.strip()[:100] if content else "",
+                }
+            )
 
         return refs
 

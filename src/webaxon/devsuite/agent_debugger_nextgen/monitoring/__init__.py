@@ -6,4 +6,4 @@ This package contains monitoring and logging components:
 
 from webaxon.devsuite.agent_debugger_nextgen.monitoring.log_monitor import LogMonitor
 
-__all__ = ['LogMonitor']
+__all__ = ["LogMonitor"]

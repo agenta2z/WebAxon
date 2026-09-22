@@ -8,11 +8,12 @@ Usage:
     import resolve_path  # Must be first import
     from webaxon.devsuite.web_agent_service_nextgen.core import ServiceConfig
 """
+
 import sys
 from pathlib import Path
 
 # Configuration
-PIVOT_FOLDER_NAME = 'examples'  # The folder name we're inside of
+PIVOT_FOLDER_NAME = "examples"  # The folder name we're inside of
 
 # Get absolute path to this file
 current_file = Path(__file__).resolve()

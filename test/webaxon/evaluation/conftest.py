@@ -30,10 +30,9 @@ if _rpu_src.exists() and str(_rpu_src) not in sys.path:
 
 import pytest
 from hypothesis import strategies as st
-
+from webaxon.evaluation.config import EvaluationConfig
 from webaxon.evaluation.protocol import EvalResult
 from webaxon.evaluation.tasks import EvaluationTask
-from webaxon.evaluation.config import EvaluationConfig
 
 
 # ── Shared helper strategies ─────────────────────────────────────────────────
@@ -42,11 +41,16 @@ from webaxon.evaluation.config import EvaluationConfig
 _non_empty_text = st.text(min_size=1).filter(lambda s: s.strip())
 
 # Windows reserved device names that cannot be used as directory names
-_WINDOWS_RESERVED = frozenset({
-    "CON", "PRN", "AUX", "NUL",
-    *(f"COM{i}" for i in range(1, 10)),
-    *(f"LPT{i}" for i in range(1, 10)),
-})
+_WINDOWS_RESERVED = frozenset(
+    {
+        "CON",
+        "PRN",
+        "AUX",
+        "NUL",
+        *(f"COM{i}" for i in range(1, 10)),
+        *(f"LPT{i}" for i in range(1, 10)),
+    }
+)
 
 # Simple identifier text (excluding Windows reserved device names)
 _identifier_text = st.text(
@@ -66,7 +70,10 @@ _confidence_strategy = st.floats(min_value=0.0, max_value=1.0, allow_nan=False)
 
 # Duration in seconds (positive)
 _duration_strategy = st.floats(
-    min_value=0.0, max_value=3600.0, allow_nan=False, allow_infinity=False,
+    min_value=0.0,
+    max_value=3600.0,
+    allow_nan=False,
+    allow_infinity=False,
 )
 
 # Difficulty levels matching load_tasks() expectations
@@ -116,7 +123,9 @@ def eval_result_strategy(draw, with_error=False):
 
     answer = draw(_non_empty_text)
     confidence = draw(_confidence_strategy)
-    action_history = draw(st.lists(_action_entry_strategy, min_size=num_steps, max_size=num_steps))
+    action_history = draw(
+        st.lists(_action_entry_strategy, min_size=num_steps, max_size=num_steps)
+    )
     action_history_readable = draw(
         st.lists(_readable_action_strategy, min_size=num_steps, max_size=num_steps)
     )
@@ -208,7 +217,9 @@ def evaluation_config_strategy(draw):
     max_steps = draw(st.integers(min_value=1, max_value=200))
     agent_timeout = draw(st.integers(min_value=1, max_value=3600))
     stay_on_start_url = draw(st.booleans())
-    output_dir = Path(draw(st.sampled_from(["runs", "output", "eval_runs", "tmp/runs"])))
+    output_dir = Path(
+        draw(st.sampled_from(["runs", "output", "eval_runs", "tmp/runs"]))
+    )
 
     return EvaluationConfig(
         adapter_name=adapter_name,
@@ -301,7 +312,9 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
-    config.addinivalue_line("markers", "e2e: real end-to-end test (needs browser + API keys)")
+    config.addinivalue_line(
+        "markers", "e2e: real end-to-end test (needs browser + API keys)"
+    )
 
 
 def pytest_collection_modifyitems(config, items):

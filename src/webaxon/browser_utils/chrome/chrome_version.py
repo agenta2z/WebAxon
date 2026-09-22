@@ -4,6 +4,7 @@ Chrome version detection utilities.
 Cross-platform support for Windows, macOS, and Linux.
 Provides functions to detect the installed Chrome browser version.
 """
+
 import logging
 import platform
 import re
@@ -21,6 +22,7 @@ def _find_chrome_executable() -> Optional[str]:
     """
     try:
         import undetected_chromedriver as uc
+
         return uc.find_chrome_executable()
     except ImportError:
         pass
@@ -33,7 +35,9 @@ def _find_chrome_executable() -> Optional[str]:
         candidates = [
             os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe"),
             os.path.expandvars(r"%PROGRAMFILES%\Google\Chrome\Application\chrome.exe"),
-            os.path.expandvars(r"%PROGRAMFILES(X86)%\Google\Chrome\Application\chrome.exe"),
+            os.path.expandvars(
+                r"%PROGRAMFILES(X86)%\Google\Chrome\Application\chrome.exe"
+            ),
         ]
     elif system == "Darwin":
         candidates = [
@@ -79,11 +83,16 @@ def get_chrome_version(chrome_path: Optional[str] = None) -> Optional[str]:
     if chrome_path and system == "Windows":
         # Method 1: PowerShell Get-Item
         try:
-            ps_cmd = f'(Get-Item \"{chrome_path}\").VersionInfo.ProductVersion'
-            ver_str = subprocess.check_output(
-                ["powershell", "-Command", ps_cmd],
-                stderr=subprocess.DEVNULL, timeout=10,
-            ).decode().strip()
+            ps_cmd = f'(Get-Item "{chrome_path}").VersionInfo.ProductVersion'
+            ver_str = (
+                subprocess.check_output(
+                    ["powershell", "-Command", ps_cmd],
+                    stderr=subprocess.DEVNULL,
+                    timeout=10,
+                )
+                .decode()
+                .strip()
+            )
             if ver_str and re.match(r"\d+\.\d+\.\d+\.\d+", ver_str):
                 _logger.debug("Detected Chrome version via PowerShell: %s", ver_str)
                 return ver_str
@@ -93,9 +102,16 @@ def get_chrome_version(chrome_path: Optional[str] = None) -> Optional[str]:
         # Method 2: Windows registry fallback
         try:
             reg_cmd = 'reg query "HKEY_CURRENT_USER\\Software\\Google\\Chrome\\BLBeacon" /v version'
-            output = subprocess.check_output(
-                reg_cmd, shell=True, stderr=subprocess.DEVNULL, timeout=5,
-            ).decode().strip()
+            output = (
+                subprocess.check_output(
+                    reg_cmd,
+                    shell=True,
+                    stderr=subprocess.DEVNULL,
+                    timeout=5,
+                )
+                .decode()
+                .strip()
+            )
             if output:
                 m = re.search(r"(\d+\.\d+\.\d+\.\d+)", output)
                 if m:
@@ -108,9 +124,15 @@ def get_chrome_version(chrome_path: Optional[str] = None) -> Optional[str]:
     elif chrome_path:
         # macOS / Linux: run chrome --version
         try:
-            output = subprocess.check_output(
-                [chrome_path, "--version"], stderr=subprocess.DEVNULL, timeout=5,
-            ).decode().strip()
+            output = (
+                subprocess.check_output(
+                    [chrome_path, "--version"],
+                    stderr=subprocess.DEVNULL,
+                    timeout=5,
+                )
+                .decode()
+                .strip()
+            )
             if output:
                 m = re.search(r"(\d+\.\d+\.\d+\.\d+)", output)
                 if m:

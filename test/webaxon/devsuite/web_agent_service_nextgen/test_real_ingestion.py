@@ -4,28 +4,35 @@ This script uses the same service_tick pattern as the integration tests,
 but with a real ClaudeApiInferencer instead of MockIngestionInferencer.
 It runs everything in a single process to avoid inter-process queue issues.
 """
-import sys
-import resolve_path  # Setup import paths
 
 import json
 import shutil
+import sys
 import tempfile
 import time
 from pathlib import Path
 
+import resolve_path  # Setup import paths
 from rich_python_utils.string_utils.formatting.handlebars_format import (
     format_template as handlebars_template_format,
 )
-
+from webaxon.devsuite.web_agent_service_nextgen.agents.agent_runner import AgentRunner
+from webaxon.devsuite.web_agent_service_nextgen.agents.template_manager import (
+    TemplateManagerWrapper,
+)
+from webaxon.devsuite.web_agent_service_nextgen.cli.client import CLIClient
+from webaxon.devsuite.web_agent_service_nextgen.communication.message_handlers import (
+    MessageHandlers,
+)
+from webaxon.devsuite.web_agent_service_nextgen.communication.queue_manager import (
+    QueueManager,
+)
+from webaxon.devsuite.web_agent_service_nextgen.core.agent_factory import AgentFactory
 from webaxon.devsuite.web_agent_service_nextgen.core.config import ServiceConfig
 from webaxon.devsuite.web_agent_service_nextgen.session import SessionManager
-from webaxon.devsuite.web_agent_service_nextgen.core.agent_factory import AgentFactory
-from webaxon.devsuite.web_agent_service_nextgen.communication.queue_manager import QueueManager
-from webaxon.devsuite.web_agent_service_nextgen.communication.message_handlers import MessageHandlers
-from webaxon.devsuite.web_agent_service_nextgen.agents.template_manager import TemplateManagerWrapper
-from webaxon.devsuite.web_agent_service_nextgen.agents.agent_runner import AgentRunner
-from webaxon.devsuite.web_agent_service_nextgen.session.agent_session_monitor import AgentSessionMonitor
-from webaxon.devsuite.web_agent_service_nextgen.cli.client import CLIClient
+from webaxon.devsuite.web_agent_service_nextgen.session.agent_session_monitor import (
+    AgentSessionMonitor,
+)
 
 # Source prompt templates
 _WEBAGENT_SRC = Path(__file__).resolve().parent.parent.parent.parent / "src" / "webaxon"
@@ -101,9 +108,12 @@ def main():
         # Session manager
         service_log_dir = testcase_root / config.log_root_path
         session_manager = SessionManager(
-            id='test', log_name='Test', logger=[print],
+            id="test",
+            log_name="Test",
+            logger=[print],
             always_add_logging_based_logger=False,
-            config=config, queue_service=queue_service,
+            config=config,
+            queue_service=queue_service,
             service_log_dir=service_log_dir,
         )
 
@@ -156,11 +166,13 @@ def main():
         print("Calling LLM (this may take 30-90 seconds)...")
         t0 = time.time()
 
-        cli._send_control({
-            "type": "register_knowledge",
-            "message": {"content": FREE_TEXT},
-            "timestamp": "manual_test",
-        })
+        cli._send_control(
+            {
+                "type": "register_knowledge",
+                "message": {"content": FREE_TEXT},
+                "timestamp": "manual_test",
+            }
+        )
 
         # Process the control message — this calls ingest_knowledge
         # which calls the real Claude API
@@ -195,7 +207,9 @@ def main():
                     print(f"    knowledge_type: {data.get('knowledge_type')}")
                     print(f"    info_type:      {data.get('info_type')}")
                     content = data.get("content", "")
-                    print(f"    content:        {content[:100]}{'...' if len(content) > 100 else ''}")
+                    print(
+                        f"    content:        {content[:100]}{'...' if len(content) > 100 else ''}"
+                    )
                 except Exception as e:
                     print(f"    [error reading] {e}")
         else:

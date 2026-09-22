@@ -3,31 +3,37 @@
 This module contains property-based tests using hypothesis to verify
 that agent execution creates separate threads when in async mode.
 """
-import sys
-import resolve_path  # Setup import paths
 
+import shutil
+import sys
+import tempfile
 import threading
 import time
 from pathlib import Path
-import tempfile
-import shutil
 from unittest.mock import Mock
 
+import resolve_path  # Setup import paths
+
 # Add parent directory to path
-from hypothesis import given, strategies as st, settings, assume
-from webaxon.devsuite.web_agent_service_nextgen.core.config import ServiceConfig
-from webaxon.devsuite.web_agent_service_nextgen.session import SessionManager, AgentSession
+from hypothesis import assume, given, settings, strategies as st
 from webaxon.devsuite.web_agent_service_nextgen.agents.agent_runner import AgentRunner
+from webaxon.devsuite.web_agent_service_nextgen.core.config import ServiceConfig
+from webaxon.devsuite.web_agent_service_nextgen.session import (
+    AgentSession,
+    SessionManager,
+)
 
 
 # Mock classes for testing
 class MockQueueService:
     """Mock queue service for testing."""
+
     pass
 
 
 class MockAgent:
     """Mock agent for testing."""
+
     def __init__(self, run_duration=0.1):
         self.run_duration = run_duration
         self.run_called = False
@@ -38,7 +44,7 @@ class MockAgent:
         self.run_called = True
         self.run_thread_id = threading.current_thread().ident
         time.sleep(self.run_duration)
-        return 'completed'
+        return "completed"
 
 
 # Feature: web-agent-service-modularization, Property 23: Async Thread Creation
@@ -94,7 +100,15 @@ def test_async_thread_creation(num_sessions, run_duration, wait_for_completion):
         queue_service = MockQueueService()
 
         # Create session manager
-        session_manager = SessionManager(id='test', log_name='Test', logger=[print], always_add_logging_based_logger=False, config=config, queue_service=queue_service, service_log_dir=temp_dir)
+        session_manager = SessionManager(
+            id="test",
+            log_name="Test",
+            logger=[print],
+            always_add_logging_based_logger=False,
+            config=config,
+            queue_service=queue_service,
+            service_log_dir=temp_dir,
+        )
 
         # Track main thread ID
         main_thread_id = threading.current_thread().ident
@@ -121,28 +135,34 @@ def test_async_thread_creation(num_sessions, run_duration, wait_for_completion):
             threads.append(thread)
 
             # Property 1: Thread should be created (not None)
-            assert thread is not None, \
+            assert thread is not None, (
                 f"start_agent_thread() should return a thread in async mode for session {session_id}"
+            )
 
             # Property 2: Thread should be a threading.Thread instance
-            assert isinstance(thread, threading.Thread), \
+            assert isinstance(thread, threading.Thread), (
                 f"Returned object should be a threading.Thread instance for session {session_id}, got {type(thread)}"
+            )
 
             # Property 3: Thread should be started (alive)
             # Give it a moment to start
             time.sleep(0.01)
-            assert thread.is_alive(), \
+            assert thread.is_alive(), (
                 f"Thread should be alive after start for session {session_id}"
+            )
 
             # Property 4: Thread should be a daemon thread
-            assert thread.daemon is True, \
+            assert thread.daemon is True, (
                 f"Thread should be a daemon thread for session {session_id}"
+            )
 
             # Property 5: Thread should have proper name containing session_id
-            assert session_id in thread.name, \
+            assert session_id in thread.name, (
                 f"Thread name should contain session_id '{session_id}', got '{thread.name}'"
-            assert 'AgentThread' in thread.name, \
+            )
+            assert "AgentThread" in thread.name, (
                 f"Thread name should contain 'AgentThread', got '{thread.name}'"
+            )
 
             # Update session with thread reference
             session_manager.update_session(session_id, agent_thread=thread)
@@ -150,29 +170,32 @@ def test_async_thread_creation(num_sessions, run_duration, wait_for_completion):
         # Property 6: All threads should be independent (different thread IDs)
         thread_ids = [t.ident for t in threads]
         unique_thread_ids = set(thread_ids)
-        assert len(unique_thread_ids) == num_sessions, \
+        assert len(unique_thread_ids) == num_sessions, (
             f"Each session should have its own thread, expected {num_sessions} unique thread IDs, got {len(unique_thread_ids)}"
+        )
 
         # Property 7: All threads should be different from main thread
         for i, thread_id in enumerate(thread_ids):
-            assert thread_id != main_thread_id, \
+            assert thread_id != main_thread_id, (
                 f"Thread {i} should run in separate thread, not main thread"
+            )
 
         # Wait a bit for agents to start running
         time.sleep(0.05)
 
         # Property 8: Agent should be called in each thread
         for i, agent in enumerate(agents):
-            assert agent.run_called, \
-                f"Agent {i} should have been called"
+            assert agent.run_called, f"Agent {i} should have been called"
 
             # Property 9: Agent should execute in the created thread, not main thread
-            assert agent.run_thread_id != main_thread_id, \
+            assert agent.run_thread_id != main_thread_id, (
                 f"Agent {i} should run in separate thread, not main thread (main={main_thread_id}, agent={agent.run_thread_id})"
+            )
 
             # Property 10: Agent should execute in its corresponding thread
-            assert agent.run_thread_id == threads[i].ident, \
+            assert agent.run_thread_id == threads[i].ident, (
                 f"Agent {i} should run in its corresponding thread (expected={threads[i].ident}, got={agent.run_thread_id})"
+            )
 
         # Property 11: Thread status can be checked via is_alive()
         # At this point, threads should still be alive (or just finishing)
@@ -190,23 +213,27 @@ def test_async_thread_creation(num_sessions, run_duration, wait_for_completion):
 
             # Property 12: After completion, threads should not be alive
             for i, thread in enumerate(threads):
-                assert not thread.is_alive(), \
+                assert not thread.is_alive(), (
                     f"Thread {i} should have completed after join()"
+                )
 
             # Property 13: Session status should be updated after completion
             for i, session_id in enumerate(session_ids):
                 session = session_manager.get(session_id)
                 # Status should be either 'completed' or 'error'
-                assert session.info.last_agent_status in ['completed', 'error', None], \
+                assert session.info.last_agent_status in ["completed", "error", None], (
                     f"Session {session_id} should have valid status after completion, got {session.info.last_agent_status}"
+                )
 
         # Property 14: Thread references should be stored in session
         for i, session_id in enumerate(session_ids):
             session = session_manager.get(session_id)
-            assert session.agent_thread is not None, \
+            assert session.agent_thread is not None, (
                 f"Session {session_id} should have thread reference stored"
-            assert session.agent_thread == threads[i], \
+            )
+            assert session.agent_thread == threads[i], (
                 f"Session {session_id} should have correct thread reference"
+            )
 
         # Property 15: Multiple concurrent threads should work correctly
         # All threads should be independent and not interfere with each other
@@ -225,7 +252,7 @@ def test_async_thread_creation(num_sessions, run_duration, wait_for_completion):
             pass  # Ignore cleanup errors
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("Running property-based test for async thread creation...")
     print("Testing with 100 random configurations...")
     print()
@@ -251,6 +278,7 @@ if __name__ == '__main__':
     except Exception as e:
         print(f"✗ Property test failed: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

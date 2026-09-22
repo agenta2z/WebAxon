@@ -7,23 +7,22 @@ Changes from original:
 - Removed _create_model_engine() and argparse __main__ block (invoked from scoring.py).
 """
 
+import asyncio
+import copy
+import json
 import os
 import re
-import json
-import copy
-import asyncio
 import threading
-from typing import Callable, Optional
-
 from multiprocessing.pool import ThreadPool
+from typing import Callable, Optional
 
 from .methods.agenttrek_eval import *
 from .methods.automomous_eval import *
 from .methods.webjudge_general_eval import *
 from .methods.webjudge_online_mind2web import *
 from .methods.webvoyager_eval import *
-from .utils import extract_predication
 from .clean_html import process_element_tag, SALIENT_ATTRIBUTES
+from .utils import extract_predication
 
 # Image extensions for filtering trajectory files
 _IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
@@ -43,7 +42,7 @@ def _load_screenshot_paths(trajectory_dir):
             continue
         paths.append(fpath)
     # Sort by leading number, matching the official repo's sort key
-    paths.sort(key=lambda x: int(re.findall(r'\d+', os.path.basename(x))[0]))
+    paths.sort(key=lambda x: int(re.findall(r"\d+", os.path.basename(x))[0]))
     return paths
 
 
@@ -57,11 +56,13 @@ def _load_snapshot_texts(trajectory_dir):
         if not os.path.isfile(fpath):
             continue
         try:
-            texts.append((fpath, open(fpath, encoding="utf-8", errors="replace").read()))
+            texts.append(
+                (fpath, open(fpath, encoding="utf-8", errors="replace").read())
+            )
         except Exception:
             pass
     # Sort by leading number (1_, 2_, ...)
-    texts.sort(key=lambda x: int(re.findall(r'\d+', os.path.basename(x[0]))[0]))
+    texts.sort(key=lambda x: int(re.findall(r"\d+", os.path.basename(x[0]))[0]))
     return texts
 
 
@@ -157,33 +158,55 @@ def auto_eval(task_dir, engine, mode, score_threshold, output_path, trajectories
     snapshot_texts = _load_snapshot_texts(trajectory_images_path)
 
     print(f"Start evaluation for {task_description}")
-    print(f"  action_history: {len(action_history or [])} raw -> {len(clean_actions or [])} after cleaning")
+    print(
+        f"  action_history: {len(action_history or [])} raw -> {len(clean_actions or [])} after cleaning"
+    )
     print(f"  screenshots: {len(screenshot_paths)} images")
     if snapshot_texts:
         print(f"  snapshot_texts: {len(snapshot_texts)} files (DOM content agent used)")
 
     # Do the auto-eval
     if mode == "Autonomous_eval":
-        messages, text, system_msg = Autonomous_eval(task_description, clean_actions, screenshot_paths[-1])
+        messages, text, system_msg = Autonomous_eval(
+            task_description, clean_actions, screenshot_paths[-1]
+        )
 
     elif mode == "AgentTrek_eval":
-        messages, text, system_msg = AgentTrek_eval(task_description, clean_actions, thoughts, screenshot_paths[-1])
+        messages, text, system_msg = AgentTrek_eval(
+            task_description, clean_actions, thoughts, screenshot_paths[-1]
+        )
 
     elif mode == "WebVoyager_eval":
-        messages, text, system_msg = WebVoyager_eval(task_description, screenshot_paths, final_result_response)
+        messages, text, system_msg = WebVoyager_eval(
+            task_description, screenshot_paths, final_result_response
+        )
 
     elif mode == "WebJudge_Online_Mind2Web_eval":
-        messages, text, system_msg, record, key_points = asyncio.run(WebJudge_Online_Mind2Web_eval(
-            task_description, clean_actions, screenshot_paths, engine, score_threshold,
-            snapshot_texts=snapshot_texts,
-        ))
+        messages, text, system_msg, record, key_points = asyncio.run(
+            WebJudge_Online_Mind2Web_eval(
+                task_description,
+                clean_actions,
+                screenshot_paths,
+                engine,
+                score_threshold,
+                snapshot_texts=snapshot_texts,
+            )
+        )
         output_results["image_judge_record"] = record
         output_results["key_points"] = key_points
 
     elif mode == "WebJudge_general_eval":
-        messages, text, system_msg, record, key_points = asyncio.run(WebJudge_general_eval(
-            task_description, input_image_paths, thoughts, clean_actions, screenshot_paths, engine, score_threshold
-        ))
+        messages, text, system_msg, record, key_points = asyncio.run(
+            WebJudge_general_eval(
+                task_description,
+                input_image_paths,
+                thoughts,
+                clean_actions,
+                screenshot_paths,
+                engine,
+                score_threshold,
+            )
+        )
         output_results["image_judge_record"] = record
         output_results["key_points"] = key_points
 
@@ -239,7 +262,8 @@ def parallel_eval(
         output_path = trajectories_dir.rstrip("/") + "_eval"
 
     task_dirs = [
-        d for d in sorted(os.listdir(trajectories_dir))
+        d
+        for d in sorted(os.listdir(trajectories_dir))
         if os.path.isdir(os.path.join(trajectories_dir, d))
     ]
     print(f"Evaluating {len(task_dirs)} tasks in total.")
@@ -247,11 +271,15 @@ def parallel_eval(
         print("No tasks found. Exiting.")
         return
 
-    def worker(pid, chunk, engine_factory, mode, score_threshold, output_path, trajectories_dir):
+    def worker(
+        pid, chunk, engine_factory, mode, score_threshold, output_path, trajectories_dir
+    ):
         engine = engine_factory()
         results = []
         for task_dir in chunk:
-            label = auto_eval(task_dir, engine, mode, score_threshold, output_path, trajectories_dir)
+            label = auto_eval(
+                task_dir, engine, mode, score_threshold, output_path, trajectories_dir
+            )
             if label is not None:
                 results.append(label)
         return results
@@ -261,7 +289,9 @@ def parallel_eval(
         engine = engine_factory()
         labels = []
         for task_dir in task_dirs:
-            label = auto_eval(task_dir, engine, mode, score_threshold, output_path, trajectories_dir)
+            label = auto_eval(
+                task_dir, engine, mode, score_threshold, output_path, trajectories_dir
+            )
             if label is not None:
                 labels.append(label)
     else:

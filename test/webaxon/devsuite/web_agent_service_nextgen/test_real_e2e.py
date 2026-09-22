@@ -6,34 +6,38 @@
 4. Waits for agent response
 5. Shuts down
 """
-import sys
-import resolve_path  # Setup import paths
 
 import json
 import shutil
 import signal
+import sys
 import threading
 import time
 from pathlib import Path
 
+import resolve_path  # Setup import paths
 from rich_python_utils.datetime_utils.common import timestamp as ts
-
-from webaxon.devsuite.web_agent_service_nextgen.service import WebAgentService
-from webaxon.devsuite.web_agent_service_nextgen.core.config import ServiceConfig
-from webaxon.devsuite.web_agent_service_nextgen.cli.client import CLIClient
 from webaxon.devsuite.constants import (
+    CLIENT_CONTROL_QUEUE_ID,
     INPUT_QUEUE_ID,
     RESPONSE_QUEUE_ID,
-    CLIENT_CONTROL_QUEUE_ID,
     SERVER_CONTROL_QUEUE_ID,
 )
+from webaxon.devsuite.web_agent_service_nextgen.cli.client import CLIClient
+from webaxon.devsuite.web_agent_service_nextgen.core.config import ServiceConfig
+from webaxon.devsuite.web_agent_service_nextgen.service import WebAgentService
 
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------
 
 # Use the real devsuite testcase root (persistent knowledge store)
-TESTCASE_ROOT = Path(__file__).resolve().parent.parent.parent.parent / "src" / "webaxon" / "devsuite"
+TESTCASE_ROOT = (
+    Path(__file__).resolve().parent.parent.parent.parent
+    / "src"
+    / "webaxon"
+    / "devsuite"
+)
 
 FREE_TEXT = """Name: Tony Chen
 Location 2801 Western Ave, Seattle, WA, 98121
@@ -99,7 +103,8 @@ def main():
     while time.time() < deadline:
         if queues_base.exists():
             new_dirs = [
-                d for d in queues_base.iterdir()
+                d
+                for d in queues_base.iterdir()
                 if d.is_dir() and d.name not in stale_dirs
             ]
             if new_dirs:
@@ -134,14 +139,18 @@ def main():
 
     # Check if the same knowledge text was already ingested
     already_ingested = False
-    ingestion_logs_dir = TESTCASE_ROOT / "_runtime" / "knowledge_store" / "ingestion_logs"
+    ingestion_logs_dir = (
+        TESTCASE_ROOT / "_runtime" / "knowledge_store" / "ingestion_logs"
+    )
     if ingestion_logs_dir.exists():
         for raw_input_file in ingestion_logs_dir.rglob("raw_input.txt"):
             try:
                 existing_text = raw_input_file.read_text(encoding="utf-8")
                 if existing_text.strip() == FREE_TEXT.strip():
                     already_ingested = True
-                    print(f"  [SKIP] Same knowledge already ingested ({raw_input_file.parent.name})")
+                    print(
+                        f"  [SKIP] Same knowledge already ingested ({raw_input_file.parent.name})"
+                    )
                     break
             except Exception:
                 continue
@@ -171,7 +180,7 @@ def main():
     # Step 3: Send agent request
     # -----------------------------------------------------------------------
     print("\n" + "-" * 80)
-    print(f"STEP 3: Sending agent request: \"{AGENT_REQUEST}\"")
+    print(f'STEP 3: Sending agent request: "{AGENT_REQUEST}"')
     print("-" * 80)
     print("  (Agent will open a browser, navigate to Safeway, and look for egg prices)")
     print("  (This may take several minutes...)")

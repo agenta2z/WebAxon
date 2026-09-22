@@ -7,15 +7,12 @@ contain exactly N turn entries and M artifact entries distributed across those t
 Every artifact SHALL reference a valid turn number that exists in the turns array.
 """
 
-import resolve_path  # noqa: F401 - must be first import
-
 import shutil
 import tempfile
 from pathlib import Path
 
-from hypothesis import given, settings, HealthCheck
-from hypothesis import strategies as st
-
+import resolve_path  # noqa: F401 - must be first import
+from hypothesis import given, HealthCheck, settings, strategies as st
 from rich_python_utils.service_utils.session_management import (
     SessionLogger as SessionLogManager,
 )
@@ -61,12 +58,17 @@ class TestManifestCompletenessProperty:
         session_id=session_ids,
         num_turns=turn_counts,
         artifacts_per_turn=st.lists(
-            artifacts_per_turn_st, min_size=1, max_size=5,
+            artifacts_per_turn_st,
+            min_size=1,
+            max_size=5,
         ),
     )
     @settings(max_examples=50, suppress_health_check=[HealthCheck.too_slow])
     def test_finalized_manifest_has_exact_turn_count(
-        self, session_id, num_turns, artifacts_per_turn,
+        self,
+        session_id,
+        num_turns,
+        artifacts_per_turn,
     ):
         """Finalized manifest SHALL contain exactly N turn entries.
 
@@ -91,11 +93,13 @@ class TestManifestCompletenessProperty:
                 turn_num = turn_idx + 1
                 mgr.start_turn(turn_num)
                 for _ in range(artifacts_per_turn[turn_idx]):
-                    artifact_logger({
-                        "type": "ReasonerInput",
-                        "name": "TestClass",
-                        "item": "test content",
-                    })
+                    artifact_logger(
+                        {
+                            "type": "ReasonerInput",
+                            "name": "TestClass",
+                            "item": "test content",
+                        }
+                    )
 
             mgr.finalize("completed")
             manifest = mgr.get_manifest()
@@ -110,12 +114,17 @@ class TestManifestCompletenessProperty:
         session_id=session_ids,
         num_turns=turn_counts,
         artifacts_per_turn=st.lists(
-            artifacts_per_turn_st, min_size=1, max_size=5,
+            artifacts_per_turn_st,
+            min_size=1,
+            max_size=5,
         ),
     )
     @settings(max_examples=50, suppress_health_check=[HealthCheck.too_slow])
     def test_finalized_manifest_has_exact_artifact_count(
-        self, session_id, num_turns, artifacts_per_turn,
+        self,
+        session_id,
+        num_turns,
+        artifacts_per_turn,
     ):
         """Finalized manifest SHALL contain exactly M artifact entries total.
 
@@ -141,18 +150,18 @@ class TestManifestCompletenessProperty:
                 turn_num = turn_idx + 1
                 mgr.start_turn(turn_num)
                 for _ in range(artifacts_per_turn[turn_idx]):
-                    artifact_logger({
-                        "type": "ReasonerInput",
-                        "name": "TestClass",
-                        "item": "test content",
-                    })
+                    artifact_logger(
+                        {
+                            "type": "ReasonerInput",
+                            "name": "TestClass",
+                            "item": "test content",
+                        }
+                    )
 
             mgr.finalize("completed")
             manifest = mgr.get_manifest()
 
-            actual_total = sum(
-                len(turn["artifacts"]) for turn in manifest["turns"]
-            )
+            actual_total = sum(len(turn["artifacts"]) for turn in manifest["turns"])
             assert actual_total == expected_total, (
                 f"Expected {expected_total} total artifacts, got {actual_total}"
             )
@@ -163,12 +172,17 @@ class TestManifestCompletenessProperty:
         session_id=session_ids,
         num_turns=turn_counts,
         artifacts_per_turn=st.lists(
-            artifacts_per_turn_st, min_size=1, max_size=5,
+            artifacts_per_turn_st,
+            min_size=1,
+            max_size=5,
         ),
     )
     @settings(max_examples=50, suppress_health_check=[HealthCheck.too_slow])
     def test_every_artifact_references_valid_turn_number(
-        self, session_id, num_turns, artifacts_per_turn,
+        self,
+        session_id,
+        num_turns,
+        artifacts_per_turn,
     ):
         """Every artifact SHALL reference a valid turn number that exists in the turns array.
 
@@ -192,11 +206,13 @@ class TestManifestCompletenessProperty:
                 turn_num = turn_idx + 1
                 mgr.start_turn(turn_num)
                 for _ in range(artifacts_per_turn[turn_idx]):
-                    artifact_logger({
-                        "type": "AgentResponse",
-                        "name": "TestAgent",
-                        "item": "response content",
-                    })
+                    artifact_logger(
+                        {
+                            "type": "AgentResponse",
+                            "name": "TestAgent",
+                            "item": "response content",
+                        }
+                    )
 
             mgr.finalize("completed")
             manifest = mgr.get_manifest()
@@ -220,7 +236,9 @@ class TestManifestCompletenessProperty:
     )
     @settings(max_examples=30, suppress_health_check=[HealthCheck.too_slow])
     def test_each_turn_has_correct_per_turn_artifact_count(
-        self, session_id, num_turns,
+        self,
+        session_id,
+        num_turns,
     ):
         """Each turn SHALL have exactly the number of artifacts logged during that turn.
 
@@ -240,11 +258,13 @@ class TestManifestCompletenessProperty:
             for turn_num in range(1, num_turns + 1):
                 mgr.start_turn(turn_num)
                 for _ in range(turn_num):
-                    artifact_logger({
-                        "type": "ReasonerResponse",
-                        "name": "Inferencer",
-                        "item": "response",
-                    })
+                    artifact_logger(
+                        {
+                            "type": "ReasonerResponse",
+                            "name": "Inferencer",
+                            "item": "response",
+                        }
+                    )
 
             mgr.finalize("completed")
             manifest = mgr.get_manifest()

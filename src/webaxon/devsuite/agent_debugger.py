@@ -26,11 +26,12 @@ Usage:
 
 Run this script and navigate to http://localhost:8050 to see the UI.
 """
+
 import sys
+import threading
+import time
 from functools import partial
 from pathlib import Path
-import time
-import threading
 
 # Add source to path if needed
 project_root = Path(__file__).parent.parent.parent.parent.parent
@@ -44,32 +45,35 @@ for path_item in [rich_python_utils_src, agent_foundation_src]:
     if path_item.exists() and str(path_item) not in sys.path:
         sys.path.insert(0, str(path_item))
 
-from agent_foundation.ui.dash_interactive.queue_based_dash_interactive_app import QueueBasedDashInteractiveApp
-from agent_foundation.ui.dash_interactive.utils.log_collector import LogCollector
-from rich_python_utils.common_objects.debuggable import Debugger
-from rich_python_utils.datetime_utils.common import timestamp
-from rich_python_utils.console_utils import hprint_message
-from rich_python_utils.io_utils.json_io import write_json
-from dash.dependencies import Input, Output, State
-from dash import html, dcc
+from dataclasses import dataclass, field
+
 import dash
+from agent_foundation.ui.dash_interactive.queue_based_dash_interactive_app import (
+    QueueBasedDashInteractiveApp,
+)
+from agent_foundation.ui.dash_interactive.utils.log_collector import LogCollector
+from dash import dcc, html
+from dash.dependencies import Input, Output, State
+from rich_python_utils.common_objects.debuggable import Debugger
+from rich_python_utils.console_utils import hprint_message
+from rich_python_utils.datetime_utils.common import timestamp
+from rich_python_utils.io_utils.json_io import write_json
+from rich_python_utils.service_utils.session_management import SessionInfo
 
 # Import web agent framework utilities from devsuite
 from webaxon.devsuite import (
-    INPUT_QUEUE_ID,
-    RESPONSE_QUEUE_ID,
-    CLIENT_CONTROL_QUEUE_ID,
-    SERVER_CONTROL_QUEUE_ID,
-    SPECIAL_MESSAGE_WAITING_FOR_RESPONSE,
     AGENT_TYPE_DEFAULT,
     AGENT_TYPE_MOCK_CLARIFICATION,
+    CLIENT_CONTROL_QUEUE_ID,
+    config,
     get_queue_service,
-    config
+    INPUT_QUEUE_ID,
+    RESPONSE_QUEUE_ID,
+    SERVER_CONTROL_QUEUE_ID,
+    SPECIAL_MESSAGE_WAITING_FOR_RESPONSE,
 )
-from rich_python_utils.service_utils.session_management import SessionInfo
 from webaxon.devsuite.common import DebuggerLogTypes
-from webaxon.devsuite.constants import RUNTIME_DIR, FOLDER_NAME_DEBUGGER_LOGS
-from dataclasses import dataclass, field
+from webaxon.devsuite.constants import FOLDER_NAME_DEBUGGER_LOGS, RUNTIME_DIR
 
 
 @dataclass
@@ -80,21 +84,30 @@ class DebuggerSessionInfo(SessionInfo):
     This tracks the client-side view of a session, including log visualization state
     and agent control/status polling.
     """
+
     # Log tracking
     log_file_path: str = None  # Path to session logs on disk
     log_collector: LogCollector = None  # LogCollector instance for this session
 
     # Agent control and status (polled from service)
-    agent_control: str = 'continue'  # Current control signal ("stop"/"pause"/"continue"/"step")
-    agent_status: str = 'not_started'  # Current execution status ("running"/"paused"/"stopped"/"not_started")
+    agent_control: str = (
+        "continue"  # Current control signal ("stop"/"pause"/"continue"/"step")
+    )
+    agent_status: str = "not_started"  # Current execution status ("running"/"paused"/"stopped"/"not_started")
     control_pending: bool = False  # Waiting for control acknowledgment
     status_messages: list = field(default_factory=list)  # Status updates from service
 
     # UI state tracking
-    loaded_log_data: dict = None  # Cached log data: {nodes, edges, mtime, timestamp, graph_structure}
+    loaded_log_data: dict = (
+        None  # Cached log data: {nodes, edges, mtime, timestamp, graph_structure}
+    )
     initial_load_done: bool = False  # True once auto-load is completed
-    last_displayed_mtime: float = None  # Last displayed modification time (for change detection)
-    logged_waiting_messages: set = field(default_factory=set)  # Message types already logged (avoid spam)
+    last_displayed_mtime: float = (
+        None  # Last displayed modification time (for change detection)
+    )
+    logged_waiting_messages: set = field(
+        default_factory=set
+    )  # Message types already logged (avoid spam)
 
     # Session debugger instance
     debugger: Debugger = None  # Debugger instance for this session
@@ -136,19 +149,25 @@ def _get_or_create_global_debugger():
     if _global_debugger is None:
         # Use project root to create global debugger log directory
         testcase_root = Path(__file__).parent
-        debugger_log_dir = testcase_root / RUNTIME_DIR / FOLDER_NAME_DEBUGGER_LOGS / 'global'
+        debugger_log_dir = (
+            testcase_root / RUNTIME_DIR / FOLDER_NAME_DEBUGGER_LOGS / "global"
+        )
         debugger_log_dir.mkdir(parents=True, exist_ok=True)
 
         _global_debugger = Debugger(
-            id='agent_debugger_global',
-            log_name='AgentDebugger',
+            id="agent_debugger_global",
+            log_name="AgentDebugger",
             logger=[
                 print,  # Console output
-                partial(write_json, file_path=str(debugger_log_dir / FOLDER_NAME_DEBUGGER_LOGS), append=True)
+                partial(
+                    write_json,
+                    file_path=str(debugger_log_dir / FOLDER_NAME_DEBUGGER_LOGS),
+                    append=True,
+                ),
             ],
             debug_mode=config.DEBUG_MODE_DEBUGGER,
             log_time=True,
-            always_add_logging_based_logger=False
+            always_add_logging_based_logger=False,
         )
     return _global_debugger
 
@@ -170,20 +189,26 @@ def get_session_info(session_id: str) -> DebuggerSessionInfo:
     if session_id not in _session_info:
         # Create session-specific debugger log directory
         testcase_root = Path(__file__).parent
-        debugger_log_dir = testcase_root / RUNTIME_DIR / FOLDER_NAME_DEBUGGER_LOGS / session_id
+        debugger_log_dir = (
+            testcase_root / RUNTIME_DIR / FOLDER_NAME_DEBUGGER_LOGS / session_id
+        )
         debugger_log_dir.mkdir(parents=True, exist_ok=True)
 
         # Create session-specific debugger
         session_debugger = Debugger(
-            id=f'debugger_{session_id}',
-            log_name=f'AgentDebugger_{session_id}',
+            id=f"debugger_{session_id}",
+            log_name=f"AgentDebugger_{session_id}",
             logger=[
                 print,  # Console output
-                partial(write_json, file_path=str(debugger_log_dir / FOLDER_NAME_DEBUGGER_LOGS), append=True)
+                partial(
+                    write_json,
+                    file_path=str(debugger_log_dir / FOLDER_NAME_DEBUGGER_LOGS),
+                    append=True,
+                ),
             ],
             debug_mode=config.DEBUG_MODE_DEBUGGER,
             log_time=True,
-            always_add_logging_based_logger=False
+            always_add_logging_based_logger=False,
         )
 
         _session_info[session_id] = DebuggerSessionInfo(
@@ -191,7 +216,7 @@ def get_session_info(session_id: str) -> DebuggerSessionInfo:
             created_at=timestamp(),
             last_active=timestamp(),
             session_type=AGENT_TYPE_DEFAULT,
-            debugger=session_debugger  # Store debugger
+            debugger=session_debugger,  # Store debugger
         )
     return _session_info[session_id]
 
@@ -255,7 +280,7 @@ def add_monitor_message(message: str):
         _monitor_messages_lock = threading.Lock()
 
     with _monitor_messages_lock:
-        timestamp = time.strftime('%H:%M:%S')
+        timestamp = time.strftime("%H:%M:%S")
         _monitor_messages.append(f"[{timestamp}] {message}")
         # Keep only last 10 messages
         if len(_monitor_messages) > 10:
@@ -286,8 +311,8 @@ def initialize_queue_service():
 
     # Check if we should refresh the queue service
     should_check = (
-            _queue_service is None or
-            (current_time - _last_queue_check_time) >= _queue_check_interval
+        _queue_service is None
+        or (current_time - _last_queue_check_time) >= _queue_check_interval
     )
 
     if should_check:
@@ -295,9 +320,7 @@ def initialize_queue_service():
 
         # get_queue_service handles all the logic: path comparison, logging, and cleanup
         _queue_service = get_queue_service(
-            testcase_root,
-            existing_service=_queue_service,
-            log_on_change=True
+            testcase_root, existing_service=_queue_service, log_on_change=True
         )
 
         _last_queue_check_time = current_time
@@ -319,19 +342,22 @@ def sync_active_sessions(active_session_ids: list):
     queue_service = initialize_queue_service()
 
     debugger = _get_or_create_global_debugger()
-    debugger.log_info({'active_sessions': active_session_ids}, DebuggerLogTypes.QUEUE_OPERATION)
+    debugger.log_info(
+        {"active_sessions": active_session_ids}, DebuggerLogTypes.QUEUE_OPERATION
+    )
 
     # Send session sync message with generic format
     control_message = {
         "type": "sync_active_sessions",
-        "message": {
-            "active_sessions": active_session_ids
-        },
-        "timestamp": timestamp()
+        "message": {"active_sessions": active_session_ids},
+        "timestamp": timestamp(),
     }
 
     queue_service.put(SERVER_CONTROL_QUEUE_ID, control_message)
-    debugger.log_info(f"Active sessions sync message sent to {SERVER_CONTROL_QUEUE_ID}", DebuggerLogTypes.QUEUE_OPERATION)
+    debugger.log_info(
+        f"Active sessions sync message sent to {SERVER_CONTROL_QUEUE_ID}",
+        DebuggerLogTypes.QUEUE_OPERATION,
+    )
 
 
 def sync_session_agent(session_id: str, agent_type: str):
@@ -345,20 +371,23 @@ def sync_session_agent(session_id: str, agent_type: str):
     queue_service = initialize_queue_service()
 
     debugger = get_debugger(session_id)
-    debugger.log_info({'session_id': session_id, 'agent_type': agent_type}, DebuggerLogTypes.QUEUE_OPERATION)
+    debugger.log_info(
+        {"session_id": session_id, "agent_type": agent_type},
+        DebuggerLogTypes.QUEUE_OPERATION,
+    )
 
     # Send per-session agent update with generic format
     control_message = {
         "type": "sync_session_agent",
-        "message": {
-            "session_id": session_id,
-            "agent_type": agent_type
-        },
-        "timestamp": timestamp()
+        "message": {"session_id": session_id, "agent_type": agent_type},
+        "timestamp": timestamp(),
     }
 
     queue_service.put(SERVER_CONTROL_QUEUE_ID, control_message)
-    debugger.log_info(f"Session agent update sent to {SERVER_CONTROL_QUEUE_ID}", DebuggerLogTypes.QUEUE_OPERATION)
+    debugger.log_info(
+        f"Session agent update sent to {SERVER_CONTROL_QUEUE_ID}",
+        DebuggerLogTypes.QUEUE_OPERATION,
+    )
 
 
 def send_agent_control(session_id: str, control: str):
@@ -374,16 +403,13 @@ def send_agent_control(session_id: str, control: str):
     # Send agent control message
     control_message = {
         "type": "agent_control",
-        "message": {
-            "session_id": session_id,
-            "control": control
-        },
-        "timestamp": timestamp()
+        "message": {"session_id": session_id, "control": control},
+        "timestamp": timestamp(),
     }
 
     hprint_message(
         control_message,
-        title=f"[CONTROL SENT] {control.upper()} → {SERVER_CONTROL_QUEUE_ID}"
+        title=f"[CONTROL SENT] {control.upper()} → {SERVER_CONTROL_QUEUE_ID}",
     )
 
     queue_service.put(SERVER_CONTROL_QUEUE_ID, control_message)
@@ -392,7 +418,12 @@ def send_agent_control(session_id: str, control: str):
     get_session_info(session_id).control_pending = True
 
 
-def queue_message_handler_internal(message: str, session_id: str, all_session_ids: list = None, current_agent_type: str = None) -> str:
+def queue_message_handler_internal(
+    message: str,
+    session_id: str,
+    all_session_ids: list = None,
+    current_agent_type: str = None,
+) -> str:
     """
     Message handler that sends user input to the agent service via queue.
 
@@ -411,15 +442,20 @@ def queue_message_handler_internal(message: str, session_id: str, all_session_id
     queue_service = initialize_queue_service()
 
     debugger = get_debugger(session_id)
-    debugger.log_info('Sending message to agent service...', DebuggerLogTypes.QUEUE_OPERATION)
-    debugger.log_debug({
-        'message_type': type(message).__name__,
-        'message_value': message,
-        'session_id_type': type(session_id).__name__,
-        'session_id': session_id,
-        'all_session_ids': all_session_ids,
-        'current_agent_type': current_agent_type
-    }, DebuggerLogTypes.DEBUG)
+    debugger.log_info(
+        "Sending message to agent service...", DebuggerLogTypes.QUEUE_OPERATION
+    )
+    debugger.log_debug(
+        {
+            "message_type": type(message).__name__,
+            "message_value": message,
+            "session_id_type": type(session_id).__name__,
+            "session_id": session_id,
+            "all_session_ids": all_session_ids,
+            "current_agent_type": current_agent_type,
+        },
+        DebuggerLogTypes.DEBUG,
+    )
 
     # Sync active sessions (this allows service to reconcile and close inactive sessions)
     sync_active_sessions(all_session_ids or [session_id])
@@ -431,17 +467,17 @@ def queue_message_handler_internal(message: str, session_id: str, all_session_id
     # Put user input on the session-specific queue
     # Format: {"session_id": session_id, "user_input": message}
     # Using "user_input" key matches Agent's task_input_field_user_input
-    queue_data = {
-        "session_id": session_id,
-        "user_input": message
-    }
-    debugger.log_debug({'queue_data': queue_data}, DebuggerLogTypes.DEBUG)
+    queue_data = {"session_id": session_id, "user_input": message}
+    debugger.log_debug({"queue_data": queue_data}, DebuggerLogTypes.DEBUG)
 
     # Send to session-specific input queue (e.g., 'user_input_session_1_20251110103004')
     # The agent thread will pick it up from there
     session_input_queue_id = f"{INPUT_QUEUE_ID}_{session_id}"
     queue_service.put(session_input_queue_id, queue_data)
-    debugger.log_info(f"Message sent to session-specific queue: {session_input_queue_id}", DebuggerLogTypes.QUEUE_OPERATION)
+    debugger.log_info(
+        f"Message sent to session-specific queue: {session_input_queue_id}",
+        DebuggerLogTypes.QUEUE_OPERATION,
+    )
 
     # Return special marker that will be rendered with animation
     return SPECIAL_MESSAGE_WAITING_FOR_RESPONSE
@@ -471,7 +507,11 @@ def background_log_monitor():
     while _log_monitor_running:
         try:
             # Check for each session's log path
-            session_items = [(sid, info.log_file_path) for sid, info in _session_info.items() if info.log_file_path]
+            session_items = [
+                (sid, info.log_file_path)
+                for sid, info in _session_info.items()
+                if info.log_file_path
+            ]
             if session_items:
                 add_monitor_message(f"Checking {len(session_items)} session(s)")
 
@@ -490,53 +530,70 @@ def background_log_monitor():
 
                     # Check newest file in the log directory
                     # Look for all files recursively (log files may not have .json extension)
-                    all_files = [f for f in log_path.rglob('*') if f.is_file()]
+                    all_files = [f for f in log_path.rglob("*") if f.is_file()]
                     if not all_files:
                         add_monitor_message(f"{session_id[:20]}: no log files")
                         continue
 
                     newest_mtime = max(f.stat().st_mtime for f in all_files)
-                    existing_mtime = existing_data.get('mtime', 0) if existing_data else 0
+                    existing_mtime = (
+                        existing_data.get("mtime", 0) if existing_data else 0
+                    )
 
                     # Skip if we already loaded this data recently
                     if existing_data and existing_mtime >= newest_mtime:
                         continue
 
-                    debugger.log_info({'session_id': session_id, 'log_file_path': log_file_path}, DebuggerLogTypes.LOG_MONITOR)
-                    add_monitor_message(f"{session_id[:20]}: loading... (mtime changed)")
+                    debugger.log_info(
+                        {"session_id": session_id, "log_file_path": log_file_path},
+                        DebuggerLogTypes.LOG_MONITOR,
+                    )
+                    add_monitor_message(
+                        f"{session_id[:20]}: loading... (mtime changed)"
+                    )
 
                     # Load log data (this is the slow part)
-                    log_collector = LogCollector.from_json_logs(log_file_path, json_file_pattern='*')
+                    log_collector = LogCollector.from_json_logs(
+                        log_file_path, json_file_pattern="*"
+                    )
                     graph_structure = log_collector.get_graph_structure()
 
-                    num_nodes = len(graph_structure['nodes'])
-                    num_edges = len(graph_structure['edges'])
+                    num_nodes = len(graph_structure["nodes"])
+                    num_edges = len(graph_structure["edges"])
 
                     # Store the loaded data with lock
                     with _log_data_lock:
                         session_info.loaded_log_data = {
-                            'log_collector': log_collector,
-                            'graph_structure': graph_structure,
-                            'nodes': num_nodes,
-                            'edges': num_edges,
-                            'mtime': newest_mtime,
-                            'timestamp': time.time(),
-                            'log_file_path': log_file_path
+                            "log_collector": log_collector,
+                            "graph_structure": graph_structure,
+                            "nodes": num_nodes,
+                            "edges": num_edges,
+                            "mtime": newest_mtime,
+                            "timestamp": time.time(),
+                            "log_file_path": log_file_path,
                         }
 
-                    debugger.log_info({
-                        'session_id': session_id,
-                        'num_nodes': num_nodes,
-                        'num_edges': num_edges
-                    }, DebuggerLogTypes.LOG_MONITOR)
-                    add_monitor_message(f"{session_id[:20]}: loaded {num_nodes}N {num_edges}E")
+                    debugger.log_info(
+                        {
+                            "session_id": session_id,
+                            "num_nodes": num_nodes,
+                            "num_edges": num_edges,
+                        },
+                        DebuggerLogTypes.LOG_MONITOR,
+                    )
+                    add_monitor_message(
+                        f"{session_id[:20]}: loaded {num_nodes}N {num_edges}E"
+                    )
 
                 except Exception as e:
-                    debugger.log_error({'session_id': session_id, 'error': str(e)}, DebuggerLogTypes.LOG_MONITOR)
+                    debugger.log_error(
+                        {"session_id": session_id, "error": str(e)},
+                        DebuggerLogTypes.LOG_MONITOR,
+                    )
                     add_monitor_message(f"{session_id[:20]}: ERROR - {str(e)[:30]}")
 
         except Exception as e:
-            debugger.log_error({'error': str(e)}, DebuggerLogTypes.LOG_MONITOR)
+            debugger.log_error({"error": str(e)}, DebuggerLogTypes.LOG_MONITOR)
 
         # Sleep before next check
         time.sleep(2.0)  # Check every 2 seconds
@@ -553,10 +610,14 @@ def start_log_monitor():
 
     if _log_monitor_thread is None or not _log_monitor_thread.is_alive():
         _log_monitor_running = True
-        _log_monitor_thread = threading.Thread(target=background_log_monitor, daemon=True)
+        _log_monitor_thread = threading.Thread(
+            target=background_log_monitor, daemon=True
+        )
         _log_monitor_thread.start()
         debugger = _get_or_create_global_debugger()
-        debugger.log_info("Started background log monitoring thread", DebuggerLogTypes.LOG_MONITOR)
+        debugger.log_info(
+            "Started background log monitoring thread", DebuggerLogTypes.LOG_MONITOR
+        )
 
 
 def stop_log_monitor():
@@ -564,7 +625,9 @@ def stop_log_monitor():
     global _log_monitor_running
     _log_monitor_running = False
     debugger = _get_or_create_global_debugger()
-    debugger.log_info("Stopping background log monitor...", DebuggerLogTypes.LOG_MONITOR)
+    debugger.log_info(
+        "Stopping background log monitor...", DebuggerLogTypes.LOG_MONITOR
+    )
 
 
 def check_for_agent_response():
@@ -591,45 +654,62 @@ def check_for_agent_response():
         return None, None, None
 
     debugger = _get_or_create_global_debugger()
-    debugger.log_debug({
-        'type': type(response_data).__name__,
-        'keys': list(response_data.keys()) if isinstance(response_data, dict) else 'N/A',
-        'value_preview': str(response_data)[:200]
-    }, DebuggerLogTypes.DEBUG)
+    debugger.log_debug(
+        {
+            "type": type(response_data).__name__,
+            "keys": list(response_data.keys())
+            if isinstance(response_data, dict)
+            else "N/A",
+            "value_preview": str(response_data)[:200],
+        },
+        DebuggerLogTypes.DEBUG,
+    )
 
     # Extract session_id and response from response_data
     # Expected format: {"session_id": session_id, "response": response_text_or_list}
     if isinstance(response_data, dict):
-        session_id = response_data.get('session_id')
-        response = response_data.get('response', '')
-        debugger.log_debug({
-            'response_type': 'dict',
-            'session_id': session_id,
-            'session_id_type': type(session_id).__name__
-        }, DebuggerLogTypes.DEBUG)
+        session_id = response_data.get("session_id")
+        response = response_data.get("response", "")
+        debugger.log_debug(
+            {
+                "response_type": "dict",
+                "session_id": session_id,
+                "session_id_type": type(session_id).__name__,
+            },
+            DebuggerLogTypes.DEBUG,
+        )
 
         # Handle list responses (e.g., clarification with context)
         if isinstance(response, list):
-            debugger.log_debug({'response_list_length': len(response)}, DebuggerLogTypes.DEBUG)
-            response = '\n\n'.join(str(item) for item in response)
+            debugger.log_debug(
+                {"response_list_length": len(response)}, DebuggerLogTypes.DEBUG
+            )
+            response = "\n\n".join(str(item) for item in response)
 
-        debugger.log_debug({
-            'response_length': len(response) if isinstance(response, str) else 'N/A'
-        }, DebuggerLogTypes.DEBUG)
+        debugger.log_debug(
+            {"response_length": len(response) if isinstance(response, str) else "N/A"},
+            DebuggerLogTypes.DEBUG,
+        )
     else:
         # Fallback for old format (plain string) - no session routing
-        debugger.log_warning({
-            'message': 'Response in old format (not dict), cannot route to session',
-            'response_type': type(response_data).__name__,
-            'value': response_data
-        }, DebuggerLogTypes.WARNING)
+        debugger.log_warning(
+            {
+                "message": "Response in old format (not dict), cannot route to session",
+                "response_type": type(response_data).__name__,
+                "value": response_data,
+            },
+            DebuggerLogTypes.WARNING,
+        )
         session_id = None
         response = str(response_data)
 
-    debugger.log_info({
-        'session_id': session_id,
-        'response_preview': response[:100] if len(response) > 100 else response
-    }, DebuggerLogTypes.QUEUE_OPERATION)
+    debugger.log_info(
+        {
+            "session_id": session_id,
+            "response_preview": response[:100] if len(response) > 100 else response,
+        },
+        DebuggerLogTypes.QUEUE_OPERATION,
+    )
 
     # Note: Log paths are now checked separately in check_for_log_paths()
     # which is called periodically by the polling callback
@@ -667,6 +747,7 @@ def get_latest_agent_logs(graph_type: str = None):
 # These handlers process different message types from CLIENT_CONTROL_QUEUE
 # They are called by the unified poll_client_controls callback
 
+
 def _handle_agent_status_message(msg, session_id, app_instance):
     """
     Handle agent_status message type.
@@ -681,8 +762,8 @@ def _handle_agent_status_message(msg, session_id, app_instance):
     Returns:
         tuple: (latest_agent, agent_created) - latest agent type and creation flag
     """
-    payload = msg.get('message', {})
-    msg_session_id = payload.get('session_id')
+    payload = msg.get("message", {})
+    msg_session_id = payload.get("session_id")
 
     latest_agent = None
     agent_created = False
@@ -694,11 +775,11 @@ def _handle_agent_status_message(msg, session_id, app_instance):
         app_instance.agent_status_messages[session_id].append(msg)
 
         # Track latest agent from status messages
-        status = payload.get('status')
-        if status in ('created', 'agent_updated'):
-            latest_agent = payload.get('agent_type')
+        status = payload.get("status")
+        if status in ("created", "agent_updated"):
+            latest_agent = payload.get("agent_type")
             agent_created = True  # Agent is now created and locked
-        elif status == 'agent_locked':
+        elif status == "agent_locked":
             # Agent type change rejected because agent already created
             agent_created = True
 
@@ -715,17 +796,19 @@ def _handle_agent_control_ack_message(msg, session_id):
         msg: Message dict with type "agent_control_ack"
         session_id: Current active session ID (used for debug logging)
     """
-    payload = msg.get('message', {})
-    msg_session_id = payload.get('session_id')
+    payload = msg.get("message", {})
+    msg_session_id = payload.get("session_id")
 
     # Process message for any session (not just current one)
     # Check if this is a known/active session
     active_sessions = get_active_session_ids()
-    if msg_session_id and (msg_session_id in active_sessions or msg_session_id == session_id):
+    if msg_session_id and (
+        msg_session_id in active_sessions or msg_session_id == session_id
+    ):
         # Update agent control and status for the message's session
-        agent_control = payload.get('control', 'continue')
-        agent_status = payload.get('agent_status', 'unknown')
-        operation_status = payload.get('operation_status', 'success')
+        agent_control = payload.get("control", "continue")
+        agent_status = payload.get("agent_status", "unknown")
+        operation_status = payload.get("operation_status", "success")
 
         session_info = get_session_info(msg_session_id)
         session_info.agent_control = agent_control
@@ -735,20 +818,23 @@ def _handle_agent_control_ack_message(msg, session_id):
         # Highlight received ack message
         hprint_message(
             {
-                'session_id': msg_session_id,
-                'control': agent_control,
-                'status': agent_status,
-                'operation': operation_status
+                "session_id": msg_session_id,
+                "control": agent_control,
+                "status": agent_status,
+                "operation": operation_status,
             },
-            title=f"[ACK RECEIVED] Session {msg_session_id}: {operation_status}"
+            title=f"[ACK RECEIVED] Session {msg_session_id}: {operation_status}",
         )
     else:
         debugger = _get_or_create_global_debugger()
-        debugger.log_debug({
-            'message': f"Skipping ack for session {msg_session_id}",
-            'reason': 'not in active sessions',
-            'current_session': session_id
-        }, DebuggerLogTypes.CONTROL_ACK)
+        debugger.log_debug(
+            {
+                "message": f"Skipping ack for session {msg_session_id}",
+                "reason": "not in active sessions",
+                "current_session": session_id,
+            },
+            DebuggerLogTypes.CONTROL_ACK,
+        )
 
 
 def _handle_log_path_message(msg):
@@ -761,24 +847,27 @@ def _handle_log_path_message(msg):
         msg: Message dict with type "log_path_available"
     """
     import datetime
+
     global _latest_log_collector, _latest_log_file_path, _recent_log_collectors
 
     debugger = _get_or_create_global_debugger()
 
     # Extract log path from message payload
-    log_file_path = msg.get('message', {}).get('log_path')
+    log_file_path = msg.get("message", {}).get("log_path")
     if not log_file_path:
-        debugger.log_warning({
-            'message': 'log_path_available message missing log_path',
-            'msg': msg
-        }, DebuggerLogTypes.WARNING)
+        debugger.log_warning(
+            {"message": "log_path_available message missing log_path", "msg": msg},
+            DebuggerLogTypes.WARNING,
+        )
         return
 
-    debugger.log_debug({'log_file_path': log_file_path}, DebuggerLogTypes.DEBUG)
+    debugger.log_debug({"log_file_path": log_file_path}, DebuggerLogTypes.DEBUG)
 
     try:
         # Load logs from the directory
-        log_collector = LogCollector.from_json_logs(log_file_path, json_file_pattern='*')
+        log_collector = LogCollector.from_json_logs(
+            log_file_path, json_file_pattern="*"
+        )
 
         # Store as the latest for UI access
         _latest_log_collector = log_collector
@@ -787,21 +876,23 @@ def _handle_log_path_message(msg):
         # Extract session_id from log path (e.g., ".../session_1_20251111062506")
         session_id = Path(log_file_path).name
 
-        debugger.log_debug({'session_id': session_id}, DebuggerLogTypes.DEBUG)
+        debugger.log_debug({"session_id": session_id}, DebuggerLogTypes.DEBUG)
 
         if session_id:
             session_info = get_session_info(session_id)
             session_info.log_collector = log_collector
             session_info.log_file_path = log_file_path
-            debugger.log_debug({
-                'session_id': session_id,
-                'active_sessions': get_active_session_ids()
-            }, DebuggerLogTypes.DEBUG)
+            debugger.log_debug(
+                {"session_id": session_id, "active_sessions": get_active_session_ids()},
+                DebuggerLogTypes.DEBUG,
+            )
         else:
-            debugger.log_debug('Could not extract session_id from log path', DebuggerLogTypes.DEBUG)
+            debugger.log_debug(
+                "Could not extract session_id from log path", DebuggerLogTypes.DEBUG
+            )
 
         # Also store with a timestamp key for history
-        timestamp_str = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+        timestamp_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         session_key = f"agent_{timestamp_str}"
         _recent_log_collectors[session_key] = log_collector
 
@@ -812,11 +903,15 @@ def _handle_log_path_message(msg):
 
     except Exception as e:
         import traceback
-        debugger.log_warning({
-            'message': f'Could not load logs from {log_file_path}',
-            'error': str(e),
-            'traceback': traceback.format_exc()
-        }, DebuggerLogTypes.WARNING)
+
+        debugger.log_warning(
+            {
+                "message": f"Could not load logs from {log_file_path}",
+                "error": str(e),
+                "traceback": traceback.format_exc(),
+            },
+            DebuggerLogTypes.WARNING,
+        )
 
 
 def main():
@@ -844,17 +939,13 @@ def main():
             self.sessions_agent_created = {}  # Maps session_id -> bool (True if agent created/locked)
 
             # Create Settings tab content
-            from dash import html, dcc
+            from dash import dcc, html
 
             settings_content = self._create_settings_tab_content()
 
             # Create custom monitor tabs list to pass to parent
             custom_monitor_tabs = [
-                {
-                    'id': 'settings',
-                    'label': 'Settings',
-                    'content': settings_content
-                }
+                {"id": "settings", "label": "Settings", "content": settings_content}
             ]
 
             # Call parent init with custom tabs
@@ -864,7 +955,7 @@ def main():
                 response_checker=check_for_agent_response,
                 special_waiting_message=SPECIAL_MESSAGE_WAITING_FOR_RESPONSE,
                 custom_monitor_tabs=custom_monitor_tabs,
-                **kwargs
+                **kwargs,
             )
 
             # Register Settings tab callbacks after app is created
@@ -882,9 +973,11 @@ def main():
             # Create control stores that need to be accessible globally
             control_stores = [
                 # Hidden store for agent control button clicks
-                dcc.Store(id='agent-control-click-store', data=None),
+                dcc.Store(id="agent-control-click-store", data=None),
                 # Hidden store for agent control status (updated by server)
-                dcc.Store(id='agent-control-status-store', data={'state': 'not_started'}),
+                dcc.Store(
+                    id="agent-control-status-store", data={"state": "not_started"}
+                ),
             ]
 
             # Insert stores after existing stores but before intervals
@@ -900,9 +993,9 @@ def main():
 
             # Insert control stores at the correct position
             new_children = (
-                existing_children[:insert_position] +
-                control_stores +
-                existing_children[insert_position:]
+                existing_children[:insert_position]
+                + control_stores
+                + existing_children[insert_position:]
             )
 
             parent_layout.children = new_children
@@ -910,134 +1003,137 @@ def main():
 
         def _create_settings_tab_content(self):
             """Create the Settings tab content."""
-            from dash import html, dcc
+            from dash import dcc, html
 
             return [
                 html.Div(
-                    children='⚙️ Session Settings',
+                    children="⚙️ Session Settings",
                     style={
-                        'fontSize': '11px',
-                        'color': '#ECECF1',
-                        'marginBottom': '10px',
-                        'fontWeight': '600'
-                    }
+                        "fontSize": "11px",
+                        "color": "#ECECF1",
+                        "marginBottom": "10px",
+                        "fontWeight": "600",
+                    },
                 ),
                 html.Div(
                     children=[
                         html.Label(
-                            'Agent Configuration:',
+                            "Agent Configuration:",
                             style={
-                                'fontSize': '10px',
-                                'color': '#8E8EA0',
-                                'marginBottom': '4px',
-                                'display': 'block',
-                                'fontWeight': '500'
-                            }
+                                "fontSize": "10px",
+                                "color": "#8E8EA0",
+                                "marginBottom": "4px",
+                                "display": "block",
+                                "fontWeight": "500",
+                            },
                         ),
                         dcc.Dropdown(
-                            id='main-panel-log-graph-agent-dropdown',
+                            id="main-panel-log-graph-agent-dropdown",
                             options=[
-                                {'label': 'Default Agent (Full Planning + Web Actions)', 'value': AGENT_TYPE_DEFAULT},
-                                {'label': 'Mock Clarification Agent (Simple Testing)', 'value': AGENT_TYPE_MOCK_CLARIFICATION},
+                                {
+                                    "label": "Default Agent (Full Planning + Web Actions)",
+                                    "value": AGENT_TYPE_DEFAULT,
+                                },
+                                {
+                                    "label": "Mock Clarification Agent (Simple Testing)",
+                                    "value": AGENT_TYPE_MOCK_CLARIFICATION,
+                                },
                             ],
                             value=AGENT_TYPE_DEFAULT,  # Default
-                            placeholder='Select agent configuration...',
-                            style={
-                                'fontSize': '10px',
-                                'marginBottom': '8px'
-                            },
-                            className='agent-dropdown'
-                        )
+                            placeholder="Select agent configuration...",
+                            style={"fontSize": "10px", "marginBottom": "8px"},
+                            className="agent-dropdown",
+                        ),
                     ]
                 ),
                 html.Button(
-                    'Apply Changes',
-                    id='main-panel-log-graph-apply-settings-btn',
+                    "Apply Changes",
+                    id="main-panel-log-graph-apply-settings-btn",
                     n_clicks=0,
                     style={
-                        'width': '100%',
-                        'padding': '6px 12px',
-                        'backgroundColor': '#19C37D',
-                        'color': '#FFFFFF',
-                        'border': 'none',
-                        'borderRadius': '4px',
-                        'cursor': 'pointer',
-                        'fontSize': '10px',
-                        'fontWeight': '500',
-                        'marginBottom': '10px',
-                        'transition': 'all 0.2s'
-                    }
+                        "width": "100%",
+                        "padding": "6px 12px",
+                        "backgroundColor": "#19C37D",
+                        "color": "#FFFFFF",
+                        "border": "none",
+                        "borderRadius": "4px",
+                        "cursor": "pointer",
+                        "fontSize": "10px",
+                        "fontWeight": "500",
+                        "marginBottom": "10px",
+                        "transition": "all 0.2s",
+                    },
                 ),
                 html.Div(
                     children=[
                         html.Div(
-                            children='Current Agent:',
+                            children="Current Agent:",
                             style={
-                                'fontSize': '9px',
-                                'color': '#8E8EA0',
-                                'marginBottom': '2px',
-                                'fontWeight': '500'
-                            }
+                                "fontSize": "9px",
+                                "color": "#8E8EA0",
+                                "marginBottom": "2px",
+                                "fontWeight": "500",
+                            },
                         ),
                         html.Div(
-                            id='main-panel-log-graph-current-agent',
+                            id="main-panel-log-graph-current-agent",
                             children=AGENT_TYPE_DEFAULT,
                             style={
-                                'fontSize': '9px',
-                                'color': '#19C37D',
-                                'fontFamily': 'monospace',
-                                'backgroundColor': 'rgba(0, 0, 0, 0.2)',
-                                'padding': '4px 6px',
-                                'borderRadius': '3px',
-                                'marginBottom': '10px'
-                            }
-                        )
+                                "fontSize": "9px",
+                                "color": "#19C37D",
+                                "fontFamily": "monospace",
+                                "backgroundColor": "rgba(0, 0, 0, 0.2)",
+                                "padding": "4px 6px",
+                                "borderRadius": "3px",
+                                "marginBottom": "10px",
+                            },
+                        ),
                     ]
                 ),
                 html.Div(
                     children=[
                         html.Div(
-                            children='Agent Status:',
+                            children="Agent Status:",
                             style={
-                                'fontSize': '9px',
-                                'color': '#8E8EA0',
-                                'marginBottom': '2px',
-                                'fontWeight': '500'
-                            }
+                                "fontSize": "9px",
+                                "color": "#8E8EA0",
+                                "marginBottom": "2px",
+                                "fontWeight": "500",
+                            },
                         ),
                         html.Div(
-                            id='main-panel-log-graph-agent-status',
-                            children='No status updates',
+                            id="main-panel-log-graph-agent-status",
+                            children="No status updates",
                             style={
-                                'fontSize': '8px',
-                                'color': '#ECECF1',
-                                'backgroundColor': 'rgba(0, 0, 0, 0.2)',
-                                'padding': '4px 6px',
-                                'borderRadius': '3px',
-                                'marginBottom': '10px',
-                                'maxHeight': '60px',
-                                'overflowY': 'auto'
-                            }
-                        )
+                                "fontSize": "8px",
+                                "color": "#ECECF1",
+                                "backgroundColor": "rgba(0, 0, 0, 0.2)",
+                                "padding": "4px 6px",
+                                "borderRadius": "3px",
+                                "marginBottom": "10px",
+                                "maxHeight": "60px",
+                                "overflowY": "auto",
+                            },
+                        ),
                     ]
                 ),
                 html.Div(
-                    children='ℹ️ Settings are session-specific',
+                    children="ℹ️ Settings are session-specific",
                     style={
-                        'fontSize': '8px',
-                        'color': '#6E6E80',
-                        'fontStyle': 'italic',
-                        'textAlign': 'center'
-                    }
+                        "fontSize": "8px",
+                        "color": "#6E6E80",
+                        "fontStyle": "italic",
+                        "textAlign": "center",
+                    },
                 ),
                 # Hidden store for log path polling callback
-                dcc.Store(id='log-path-poll-dummy', data=None),
+                dcc.Store(id="log-path-poll-dummy", data=None),
                 # Interval component to poll for agent status updates
                 dcc.Interval(
-                    id='agent-status-poll-interval',
+                    id="agent-status-poll-interval",
                     interval=1000,  # Poll every 1 second
-                    n_intervals=0
-                )
+                    n_intervals=0,
+                ),
             ]
 
         def _register_settings_callbacks(self):
@@ -1048,19 +1144,21 @@ def main():
             # Callback to populate agent dropdown based on current session
             @self.app.callback(
                 [
-                    Output('main-panel-log-graph-agent-dropdown', 'value'),
-                    Output('main-panel-log-graph-current-agent', 'children'),
-                    Output('main-panel-log-graph-agent-dropdown', 'disabled')
+                    Output("main-panel-log-graph-agent-dropdown", "value"),
+                    Output("main-panel-log-graph-current-agent", "children"),
+                    Output("main-panel-log-graph-agent-dropdown", "disabled"),
                 ],
-                [
-                    Input('current-session-store', 'data')
-                ],
-                prevent_initial_call=False
+                [Input("current-session-store", "data")],
+                prevent_initial_call=False,
             )
             def populate_agent_settings(session_id):
                 """Update dropdown to show current session's agent and disable if agent created."""
                 # Check if agent has been created for this session
-                is_agent_created = self.sessions_agent_created.get(session_id, False) if session_id else False
+                is_agent_created = (
+                    self.sessions_agent_created.get(session_id, False)
+                    if session_id
+                    else False
+                )
 
                 if session_id and session_id in self.session_agents:
                     current_agent = self.session_agents[session_id]
@@ -1072,17 +1170,19 @@ def main():
             # Callback to apply agent settings
             @self.app.callback(
                 [
-                    Output('main-panel-log-graph-apply-settings-btn', 'children'),
-                    Output('main-panel-log-graph-current-agent', 'children', allow_duplicate=True)
+                    Output("main-panel-log-graph-apply-settings-btn", "children"),
+                    Output(
+                        "main-panel-log-graph-current-agent",
+                        "children",
+                        allow_duplicate=True,
+                    ),
                 ],
+                [Input("main-panel-log-graph-apply-settings-btn", "n_clicks")],
                 [
-                    Input('main-panel-log-graph-apply-settings-btn', 'n_clicks')
+                    State("main-panel-log-graph-agent-dropdown", "value"),
+                    State("current-session-store", "data"),
                 ],
-                [
-                    State('main-panel-log-graph-agent-dropdown', 'value'),
-                    State('current-session-store', 'data')
-                ],
-                prevent_initial_call=True
+                prevent_initial_call=True,
             )
             def apply_agent_settings(n_clicks, selected_agent, session_id):
                 """Apply agent settings when button is clicked."""
@@ -1096,24 +1196,28 @@ def main():
                 sync_session_agent(session_id, selected_agent)
 
                 # Show "Pending..." while waiting for acknowledgment from service
-                return '✓ Applied', 'Pending Service Change...'
+                return "✓ Applied", "Pending Service Change..."
 
             # Unified callback to poll for ALL client control messages
             # This replaces three separate callbacks that were competing for messages
             @self.app.callback(
                 [
-                    Output('main-panel-log-graph-agent-status', 'children'),
-                    Output('main-panel-log-graph-current-agent', 'children', allow_duplicate=True),
-                    Output('main-panel-log-graph-agent-dropdown', 'disabled', allow_duplicate=True),
-                    Output('agent-control-status-store', 'data')
+                    Output("main-panel-log-graph-agent-status", "children"),
+                    Output(
+                        "main-panel-log-graph-current-agent",
+                        "children",
+                        allow_duplicate=True,
+                    ),
+                    Output(
+                        "main-panel-log-graph-agent-dropdown",
+                        "disabled",
+                        allow_duplicate=True,
+                    ),
+                    Output("agent-control-status-store", "data"),
                 ],
-                [
-                    Input('agent-status-poll-interval', 'n_intervals')
-                ],
-                [
-                    State('current-session-store', 'data')
-                ],
-                prevent_initial_call=True
+                [Input("agent-status-poll-interval", "n_intervals")],
+                [State("current-session-store", "data")],
+                prevent_initial_call=True,
             )
             def poll_client_controls(_n_intervals, session_id):
                 """
@@ -1130,8 +1234,8 @@ def main():
 
                 Uses a non-blocking lock to prevent concurrent queue access while keeping UI responsive.
                 """
-                from dash import html
                 import dash
+                from dash import html
 
                 # Try to initialize queue service if not available yet
                 # This handles the case where debugger starts before the service
@@ -1140,19 +1244,31 @@ def main():
                     if not self.queue_service:
                         # Service still not available - return early
                         return (
-                            'No status updates (waiting for service)',
+                            "No status updates (waiting for service)",
                             dash.no_update,
                             False,
-                            {'control': 'continue', 'status': 'not_started', 'pending': False}
+                            {
+                                "control": "continue",
+                                "status": "not_started",
+                                "pending": False,
+                            },
                         )
                     else:
                         debugger = _get_or_create_global_debugger()
-                        debugger.log_info('Connected to queue service successfully', DebuggerLogTypes.QUEUE_OPERATION)
+                        debugger.log_info(
+                            "Connected to queue service successfully",
+                            DebuggerLogTypes.QUEUE_OPERATION,
+                        )
 
                 # Try to acquire lock - skip this poll if already running
                 if not _client_control_poll_lock.acquire(blocking=False):
                     # Another callback is already processing - skip to keep UI responsive
-                    return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+                    return (
+                        dash.no_update,
+                        dash.no_update,
+                        dash.no_update,
+                        dash.no_update,
+                    )
 
                 try:
                     # Atomically read ALL messages from queue
@@ -1160,7 +1276,9 @@ def main():
                     max_messages = 100  # Prevent runaway processing
 
                     while len(messages) < max_messages:
-                        msg = self.queue_service.get(CLIENT_CONTROL_QUEUE_ID, blocking=False, timeout=0)
+                        msg = self.queue_service.get(
+                            CLIENT_CONTROL_QUEUE_ID, blocking=False, timeout=0
+                        )
                         if msg is None:
                             break
                         messages.append(msg)
@@ -1173,35 +1291,53 @@ def main():
                     for msg in messages:
                         if not isinstance(msg, dict):
                             debugger = _get_or_create_global_debugger()
-                            debugger.log_warning({'message': 'Non-dict message in CLIENT_CONTROL_QUEUE', 'value': msg}, DebuggerLogTypes.WARNING)
+                            debugger.log_warning(
+                                {
+                                    "message": "Non-dict message in CLIENT_CONTROL_QUEUE",
+                                    "value": msg,
+                                },
+                                DebuggerLogTypes.WARNING,
+                            )
                             continue
 
-                        msg_type = msg.get('type')
+                        msg_type = msg.get("type")
 
-                        if msg_type == 'agent_status':
-                            agent, created = _handle_agent_status_message(msg, session_id, self)
+                        if msg_type == "agent_status":
+                            agent, created = _handle_agent_status_message(
+                                msg, session_id, self
+                            )
                             if agent:
                                 latest_agent = agent
                             if created:
                                 agent_created = True
 
-                        elif msg_type == 'agent_control_ack':
+                        elif msg_type == "agent_control_ack":
                             _handle_agent_control_ack_message(msg, session_id)
 
-                        elif msg_type == 'log_path_available':
+                        elif msg_type == "log_path_available":
                             _handle_log_path_message(msg)
 
                         else:
                             debugger = _get_or_create_global_debugger()
-                            debugger.log_warning({'message': 'Unknown message type', 'msg_type': msg_type}, DebuggerLogTypes.WARNING)
+                            debugger.log_warning(
+                                {
+                                    "message": "Unknown message type",
+                                    "msg_type": msg_type,
+                                },
+                                DebuggerLogTypes.WARNING,
+                            )
 
                     # If no active session, just return defaults but still process messages
                     if not session_id:
                         return (
-                            'No status updates (no active session)',
+                            "No status updates (no active session)",
                             dash.no_update,
                             False,
-                            {'control': 'continue', 'status': 'not_started', 'pending': False}
+                            {
+                                "control": "continue",
+                                "status": "not_started",
+                                "pending": False,
+                            },
                         )
 
                     # Update the sessions_agent_created flag if agent was created/locked
@@ -1209,70 +1345,88 @@ def main():
                         self.sessions_agent_created[session_id] = True
 
                     # Build agent status display from accumulated messages
-                    status_display = 'No status updates'
+                    status_display = "No status updates"
                     if session_id in self.agent_status_messages:
                         recent_messages = self.agent_status_messages[session_id][-5:]
 
                         # Format messages for display
                         status_divs = []
                         for msg in reversed(recent_messages):  # Show newest first
-                            payload = msg.get('message', {})
-                            status = payload.get('status', 'unknown')
-                            agent_type = payload.get('agent_type', 'N/A')
-                            msg_timestamp = msg.get('timestamp', 'N/A')
-                            error = payload.get('error')
+                            payload = msg.get("message", {})
+                            status = payload.get("status", "unknown")
+                            agent_type = payload.get("agent_type", "N/A")
+                            msg_timestamp = msg.get("timestamp", "N/A")
+                            error = payload.get("error")
 
-                            if status == 'created':
+                            if status == "created":
                                 text = f"[{msg_timestamp}] ✓ Agent created with {agent_type}"
-                                color = '#19C37D'
-                            elif status == 'agent_updated':
-                                text = f"[{msg_timestamp}] ✓ Agent updated to {agent_type}"
-                                color = '#19C37D'
-                            elif status == 'agent_locked':
+                                color = "#19C37D"
+                            elif status == "agent_updated":
+                                text = (
+                                    f"[{msg_timestamp}] ✓ Agent updated to {agent_type}"
+                                )
+                                color = "#19C37D"
+                            elif status == "agent_locked":
                                 text = f"[{msg_timestamp}] 🔒 Agent locked (cannot change after first message)"
-                                color = '#FF9800'
-                            elif status == 'agent_type_updated':
+                                color = "#FF9800"
+                            elif status == "agent_type_updated":
                                 text = f"[{msg_timestamp}] ✓ Agent type updated to {agent_type} (not created yet)"
-                                color = '#19C37D'
-                            elif status == 'error':
+                                color = "#19C37D"
+                            elif status == "error":
                                 text = f"[{msg_timestamp}] ✗ Error: {error}"
-                                color = '#FF6B6B'
+                                color = "#FF6B6B"
                             else:
                                 text = f"[{msg_timestamp}] Status: {status}"
-                                color = '#8E8EA0'
+                                color = "#8E8EA0"
 
-                            status_divs.append(html.Div(text, style={'color': color, 'marginBottom': '2px'}))
+                            status_divs.append(
+                                html.Div(
+                                    text, style={"color": color, "marginBottom": "2px"}
+                                )
+                            )
 
-                        status_display = status_divs if status_divs else 'No status updates'
+                        status_display = (
+                            status_divs if status_divs else "No status updates"
+                        )
 
                     # Update Current Agent if we got a new agent from service
-                    current_agent_display = latest_agent if latest_agent else dash.no_update
+                    current_agent_display = (
+                        latest_agent if latest_agent else dash.no_update
+                    )
 
                     # Update disabled state based on whether agent has been created
-                    dropdown_disabled = self.sessions_agent_created.get(session_id, False)
+                    dropdown_disabled = self.sessions_agent_created.get(
+                        session_id, False
+                    )
 
                     # Get agent control status for this session
                     session_info = get_session_info(session_id)
                     control_status = {
-                        'control': session_info.agent_control,
-                        'status': session_info.agent_status,
-                        'pending': session_info.control_pending
+                        "control": session_info.agent_control,
+                        "status": session_info.agent_status,
+                        "pending": session_info.control_pending,
                     }
 
-                    return status_display, current_agent_display, dropdown_disabled, control_status
+                    return (
+                        status_display,
+                        current_agent_display,
+                        dropdown_disabled,
+                        control_status,
+                    )
 
                 except Exception as e:
                     import traceback
+
                     debugger = _get_or_create_global_debugger()
-                    debugger.log_error({
-                        'error': str(e),
-                        'traceback': traceback.format_exc()
-                    }, DebuggerLogTypes.ERROR)
+                    debugger.log_error(
+                        {"error": str(e), "traceback": traceback.format_exc()},
+                        DebuggerLogTypes.ERROR,
+                    )
                     return (
-                        f'Error polling: {str(e)}',
+                        f"Error polling: {str(e)}",
                         dash.no_update,
                         dash.no_update,
-                        {'control': 'continue', 'status': 'error', 'pending': False}
+                        {"control": "continue", "status": "error", "pending": False},
                     )
                 finally:
                     _client_control_poll_lock.release()
@@ -1285,19 +1439,23 @@ def main():
         title="Web Agent Debugger",
         port=8050,
         debug=False,
-        queue_service=initialize_queue_service()  # Enable queue-based inferencer selection
+        queue_service=initialize_queue_service(),  # Enable queue-based inferencer selection
     )
 
     # Create a closure that has access to app.session_agents
-    def queue_message_handler_with_app(message: str, session_id: str, all_session_ids: list = None) -> str:
+    def queue_message_handler_with_app(
+        message: str, session_id: str, all_session_ids: list = None
+    ) -> str:
         """Message handler that has access to app's session_agents."""
         # Get the current agent type for this session (default to AGENT_TYPE_DEFAULT to match server)
         current_agent_type = AGENT_TYPE_DEFAULT  # Default matches server default
-        if hasattr(app, 'session_agents') and session_id in app.session_agents:
+        if hasattr(app, "session_agents") and session_id in app.session_agents:
             current_agent_type = app.session_agents[session_id]
 
         # Call the internal handler with current agent type for this session only
-        return queue_message_handler_internal(message, session_id, all_session_ids, current_agent_type)
+        return queue_message_handler_internal(
+            message, session_id, all_session_ids, current_agent_type
+        )
 
     # Set custom message handler
     app.set_message_handler(queue_message_handler_with_app)
@@ -1363,9 +1521,9 @@ def main():
             return window.dash_clientside.no_update;
         }
         """,
-        Output('main-panel-log-graph-log-monitor-panel', 'data-drag-initialized'),
-        Input('main-panel-log-graph-log-monitor-panel', 'id'),
-        prevent_initial_call=False
+        Output("main-panel-log-graph-log-monitor-panel", "data-drag-initialized"),
+        Input("main-panel-log-graph-log-monitor-panel", "id"),
+        prevent_initial_call=False,
     )
 
     # Add clientside callback for monitor tab switching
@@ -1415,13 +1573,13 @@ def main():
             return window.dash_clientside.no_update;
         }
         """,
-        Output('main-panel-log-graph-monitor-panel', 'data-tab-switch'),
+        Output("main-panel-log-graph-monitor-panel", "data-tab-switch"),
         [
-            Input('main-panel-log-graph-monitor-tab-logs-btn', 'n_clicks'),
-            Input('main-panel-log-graph-monitor-tab-responses-btn', 'n_clicks'),
-            Input('main-panel-log-graph-monitor-tab-settings-btn', 'n_clicks')
+            Input("main-panel-log-graph-monitor-tab-logs-btn", "n_clicks"),
+            Input("main-panel-log-graph-monitor-tab-responses-btn", "n_clicks"),
+            Input("main-panel-log-graph-monitor-tab-settings-btn", "n_clicks"),
         ],
-        prevent_initial_call=False
+        prevent_initial_call=False,
     )
 
     # Add clientside callback to inject agent control buttons into Logs tab
@@ -1478,9 +1636,9 @@ def main():
             return window.dash_clientside.no_update;
         }
         """,
-        Output('main-panel-log-graph-monitor-panel', 'data-controls-initialized'),
-        Input('response-poll-interval', 'n_intervals'),
-        prevent_initial_call=False
+        Output("main-panel-log-graph-monitor-panel", "data-controls-initialized"),
+        Input("response-poll-interval", "n_intervals"),
+        prevent_initial_call=False,
     )
 
     # Add clientside callback to set up button click handlers
@@ -1528,19 +1686,19 @@ def main():
             return window.dash_clientside.no_update;
         }
         """,
-        Output('main-panel-log-graph-monitor-panel', 'data-click-handlers'),
+        Output("main-panel-log-graph-monitor-panel", "data-click-handlers"),
         [
-            Input('response-poll-interval', 'n_intervals'),
-            Input('agent-control-click-store', 'data')
+            Input("response-poll-interval", "n_intervals"),
+            Input("agent-control-click-store", "data"),
         ],
-        prevent_initial_call=False
+        prevent_initial_call=False,
     )
 
     # Add callback to sync sessions on page load/refresh
     @app.app.callback(
-        Output('sessions-store', 'data', allow_duplicate=True),
-        Input('sessions-store', 'data'),
-        prevent_initial_call='initial_duplicate'  # Run on initial load with allow_duplicate
+        Output("sessions-store", "data", allow_duplicate=True),
+        Input("sessions-store", "data"),
+        prevent_initial_call="initial_duplicate",  # Run on initial load with allow_duplicate
     )
     def sync_sessions_on_load(sessions):
         """
@@ -1550,33 +1708,41 @@ def main():
         the service is notified to clean up any orphaned agent sessions.
         """
         # Extract active session IDs from sessions store (SOURCE OF TRUTH from Dash)
-        active_session_ids = [s['id'] for s in sessions] if sessions else []
+        active_session_ids = [s["id"] for s in sessions] if sessions else []
 
         # Comprehensive cleanup of all session-related data
         cleanup_inactive_sessions(active_session_ids)
         debugger = _get_or_create_global_debugger()
-        debugger.log_info({'active_sessions': active_session_ids}, DebuggerLogTypes.SESSION_SWITCH)
+        debugger.log_info(
+            {"active_sessions": active_session_ids}, DebuggerLogTypes.SESSION_SWITCH
+        )
 
         # Sync active sessions with service (this will close any sessions not in the list)
         sync_active_sessions(active_session_ids)
 
         # Sync agent for each session that has one set
-        if hasattr(app, 'session_agents'):
+        if hasattr(app, "session_agents"):
             for session_id in active_session_ids:
                 if session_id in app.session_agents:
                     sync_session_agent(session_id, app.session_agents[session_id])
 
-        debugger.log_info({'action': 'synced_sessions_on_page_load', 'active_sessions': active_session_ids}, DebuggerLogTypes.SESSION_SWITCH)
+        debugger.log_info(
+            {
+                "action": "synced_sessions_on_page_load",
+                "active_sessions": active_session_ids,
+            },
+            DebuggerLogTypes.SESSION_SWITCH,
+        )
 
         # Return sessions unchanged
         return sessions if sessions else dash.no_update
 
     # Add callback to handle agent control button clicks
     @app.app.callback(
-        Output('agent-control-click-store', 'data', allow_duplicate=True),
-        [Input('agent-control-click-store', 'data')],
-        [State('current-session-store', 'data')],
-        prevent_initial_call=True
+        Output("agent-control-click-store", "data", allow_duplicate=True),
+        [Input("agent-control-click-store", "data")],
+        [State("current-session-store", "data")],
+        prevent_initial_call=True,
     )
     def handle_agent_control_click(control_data, session_id):
         """
@@ -1591,12 +1757,15 @@ def main():
         if not control_data or not session_id:
             return dash.no_update
 
-        control = control_data.get('control')
+        control = control_data.get("control")
         if not control:
             return dash.no_update
 
         debugger = get_debugger(session_id)
-        debugger.log_info({'control': control, 'session_id': session_id}, DebuggerLogTypes.AGENT_CONTROL)
+        debugger.log_info(
+            {"control": control, "session_id": session_id},
+            DebuggerLogTypes.AGENT_CONTROL,
+        )
 
         # Send control message to agent service
         send_agent_control(session_id, control)
@@ -1610,33 +1779,57 @@ def main():
     # Add callback for initial auto-load when switching to Log Debugging tab
     @app.app.callback(
         [
-            Output('log-data-store', 'data', allow_duplicate=True),
-            Output('main-panel-log-graph-plotly-loading-overlay', 'style', allow_duplicate=True),
-            Output('main-panel-log-graph-cytoscape-loading-overlay', 'style', allow_duplicate=True)
+            Output("log-data-store", "data", allow_duplicate=True),
+            Output(
+                "main-panel-log-graph-plotly-loading-overlay",
+                "style",
+                allow_duplicate=True,
+            ),
+            Output(
+                "main-panel-log-graph-cytoscape-loading-overlay",
+                "style",
+                allow_duplicate=True,
+            ),
         ],
-        [Input('main-panel-log-btn', 'n_clicks')],
+        [Input("main-panel-log-btn", "n_clicks")],
         [
-            State('log-data-store', 'data'),
-            State('current-session-store', 'data'),
-            State('main-panel-log-graph-rendering-mode', 'value')
+            State("log-data-store", "data"),
+            State("current-session-store", "data"),
+            State("main-panel-log-graph-rendering-mode", "value"),
         ],
-        prevent_initial_call=True
+        prevent_initial_call=True,
     )
-    def auto_load_on_first_tab_switch(log_btn_clicks, current_data, session_id, rendering_mode):
+    def auto_load_on_first_tab_switch(
+        log_btn_clicks, current_data, session_id, rendering_mode
+    ):
         """Auto-load logs on first switch to Log Debugging tab."""
         global _log_data_lock
         import dash
 
         # Define styles for showing/hiding overlay
         overlay_visible = {
-            'position': 'absolute', 'top': '0', 'left': '0', 'right': '0', 'bottom': '0',
-            'backgroundColor': 'rgba(44, 44, 44, 0.95)', 'display': 'flex',
-            'alignItems': 'center', 'justifyContent': 'center', 'zIndex': '2000'
+            "position": "absolute",
+            "top": "0",
+            "left": "0",
+            "right": "0",
+            "bottom": "0",
+            "backgroundColor": "rgba(44, 44, 44, 0.95)",
+            "display": "flex",
+            "alignItems": "center",
+            "justifyContent": "center",
+            "zIndex": "2000",
         }
         overlay_hidden = {
-            'position': 'absolute', 'top': '0', 'left': '0', 'right': '0', 'bottom': '0',
-            'backgroundColor': 'rgba(44, 44, 44, 0.95)', 'display': 'none',
-            'alignItems': 'center', 'justifyContent': 'center', 'zIndex': '2000'
+            "position": "absolute",
+            "top": "0",
+            "left": "0",
+            "right": "0",
+            "bottom": "0",
+            "backgroundColor": "rgba(44, 44, 44, 0.95)",
+            "display": "none",
+            "alignItems": "center",
+            "justifyContent": "center",
+            "zIndex": "2000",
         }
 
         if not log_btn_clicks or not session_id:
@@ -1650,7 +1843,10 @@ def main():
             return dash.no_update, dash.no_update, dash.no_update
 
         debugger = get_debugger(session_id)
-        debugger.log_info({'action': 'first_time_viewing_log_debugging', 'session_id': session_id}, DebuggerLogTypes.AUTO_LOAD)
+        debugger.log_info(
+            {"action": "first_time_viewing_log_debugging", "session_id": session_id},
+            DebuggerLogTypes.AUTO_LOAD,
+        )
 
         # Get the pre-loaded log data from background thread
         with _log_data_lock:
@@ -1661,97 +1857,152 @@ def main():
             log_file_path = session_info.log_file_path
 
             if log_file_path:
-                debugger.log_info({'action': 'loading_directly', 'log_file_path': log_file_path}, DebuggerLogTypes.AUTO_LOAD)
+                debugger.log_info(
+                    {"action": "loading_directly", "log_file_path": log_file_path},
+                    DebuggerLogTypes.AUTO_LOAD,
+                )
                 try:
                     # Load logs directly (this is synchronous, but only happens once)
-                    log_collector = LogCollector.from_json_logs(log_file_path, json_file_pattern='*')
+                    log_collector = LogCollector.from_json_logs(
+                        log_file_path, json_file_pattern="*"
+                    )
                     graph_structure = log_collector.get_graph_structure()
 
-                    num_nodes = len(graph_structure['nodes'])
-                    num_edges = len(graph_structure['edges'])
+                    num_nodes = len(graph_structure["nodes"])
+                    num_edges = len(graph_structure["edges"])
 
                     # Get mtime for tracking
                     log_path = Path(log_file_path)
                     # Look for all files recursively (log files may not have .json extension)
-                    all_files = [f for f in log_path.rglob('*') if f.is_file()]
-                    newest_mtime = max(f.stat().st_mtime for f in all_files) if all_files else 0
+                    all_files = [f for f in log_path.rglob("*") if f.is_file()]
+                    newest_mtime = (
+                        max(f.stat().st_mtime for f in all_files) if all_files else 0
+                    )
 
                     # Mark as loaded
                     session_info.initial_load_done = True
                     session_info.last_displayed_mtime = newest_mtime
 
-                    debugger.log_info({'action': 'loaded_directly', 'num_nodes': num_nodes, 'num_edges': num_edges}, DebuggerLogTypes.AUTO_LOAD)
+                    debugger.log_info(
+                        {
+                            "action": "loaded_directly",
+                            "num_nodes": num_nodes,
+                            "num_edges": num_edges,
+                        },
+                        DebuggerLogTypes.AUTO_LOAD,
+                    )
 
                     # Return graph structure
                     result = {
-                        'graph_data': {
-                            'nodes': graph_structure['nodes'],
-                            'edges': graph_structure['edges'],
-                            'agent': graph_structure['agent'],
-                            'log_file': Path(log_file_path).name if log_file_path else f'session_{session_id}'
+                        "graph_data": {
+                            "nodes": graph_structure["nodes"],
+                            "edges": graph_structure["edges"],
+                            "agent": graph_structure["agent"],
+                            "log_file": Path(log_file_path).name
+                            if log_file_path
+                            else f"session_{session_id}",
                         },
-                        'log_groups': {k: v for k, v in log_collector.log_groups.items()}
+                        "log_groups": {
+                            k: v for k, v in log_collector.log_groups.items()
+                        },
                     }
 
-                    debugger.log_info({'action': 'initial_load_complete', 'num_log_groups': len(result['log_groups'])}, DebuggerLogTypes.AUTO_LOAD)
+                    debugger.log_info(
+                        {
+                            "action": "initial_load_complete",
+                            "num_log_groups": len(result["log_groups"]),
+                        },
+                        DebuggerLogTypes.AUTO_LOAD,
+                    )
                     # Hide loading overlay after loading completes
-                    plotly_overlay = overlay_hidden if rendering_mode == 'plotly' else dash.no_update
-                    cytoscape_overlay = overlay_hidden if rendering_mode == 'cytoscape' else dash.no_update
+                    plotly_overlay = (
+                        overlay_hidden if rendering_mode == "plotly" else dash.no_update
+                    )
+                    cytoscape_overlay = (
+                        overlay_hidden
+                        if rendering_mode == "cytoscape"
+                        else dash.no_update
+                    )
                     return result, plotly_overlay, cytoscape_overlay
 
                 except Exception as e:
-                    debugger.log_error({'error': str(e)}, DebuggerLogTypes.ERROR)
+                    debugger.log_error({"error": str(e)}, DebuggerLogTypes.ERROR)
                     # Mark as done even on error so monitor can show status
                     session_info.initial_load_done = True
                     return dash.no_update, overlay_hidden, overlay_hidden
             else:
-                debugger.log_warning({
-                    'message': 'No log path available for session',
-                    'session_id': session_id,
-                    'available_sessions': get_active_session_ids()
-                }, DebuggerLogTypes.WARNING)
+                debugger.log_warning(
+                    {
+                        "message": "No log path available for session",
+                        "session_id": session_id,
+                        "available_sessions": get_active_session_ids(),
+                    },
+                    DebuggerLogTypes.WARNING,
+                )
                 # IMPORTANT: Mark as done even without data so monitor panel shows proper status
                 # The background monitor will load data and the monitor panel will show "new data available"
                 session_info.initial_load_done = True
-                debugger.log_info({'action': 'marked_as_initially_loaded', 'session_id': session_id}, DebuggerLogTypes.AUTO_LOAD)
+                debugger.log_info(
+                    {"action": "marked_as_initially_loaded", "session_id": session_id},
+                    DebuggerLogTypes.AUTO_LOAD,
+                )
                 return dash.no_update, dash.no_update, dash.no_update
 
         # Use pre-loaded data from background thread
         session_info.initial_load_done = True
-        session_info.last_displayed_mtime = loaded_data['mtime']
+        session_info.last_displayed_mtime = loaded_data["mtime"]
 
-        log_collector = loaded_data['log_collector']
-        graph_structure = loaded_data['graph_structure']
-        log_file_path = loaded_data['log_file_path']
+        log_collector = loaded_data["log_collector"]
+        graph_structure = loaded_data["graph_structure"]
+        log_file_path = loaded_data["log_file_path"]
 
-        num_nodes = loaded_data['nodes']
-        num_edges = loaded_data['edges']
+        num_nodes = loaded_data["nodes"]
+        num_edges = loaded_data["edges"]
 
-        debugger.log_info({'action': 'using_preloaded_data', 'num_nodes': num_nodes, 'num_edges': num_edges}, DebuggerLogTypes.AUTO_LOAD)
+        debugger.log_info(
+            {
+                "action": "using_preloaded_data",
+                "num_nodes": num_nodes,
+                "num_edges": num_edges,
+            },
+            DebuggerLogTypes.AUTO_LOAD,
+        )
 
         # Return graph structure
         result = {
-            'graph_data': {
-                'nodes': graph_structure['nodes'],
-                'edges': graph_structure['edges'],
-                'agent': graph_structure['agent'],
-                'log_file': Path(log_file_path).name if log_file_path else f'session_{session_id}'
+            "graph_data": {
+                "nodes": graph_structure["nodes"],
+                "edges": graph_structure["edges"],
+                "agent": graph_structure["agent"],
+                "log_file": Path(log_file_path).name
+                if log_file_path
+                else f"session_{session_id}",
             },
-            'log_groups': {k: v for k, v in log_collector.log_groups.items()}
+            "log_groups": {k: v for k, v in log_collector.log_groups.items()},
         }
 
-        debugger.log_info({'action': 'initial_load_complete', 'num_log_groups': len(result['log_groups'])}, DebuggerLogTypes.AUTO_LOAD)
+        debugger.log_info(
+            {
+                "action": "initial_load_complete",
+                "num_log_groups": len(result["log_groups"]),
+            },
+            DebuggerLogTypes.AUTO_LOAD,
+        )
         # Hide loading overlay after loading completes
-        plotly_overlay = overlay_hidden if rendering_mode == 'plotly' else dash.no_update
-        cytoscape_overlay = overlay_hidden if rendering_mode == 'cytoscape' else dash.no_update
+        plotly_overlay = (
+            overlay_hidden if rendering_mode == "plotly" else dash.no_update
+        )
+        cytoscape_overlay = (
+            overlay_hidden if rendering_mode == "cytoscape" else dash.no_update
+        )
         return result, plotly_overlay, cytoscape_overlay
 
     # Add callback to handle session switches while on Log Debugging tab
     @app.app.callback(
-        Output('log-data-store', 'data', allow_duplicate=True),
-        [Input('current-session-store', 'data')],
-        [State('log-data-store', 'data')],
-        prevent_initial_call=True
+        Output("log-data-store", "data", allow_duplicate=True),
+        [Input("current-session-store", "data")],
+        [State("log-data-store", "data")],
+        prevent_initial_call=True,
     )
     def handle_session_switch(session_id, current_log_data):
         """Load appropriate log graph when switching sessions while on Log Debugging tab."""
@@ -1770,7 +2021,10 @@ def main():
             return dash.no_update
 
         debugger = get_debugger(session_id)
-        debugger.log_info({'action': 'switching_to_session', 'session_id': session_id}, DebuggerLogTypes.SESSION_SWITCH)
+        debugger.log_info(
+            {"action": "switching_to_session", "session_id": session_id},
+            DebuggerLogTypes.SESSION_SWITCH,
+        )
 
         # Try to get pre-loaded data from background thread
         with _log_data_lock:
@@ -1781,82 +2035,108 @@ def main():
 
         # If we have newer data than what was last displayed, use the old mtime data
         # Otherwise load from file path if available
-        if loaded_data and loaded_data['mtime'] == last_mtime:
+        if loaded_data and loaded_data["mtime"] == last_mtime:
             # Use the exact data that was last displayed
-            log_collector = loaded_data['log_collector']
-            graph_structure = loaded_data['graph_structure']
-            log_file_path = loaded_data['log_file_path']
+            log_collector = loaded_data["log_collector"]
+            graph_structure = loaded_data["graph_structure"]
+            log_file_path = loaded_data["log_file_path"]
 
-            debugger.log_info({'action': 'using_cached_data', 'session_id': session_id}, DebuggerLogTypes.SESSION_SWITCH)
+            debugger.log_info(
+                {"action": "using_cached_data", "session_id": session_id},
+                DebuggerLogTypes.SESSION_SWITCH,
+            )
         else:
             # Need to load the last displayed version
             log_file_path = session_info.log_file_path
             if not log_file_path:
-                debugger.log_warning({'message': 'No log path for session', 'session_id': session_id}, DebuggerLogTypes.WARNING)
+                debugger.log_warning(
+                    {"message": "No log path for session", "session_id": session_id},
+                    DebuggerLogTypes.WARNING,
+                )
                 return dash.no_update
 
             try:
-                debugger.log_info({'action': 'loading_last_displayed_data', 'log_file_path': log_file_path}, DebuggerLogTypes.SESSION_SWITCH)
-                log_collector = LogCollector.from_json_logs(log_file_path, json_file_pattern='*')
+                debugger.log_info(
+                    {
+                        "action": "loading_last_displayed_data",
+                        "log_file_path": log_file_path,
+                    },
+                    DebuggerLogTypes.SESSION_SWITCH,
+                )
+                log_collector = LogCollector.from_json_logs(
+                    log_file_path, json_file_pattern="*"
+                )
                 graph_structure = log_collector.get_graph_structure()
             except Exception as e:
-                debugger.log_error({'error': str(e)}, DebuggerLogTypes.ERROR)
+                debugger.log_error({"error": str(e)}, DebuggerLogTypes.ERROR)
                 return dash.no_update
 
         # Return the graph structure
         result = {
-            'graph_data': {
-                'nodes': graph_structure['nodes'],
-                'edges': graph_structure['edges'],
-                'agent': graph_structure['agent'],
-                'log_file': Path(log_file_path).name if log_file_path else f'session_{session_id}'
+            "graph_data": {
+                "nodes": graph_structure["nodes"],
+                "edges": graph_structure["edges"],
+                "agent": graph_structure["agent"],
+                "log_file": Path(log_file_path).name
+                if log_file_path
+                else f"session_{session_id}",
             },
-            'log_groups': {k: v for k, v in log_collector.log_groups.items()}
+            "log_groups": {k: v for k, v in log_collector.log_groups.items()},
         }
 
-        debugger.log_info({'action': 'loaded_graph', 'num_log_groups': len(result['log_groups'])}, DebuggerLogTypes.SESSION_SWITCH)
+        debugger.log_info(
+            {"action": "loaded_graph", "num_log_groups": len(result["log_groups"])},
+            DebuggerLogTypes.SESSION_SWITCH,
+        )
         return result
 
     # Add callback to toggle monitor messages visibility
     @app.app.callback(
         [
-            Output('main-panel-log-graph-monitor-messages', 'style'),
-            Output('main-panel-log-graph-monitor-messages-toggle', 'children')
+            Output("main-panel-log-graph-monitor-messages", "style"),
+            Output("main-panel-log-graph-monitor-messages-toggle", "children"),
         ],
-        [Input('main-panel-log-graph-monitor-messages-toggle', 'n_clicks')],
-        prevent_initial_call=False
+        [Input("main-panel-log-graph-monitor-messages-toggle", "n_clicks")],
+        prevent_initial_call=False,
     )
     def toggle_monitor_messages(n_clicks):
         """Toggle visibility of monitor messages."""
         is_hidden = n_clicks % 2 == 1  # Odd clicks = hidden
 
         if is_hidden:
-            return {'display': 'none'}, 'show'
+            return {"display": "none"}, "show"
         else:
             return {
-                'fontSize': '9px', 'color': '#6E6E80', 'fontFamily': 'monospace',
-                'maxHeight': '100px', 'overflowY': 'auto',
-                'backgroundColor': 'rgba(0, 0, 0, 0.2)', 'padding': '6px',
-                'borderRadius': '3px', 'marginBottom': '10px', 'lineHeight': '1.3'
-            }, 'hide'
+                "fontSize": "9px",
+                "color": "#6E6E80",
+                "fontFamily": "monospace",
+                "maxHeight": "100px",
+                "overflowY": "auto",
+                "backgroundColor": "rgba(0, 0, 0, 0.2)",
+                "padding": "6px",
+                "borderRadius": "3px",
+                "marginBottom": "10px",
+                "lineHeight": "1.3",
+            }, "hide"
 
     # Add callback to update floating log monitor panel
     @app.app.callback(
         [
-            Output('main-panel-log-graph-refresh-btn', 'style'),
-            Output('main-panel-log-graph-monitor-status', 'children'),
-            Output('main-panel-log-graph-monitor-stats', 'children'),
-            Output('main-panel-log-graph-monitor-messages', 'children')
+            Output("main-panel-log-graph-refresh-btn", "style"),
+            Output("main-panel-log-graph-monitor-status", "children"),
+            Output("main-panel-log-graph-monitor-stats", "children"),
+            Output("main-panel-log-graph-monitor-messages", "children"),
         ],
-        [Input('response-poll-interval', 'n_intervals')],
-        [State('current-session-store', 'data')],
-        prevent_initial_call=False
+        [Input("response-poll-interval", "n_intervals")],
+        [State("current-session-store", "data")],
+        prevent_initial_call=False,
     )
     def update_log_monitor_panel(n_intervals, session_id):
         """Update floating log monitor panel with real-time status."""
         global _log_data_lock
-        import dash
         import datetime
+
+        import dash
         from dash import html
 
         # Helper function to get agent control and status prefix
@@ -1871,88 +2151,134 @@ def main():
 
             # Map control values to display names
             control_map = {
-                'stop': 'Stop',
-                'pause': 'Pause',
-                'continue': 'Continue',
-                'step': 'Step',
-                'stepbystep': 'Step'
+                "stop": "Stop",
+                "pause": "Pause",
+                "continue": "Continue",
+                "step": "Step",
+                "stepbystep": "Step",
             }
-            control_display = control_map.get(control, 'Continue')
+            control_display = control_map.get(control, "Continue")
 
             # Map status values to display names
             status_map = {
-                'running': 'Running',
-                'paused': 'Paused',
-                'stopped': 'Stopped',
-                'not_started': 'NotStarted',
-                'unknown': 'Unknown'
+                "running": "Running",
+                "paused": "Paused",
+                "stopped": "Stopped",
+                "not_started": "NotStarted",
+                "unknown": "Unknown",
             }
-            status_display = status_map.get(status, 'Unknown')
+            status_display = status_map.get(status, "Unknown")
 
             return f"[CTL:{control_display}] [Status:{status_display}]"
 
         # Debug logging for first few calls
         debugger = _get_or_create_global_debugger()
         if n_intervals is not None and n_intervals < 5:
-            debugger.log_debug({'call_number': n_intervals, 'session_id': session_id}, DebuggerLogTypes.MONITOR_PANEL)
+            debugger.log_debug(
+                {"call_number": n_intervals, "session_id": session_id},
+                DebuggerLogTypes.MONITOR_PANEL,
+            )
 
         # Get monitor messages
         monitor_messages = get_monitor_messages()
         if monitor_messages:
-            messages_div = html.Div([html.Div(msg, style={'marginBottom': '2px'}) for msg in monitor_messages[-10:]])
+            messages_div = html.Div(
+                [
+                    html.Div(msg, style={"marginBottom": "2px"})
+                    for msg in monitor_messages[-10:]
+                ]
+            )
         else:
             messages_div = "No messages yet..."
 
         if not session_id:
             gray_button = {
-                'width': '100%', 'padding': '8px 12px',
-                'backgroundColor': '#4A4A5A', 'color': '#8E8EA0',
-                'border': 'none', 'borderRadius': '4px',
-                'cursor': 'not-allowed', 'fontSize': '12px',
-                'fontWeight': '500', 'transition': 'all 0.2s'
+                "width": "100%",
+                "padding": "8px 12px",
+                "backgroundColor": "#4A4A5A",
+                "color": "#8E8EA0",
+                "border": "none",
+                "borderRadius": "4px",
+                "cursor": "not-allowed",
+                "fontSize": "12px",
+                "fontWeight": "500",
+                "transition": "all 0.2s",
             }
             # Only log once to avoid console flooding (use debug level to avoid spam)
-            debugger.log_debug('No session_id, returning default state', DebuggerLogTypes.MONITOR_PANEL)
-            return gray_button, f"{get_agent_state_prefix(None)} ⏸️ No active session", "Switch to a session tab", messages_div
+            debugger.log_debug(
+                "No session_id, returning default state", DebuggerLogTypes.MONITOR_PANEL
+            )
+            return (
+                gray_button,
+                f"{get_agent_state_prefix(None)} ⏸️ No active session",
+                "Switch to a session tab",
+                messages_div,
+            )
 
         session_info = get_session_info(session_id)
 
         # Check if initial load has been done
         if not session_info.initial_load_done:
             gray_button = {
-                'width': '100%', 'padding': '8px 12px',
-                'backgroundColor': '#4A4A5A', 'color': '#8E8EA0',
-                'border': 'none', 'borderRadius': '4px',
-                'cursor': 'not-allowed', 'fontSize': '12px',
-                'fontWeight': '500', 'transition': 'all 0.2s'
+                "width": "100%",
+                "padding": "8px 12px",
+                "backgroundColor": "#4A4A5A",
+                "color": "#8E8EA0",
+                "border": "none",
+                "borderRadius": "4px",
+                "cursor": "not-allowed",
+                "fontSize": "12px",
+                "fontWeight": "500",
+                "transition": "all 0.2s",
             }
             # Only log once per session to avoid console flooding
-            if 'waiting_first_load' not in session_info.logged_waiting_messages:
+            if "waiting_first_load" not in session_info.logged_waiting_messages:
                 session_debugger = get_debugger(session_id)
-                session_debugger.log_debug({'session_id': session_id, 'status': 'waiting_for_first_load'}, DebuggerLogTypes.MONITOR_PANEL)
-                session_info.logged_waiting_messages.add('waiting_first_load')
-            return gray_button, f"{get_agent_state_prefix(session_id)} ⏳ Waiting for first load...", f"Session: {session_id[:20]}...", messages_div
+                session_debugger.log_debug(
+                    {"session_id": session_id, "status": "waiting_for_first_load"},
+                    DebuggerLogTypes.MONITOR_PANEL,
+                )
+                session_info.logged_waiting_messages.add("waiting_first_load")
+            return (
+                gray_button,
+                f"{get_agent_state_prefix(session_id)} ⏳ Waiting for first load...",
+                f"Session: {session_id[:20]}...",
+                messages_div,
+            )
 
         # Get log file path for this session
         log_file_path = session_info.log_file_path
         if not log_file_path:
             gray_button = {
-                'width': '100%', 'padding': '8px 12px',
-                'backgroundColor': '#4A4A5A', 'color': '#8E8EA0',
-                'border': 'none', 'borderRadius': '4px',
-                'cursor': 'not-allowed', 'fontSize': '12px',
-                'fontWeight': '500', 'transition': 'all 0.2s'
+                "width": "100%",
+                "padding": "8px 12px",
+                "backgroundColor": "#4A4A5A",
+                "color": "#8E8EA0",
+                "border": "none",
+                "borderRadius": "4px",
+                "cursor": "not-allowed",
+                "fontSize": "12px",
+                "fontWeight": "500",
+                "transition": "all 0.2s",
             }
             # Only log once per session to avoid console flooding
-            if 'no_log_path' not in session_info.logged_waiting_messages:
+            if "no_log_path" not in session_info.logged_waiting_messages:
                 session_debugger = get_debugger(session_id)
-                session_debugger.log_debug({
-                    'session_id': session_id,
-                    'status': 'no_log_path_yet',
-                    'available_sessions': get_active_session_ids()
-                }, DebuggerLogTypes.MONITOR_PANEL)
-                session_info.logged_waiting_messages.add('no_log_path')
-            return gray_button, f"{get_agent_state_prefix(session_id)} ❌ No log path", f"Session: {session_id[:20]}...", messages_div
+                session_debugger.log_debug(
+                    {
+                        "session_id": session_id,
+                        "status": "no_log_path_yet",
+                        "available_sessions": get_active_session_ids(),
+                    },
+                    DebuggerLogTypes.MONITOR_PANEL,
+                )
+                session_info.logged_waiting_messages.add("no_log_path")
+            return (
+                gray_button,
+                f"{get_agent_state_prefix(session_id)} ❌ No log path",
+                f"Session: {session_id[:20]}...",
+                messages_div,
+            )
 
         # Check if we have NEW loaded log data for this session
         with _log_data_lock:
@@ -1960,16 +2286,24 @@ def main():
 
         if loaded_data:
             # Check if this data is newer than what's currently displayed
-            current_mtime = loaded_data.get('mtime', 0)
+            current_mtime = loaded_data.get("mtime", 0)
             last_displayed = session_info.last_displayed_mtime or 0
 
-            num_nodes = loaded_data.get('nodes', 0)
-            num_edges = loaded_data.get('edges', 0)
-            load_timestamp = loaded_data.get('timestamp', 0)
+            num_nodes = loaded_data.get("nodes", 0)
+            num_edges = loaded_data.get("edges", 0)
+            load_timestamp = loaded_data.get("timestamp", 0)
 
             # Format timestamps
-            current_time_str = datetime.datetime.fromtimestamp(current_mtime).strftime('%H:%M:%S') if current_mtime else 'N/A'
-            last_displayed_str = datetime.datetime.fromtimestamp(last_displayed).strftime('%H:%M:%S') if last_displayed else 'N/A'
+            current_time_str = (
+                datetime.datetime.fromtimestamp(current_mtime).strftime("%H:%M:%S")
+                if current_mtime
+                else "N/A"
+            )
+            last_displayed_str = (
+                datetime.datetime.fromtimestamp(last_displayed).strftime("%H:%M:%S")
+                if last_displayed
+                else "N/A"
+            )
             age_seconds = time.time() - load_timestamp if load_timestamp else 0
 
             # Build stats text
@@ -1977,112 +2311,146 @@ def main():
                 f"Nodes: {num_nodes} | Edges: {num_edges}",
                 f"File: {current_time_str}",
                 f"Displayed: {last_displayed_str}",
-                f"Age: {age_seconds:.0f}s"
+                f"Age: {age_seconds:.0f}s",
             ]
-            stats_text = html.Div([html.Div(line, style={'marginBottom': '2px'}) for line in stats_lines])
+            stats_text = html.Div(
+                [html.Div(line, style={"marginBottom": "2px"}) for line in stats_lines]
+            )
 
             # Debug output (only log when there's a difference or on first few calls)
             session_debugger = get_debugger(session_id)
-            if current_mtime != last_displayed or (n_intervals is not None and n_intervals < 3):
-                session_debugger.log_debug({
-                    'session_id': session_id,
-                    'current_mtime': current_mtime,
-                    'last_displayed': last_displayed,
-                    'newer': current_mtime > last_displayed,
-                    'num_nodes': num_nodes,
-                    'num_edges': num_edges,
-                    'age_seconds': int(age_seconds)
-                }, DebuggerLogTypes.MONITOR_PANEL)
+            if current_mtime != last_displayed or (
+                n_intervals is not None and n_intervals < 3
+            ):
+                session_debugger.log_debug(
+                    {
+                        "session_id": session_id,
+                        "current_mtime": current_mtime,
+                        "last_displayed": last_displayed,
+                        "newer": current_mtime > last_displayed,
+                        "num_nodes": num_nodes,
+                        "num_edges": num_edges,
+                        "age_seconds": int(age_seconds),
+                    },
+                    DebuggerLogTypes.MONITOR_PANEL,
+                )
 
             if current_mtime > last_displayed:
                 # New data available!
-                session_debugger.log_info({
-                    'status': 'new_data_available',
-                    'session_id': session_id,
-                    'num_nodes': num_nodes,
-                    'num_edges': num_edges
-                }, DebuggerLogTypes.MONITOR_PANEL)
+                session_debugger.log_info(
+                    {
+                        "status": "new_data_available",
+                        "session_id": session_id,
+                        "num_nodes": num_nodes,
+                        "num_edges": num_edges,
+                    },
+                    DebuggerLogTypes.MONITOR_PANEL,
+                )
 
                 # Enable button with green style
                 button_style = {
-                    'width': '100%',
-                    'padding': '8px 12px',
-                    'backgroundColor': '#19C37D',
-                    'color': '#ECECF1',
-                    'border': 'none',
-                    'borderRadius': '4px',
-                    'cursor': 'pointer',
-                    'fontSize': '12px',
-                    'fontWeight': '500',
-                    'transition': 'all 0.2s',
-                    'boxShadow': '0 0 10px rgba(25, 195, 125, 0.3)'
+                    "width": "100%",
+                    "padding": "8px 12px",
+                    "backgroundColor": "#19C37D",
+                    "color": "#ECECF1",
+                    "border": "none",
+                    "borderRadius": "4px",
+                    "cursor": "pointer",
+                    "fontSize": "12px",
+                    "fontWeight": "500",
+                    "transition": "all 0.2s",
+                    "boxShadow": "0 0 10px rgba(25, 195, 125, 0.3)",
                 }
-                status_text = f"{get_agent_state_prefix(session_id)} ✅ New data available!"
+                status_text = (
+                    f"{get_agent_state_prefix(session_id)} ✅ New data available!"
+                )
                 return button_style, status_text, stats_text, messages_div
             else:
                 # Up to date - gray button
                 button_style = {
-                    'width': '100%',
-                    'padding': '8px 12px',
-                    'backgroundColor': '#4A4A5A',
-                    'color': '#8E8EA0',
-                    'border': 'none',
-                    'borderRadius': '4px',
-                    'cursor': 'not-allowed',
-                    'fontSize': '12px',
-                    'fontWeight': '500',
-                    'transition': 'all 0.2s'
+                    "width": "100%",
+                    "padding": "8px 12px",
+                    "backgroundColor": "#4A4A5A",
+                    "color": "#8E8EA0",
+                    "border": "none",
+                    "borderRadius": "4px",
+                    "cursor": "not-allowed",
+                    "fontSize": "12px",
+                    "fontWeight": "500",
+                    "transition": "all 0.2s",
                 }
                 status_text = f"{get_agent_state_prefix(session_id)} Up to date"
                 return button_style, status_text, stats_text, messages_div
 
         # No loaded data yet - monitor is working but hasn't loaded this session
         # Only log once per session to avoid console flooding
-        if 'no_loaded_data' not in session_info.logged_waiting_messages:
+        if "no_loaded_data" not in session_info.logged_waiting_messages:
             session_debugger = get_debugger(session_id)
-            session_debugger.log_debug({
-                'session_id': session_id,
-                'status': 'no_loaded_data_yet'
-            }, DebuggerLogTypes.MONITOR_PANEL)
-            session_info.logged_waiting_messages.add('no_loaded_data')
+            session_debugger.log_debug(
+                {"session_id": session_id, "status": "no_loaded_data_yet"},
+                DebuggerLogTypes.MONITOR_PANEL,
+            )
+            session_info.logged_waiting_messages.add("no_loaded_data")
         return (
             {
-                'width': '100%', 'padding': '8px 12px',
-                'backgroundColor': '#4A4A5A', 'color': '#8E8EA0',
-                'border': 'none', 'borderRadius': '4px',
-                'cursor': 'not-allowed', 'fontSize': '12px',
-                'fontWeight': '500', 'transition': 'all 0.2s'
+                "width": "100%",
+                "padding": "8px 12px",
+                "backgroundColor": "#4A4A5A",
+                "color": "#8E8EA0",
+                "border": "none",
+                "borderRadius": "4px",
+                "cursor": "not-allowed",
+                "fontSize": "12px",
+                "fontWeight": "500",
+                "transition": "all 0.2s",
             },
             f"{get_agent_state_prefix(session_id)} ⏳ Monitor loading...",
             f"Path: {log_file_path[:30]}...",
-            messages_div
+            messages_div,
         )
 
     # Add callback to refresh log graph when button clicked
     @app.app.callback(
         [
-            Output('log-data-store', 'data', allow_duplicate=True),
-            Output('main-panel-log-graph-plotly-loading-overlay', 'style', allow_duplicate=True),
-            Output('main-panel-log-graph-cytoscape-loading-overlay', 'style', allow_duplicate=True)
+            Output("log-data-store", "data", allow_duplicate=True),
+            Output(
+                "main-panel-log-graph-plotly-loading-overlay",
+                "style",
+                allow_duplicate=True,
+            ),
+            Output(
+                "main-panel-log-graph-cytoscape-loading-overlay",
+                "style",
+                allow_duplicate=True,
+            ),
         ],
-        [Input('main-panel-log-graph-refresh-btn', 'n_clicks')],
+        [Input("main-panel-log-graph-refresh-btn", "n_clicks")],
         [
-            State('log-data-store', 'data'),
-            State('current-session-store', 'data'),
-            State('main-panel-log-graph-rendering-mode', 'value')
+            State("log-data-store", "data"),
+            State("current-session-store", "data"),
+            State("main-panel-log-graph-rendering-mode", "value"),
         ],
-        prevent_initial_call=True
+        prevent_initial_call=True,
     )
-    def refresh_log_graph_on_button_click(refresh_clicks, current_data, session_id, rendering_mode):
+    def refresh_log_graph_on_button_click(
+        refresh_clicks, current_data, session_id, rendering_mode
+    ):
         """Refresh log graph when user clicks the refresh button."""
         global _log_data_lock
         import dash
 
         # Define styles for hiding overlay
         overlay_hidden = {
-            'position': 'absolute', 'top': '0', 'left': '0', 'right': '0', 'bottom': '0',
-            'backgroundColor': 'rgba(44, 44, 44, 0.95)', 'display': 'none',
-            'alignItems': 'center', 'justifyContent': 'center', 'zIndex': '2000'
+            "position": "absolute",
+            "top": "0",
+            "left": "0",
+            "right": "0",
+            "bottom": "0",
+            "backgroundColor": "rgba(44, 44, 44, 0.95)",
+            "display": "none",
+            "alignItems": "center",
+            "justifyContent": "center",
+            "zIndex": "2000",
         }
 
         if not refresh_clicks:
@@ -2092,7 +2460,10 @@ def main():
             return dash.no_update, dash.no_update, dash.no_update
 
         debugger = get_debugger(session_id)
-        debugger.log_info({'action': 'refresh_button_clicked', 'session_id': session_id}, DebuggerLogTypes.REFRESH)
+        debugger.log_info(
+            {"action": "refresh_button_clicked", "session_id": session_id},
+            DebuggerLogTypes.REFRESH,
+        )
         session_info = get_session_info(session_id)
 
         # Get the pre-loaded log data from background thread
@@ -2100,69 +2471,92 @@ def main():
             loaded_data = session_info.loaded_log_data
 
         if not loaded_data:
-            debugger.log_warning({'message': 'No loaded data available', 'session_id': session_id}, DebuggerLogTypes.WARNING)
-            return (current_data if current_data else dash.no_update), dash.no_update, dash.no_update
+            debugger.log_warning(
+                {"message": "No loaded data available", "session_id": session_id},
+                DebuggerLogTypes.WARNING,
+            )
+            return (
+                (current_data if current_data else dash.no_update),
+                dash.no_update,
+                dash.no_update,
+            )
 
         # Track the mtime of this data so we know it's been displayed
-        session_info.last_displayed_mtime = loaded_data['mtime']
+        session_info.last_displayed_mtime = loaded_data["mtime"]
 
         # Use the pre-loaded data (already has graph_structure computed)
-        log_collector = loaded_data['log_collector']
-        graph_structure = loaded_data['graph_structure']
-        log_file_path = loaded_data['log_file_path']
+        log_collector = loaded_data["log_collector"]
+        graph_structure = loaded_data["graph_structure"]
+        log_file_path = loaded_data["log_file_path"]
 
-        num_nodes = loaded_data['nodes']
-        num_edges = loaded_data['edges']
+        num_nodes = loaded_data["nodes"]
+        num_edges = loaded_data["edges"]
 
-        debugger.log_info({'action': 'using_preloaded_data', 'num_nodes': num_nodes, 'num_edges': num_edges}, DebuggerLogTypes.REFRESH)
+        debugger.log_info(
+            {
+                "action": "using_preloaded_data",
+                "num_nodes": num_nodes,
+                "num_edges": num_edges,
+            },
+            DebuggerLogTypes.REFRESH,
+        )
 
         # Return graph structure
         result = {
-            'graph_data': {
-                'nodes': graph_structure['nodes'],
-                'edges': graph_structure['edges'],
-                'agent': graph_structure['agent'],
-                'log_file': Path(log_file_path).name if log_file_path else f'session_{session_id}'
+            "graph_data": {
+                "nodes": graph_structure["nodes"],
+                "edges": graph_structure["edges"],
+                "agent": graph_structure["agent"],
+                "log_file": Path(log_file_path).name
+                if log_file_path
+                else f"session_{session_id}",
             },
-            'log_groups': {k: v for k, v in log_collector.log_groups.items()}
+            "log_groups": {k: v for k, v in log_collector.log_groups.items()},
         }
 
-        debugger.log_info({'action': 'refreshed_graph', 'num_log_groups': len(result['log_groups'])}, DebuggerLogTypes.REFRESH)
+        debugger.log_info(
+            {"action": "refreshed_graph", "num_log_groups": len(result["log_groups"])},
+            DebuggerLogTypes.REFRESH,
+        )
         # Hide loading overlay after refresh completes
-        plotly_overlay = overlay_hidden if rendering_mode == 'plotly' else dash.no_update
-        cytoscape_overlay = overlay_hidden if rendering_mode == 'cytoscape' else dash.no_update
+        plotly_overlay = (
+            overlay_hidden if rendering_mode == "plotly" else dash.no_update
+        )
+        cytoscape_overlay = (
+            overlay_hidden if rendering_mode == "cytoscape" else dash.no_update
+        )
         return result, plotly_overlay, cytoscape_overlay
 
     # Run the app
     debugger = _get_or_create_global_debugger()
     startup_info = {
-        'title': 'WEB AGENT DEBUGGER - Queue-Based UI',
-        'architecture': {
-            'queue_based_communication': 'Uses StorageBasedQueueService',
-            'decoupled_design': 'UI and agent run in separate processes',
-            'persistent_queues': 'File-based queues survive restarts',
-            'real_agent': 'Full grocery planning agent with web automation',
-            'log_visualization': 'Execution graph from JSON logs'
+        "title": "WEB AGENT DEBUGGER - Queue-Based UI",
+        "architecture": {
+            "queue_based_communication": "Uses StorageBasedQueueService",
+            "decoupled_design": "UI and agent run in separate processes",
+            "persistent_queues": "File-based queues survive restarts",
+            "real_agent": "Full grocery planning agent with web automation",
+            "log_visualization": "Execution graph from JSON logs",
         },
-        'queue_configuration': {
-            'queue_base_path': '_runtime/queue_storage/',
-            'auto_detect': 'Latest timestamp folder',
-            'input_queue': INPUT_QUEUE_ID,
-            'response_queue': RESPONSE_QUEUE_ID,
-            'client_control_queue': CLIENT_CONTROL_QUEUE_ID
+        "queue_configuration": {
+            "queue_base_path": "_runtime/queue_storage/",
+            "auto_detect": "Latest timestamp folder",
+            "input_queue": INPUT_QUEUE_ID,
+            "response_queue": RESPONSE_QUEUE_ID,
+            "client_control_queue": CLIENT_CONTROL_QUEUE_ID,
         },
-        'setup': [
-            'Start the agent service: python web_agent_service.py',
-            'Start this debugger UI: python agent_debugger.py',
-            'Navigate to http://localhost:8050'
+        "setup": [
+            "Start the agent service: python web_agent_service.py",
+            "Start this debugger UI: python agent_debugger.py",
+            "Navigate to http://localhost:8050",
         ],
-        'features': [
-            'Asynchronous communication through queues',
-            'Real web agent with browser automation',
-            'Execution graph visualization',
-            'Detailed log inspection',
-            'Multi-process architecture'
-        ]
+        "features": [
+            "Asynchronous communication through queues",
+            "Real web agent with browser automation",
+            "Execution graph visualization",
+            "Detailed log inspection",
+            "Multi-process architecture",
+        ],
     }
     debugger.log_info(startup_info, DebuggerLogTypes.DEBUGGER_STARTUP)
 
@@ -2171,11 +2565,12 @@ def main():
 
     # Disable Flask/Werkzeug request logging to reduce console spam
     import logging
-    log = logging.getLogger('werkzeug')
+
+    log = logging.getLogger("werkzeug")
     log.setLevel(logging.WARNING)
 
     app.run()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

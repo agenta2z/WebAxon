@@ -6,7 +6,8 @@ to ensure consistent data structures across implementations.
 """
 
 from typing import Dict, List, Mapping, Optional, Sequence, Union
-from attr import attrs, attrib
+
+from attr import attrib, attrs
 
 
 @attrs(slots=True)
@@ -29,6 +30,7 @@ class ElementDimensionInfo:
         overflow_x: CSS overflow-x value (e.g., 'auto', 'scroll', 'hidden')
         overflow_y: CSS overflow-y value (e.g., 'auto', 'scroll', 'hidden')
     """
+
     width: int = attrib()
     height: int = attrib()
     client_width: int = attrib()
@@ -50,8 +52,8 @@ ElementConditions = Union[ElementCondition, Sequence[ElementCondition]]
 
 # Scrollable child resolution strategies
 SCROLLABLE_CHILD_STRATEGIES = (
-    'first_scrollable',           # First scrollable descendant (DFS)
-    'first_largest_scrollable',   # First scrollable with largest scroll area
-    'deepest_scrollable',         # Deepest scrollable in DOM tree
-    'largest_scrollable',         # Scrollable with largest scroll area overall
+    "first_scrollable",  # First scrollable descendant (DFS)
+    "first_largest_scrollable",  # First scrollable with largest scroll area
+    "deepest_scrollable",  # Deepest scrollable in DOM tree
+    "largest_scrollable",  # Scrollable with largest scroll area overall
 )

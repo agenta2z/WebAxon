@@ -18,8 +18,8 @@ templates receive pre-formatted strings. The parity test passes floats to
 Python .format() and pre-formatted strings to Handlebars, then compares.
 """
 
-import sys
 import re
+import sys
 from pathlib import Path
 from typing import Dict, Optional, Tuple
 
@@ -38,16 +38,19 @@ except ImportError:
     sys.exit(1)
 
 try:
-    from agent_foundation.knowledge.ingestion.prompts.structuring_prompt import (
-        STRUCTURING_PROMPT_TEMPLATE,
-        PIECES_ONLY_PROMPT_TEMPLATE,
-        CLASSIFICATION_PROMPT_TEMPLATE,
-    )
     from agent_foundation.knowledge.ingestion.prompts.dedup_llm_judge import (
         DEDUP_LLM_JUDGE_PROMPT,
     )
     from agent_foundation.knowledge.ingestion.prompts.merge_execution import (
         MERGE_EXECUTION_PROMPT,
+    )
+    from agent_foundation.knowledge.ingestion.prompts.skill_synthesis import (
+        SKILL_SYNTHESIS_PROMPT,
+    )
+    from agent_foundation.knowledge.ingestion.prompts.structuring_prompt import (
+        CLASSIFICATION_PROMPT_TEMPLATE,
+        PIECES_ONLY_PROMPT_TEMPLATE,
+        STRUCTURING_PROMPT_TEMPLATE,
     )
     from agent_foundation.knowledge.ingestion.prompts.update_prompt import (
         UPDATE_INTENT_PROMPT,
@@ -55,12 +58,7 @@ try:
     from agent_foundation.knowledge.ingestion.prompts.validation import (
         VALIDATION_PROMPT,
     )
-    from agent_foundation.knowledge.ingestion.prompts.skill_synthesis import (
-        SKILL_SYNTHESIS_PROMPT,
-    )
-    from agent_foundation.knowledge.ingestion.taxonomy import (
-        format_taxonomy_for_prompt,
-    )
+    from agent_foundation.knowledge.ingestion.taxonomy import format_taxonomy_for_prompt
 except ImportError:
     print("ERROR: Cannot import from agent_foundation.")
     print("Ensure AgentFoundation is installed or on PYTHONPATH.")
@@ -300,7 +298,9 @@ def run_parity_tests() -> bool:
                     break
             else:
                 if len(hbs_lines) != len(py_lines):
-                    print(f"  Line count differs: hbs={len(hbs_lines)}, py={len(py_lines)}")
+                    print(
+                        f"  Line count differs: hbs={len(hbs_lines)}, py={len(py_lines)}"
+                    )
 
     print(f"\nResults: {passed} passed, {failed} failed, {passed + failed} total")
     return failed == 0

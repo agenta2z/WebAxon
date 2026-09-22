@@ -43,6 +43,7 @@ def _split_flags(args: str) -> Tuple[str, Dict[str, str]]:
     positional = " ".join(positional_parts)
     return positional, flags
 
+
 def _extract_spaces(flags: Dict[str, str]) -> Optional[List[str]]:
     """Extract space filter from parsed flags.
 
@@ -132,7 +133,9 @@ def parse_kb_get(args: str) -> Dict[str, Any]:
 
     query = positional.strip()
     if not query:
-        raise ValueError("Usage: /kb-get <query> [--domain D] [--limit N] [--entity-id ID] [--tags T1,T2] [--space S] [--spaces S1,S2]")
+        raise ValueError(
+            "Usage: /kb-get <query> [--domain D] [--limit N] [--entity-id ID] [--tags T1,T2] [--space S] [--spaces S1,S2]"
+        )
 
     domain: Optional[str] = flags.get("domain")
     entity_id: Optional[str] = flags.get("entity-id")
@@ -142,9 +145,13 @@ def parse_kb_get(args: str) -> Dict[str, Any]:
         try:
             limit = int(flags["limit"])
         except (ValueError, TypeError):
-            raise ValueError(f"--limit must be a positive integer, got: {flags['limit']}")
+            raise ValueError(
+                f"--limit must be a positive integer, got: {flags['limit']}"
+            )
         if limit <= 0:
-            raise ValueError(f"--limit must be a positive integer, got: {flags['limit']}")
+            raise ValueError(
+                f"--limit must be a positive integer, got: {flags['limit']}"
+            )
 
     tags: Optional[List[str]] = None
     if "tags" in flags:
@@ -187,6 +194,7 @@ def parse_kb_restore(args: str) -> Dict[str, Any]:
     if not piece_id:
         raise ValueError("Usage: /kb-restore <piece_id>")
     return {"piece_id": piece_id}
+
 
 def parse_kb_review_spaces(args: str) -> Dict[str, Any]:
     """Parse ``/kb-review-spaces [--approve <piece_id>] [--reject <piece_id>]``.

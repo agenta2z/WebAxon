@@ -2,6 +2,7 @@
 Quick verification that the template can be loaded and parsed correctly.
 This ensures the template is valid and ready for use.
 """
+
 import sys
 from pathlib import Path
 
@@ -14,22 +15,32 @@ if str(src_path) not in sys.path:
 from webaxon.automation.schema import load_sequence_from_string
 
 # Import the template function directly from the file
-sys.path.insert(0, str(project_root / "src" / "webaxon" / "devsuite" / "agent_debugger_nextgen" / "action_tester"))
+sys.path.insert(
+    0,
+    str(
+        project_root
+        / "src"
+        / "webaxon"
+        / "devsuite"
+        / "agent_debugger_nextgen"
+        / "action_tester"
+    ),
+)
 from models import get_default_sequence_template
 
 
 def main():
     print("Verifying default template can be loaded and parsed...\n")
-    
+
     # Get the template
     template = get_default_sequence_template()
-    
+
     print("Template JSON:")
     print("=" * 70)
     print(template)
     print("=" * 70)
     print()
-    
+
     # Parse it
     try:
         sequence = load_sequence_from_string(template)
@@ -40,7 +51,7 @@ def main():
         print(f"Description: {sequence.description}")
         print(f"Number of actions: {len(sequence.actions)}")
         print()
-        
+
         print("Actions:")
         for i, action in enumerate(sequence.actions, 1):
             strategy = action.target.strategy if action.target else "N/A"
@@ -52,13 +63,13 @@ def main():
             if action.args:
                 print(f"     Args: {action.args}")
             print()
-        
+
         # Verify all strategies are present
         strategies = set()
         for action in sequence.actions:
             if action.target:
                 strategies.add(action.target.strategy)
-        
+
         required = {"id", "__id__", "xpath", "css", "literal"}
         if strategies == required:
             print("✅ All 5 target strategies are present!")
@@ -66,12 +77,13 @@ def main():
         else:
             print(f"⚠️  Missing strategies: {required - strategies}")
             return False
-        
+
         return True
-        
+
     except Exception as e:
         print(f"❌ Failed to parse template: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 

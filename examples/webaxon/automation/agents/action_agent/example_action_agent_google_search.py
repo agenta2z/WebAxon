@@ -31,11 +31,11 @@ from pathlib import Path
 
 # Import common utilities
 from common import (
-    setup_project_paths,
-    setup_logging,
-    TestResult,
     extract_executed_actions,
-    print_action_summary
+    print_action_summary,
+    setup_logging,
+    setup_project_paths,
+    TestResult,
 )
 
 # Setup paths and logging
@@ -57,39 +57,58 @@ def run_dry_run_test() -> bool:
 
     # Test 1: Verify imports
     try:
-        from agent_foundation.agents.prompt_based_agents.prompt_based_action_agent import PromptBasedActionAgent
+        from agent_foundation.agents.prompt_based_agents.prompt_based_action_agent import (
+            PromptBasedActionAgent,
+        )
         from agent_foundation.common.inferencers.inferencer_base import InferencerBase
-        from rich_python_utils.string_utils.formatting.template_manager import TemplateManager
+        from rich_python_utils.string_utils.formatting.template_manager import (
+            TemplateManager,
+        )
         from webaxon.automation.agents import create_action_agent
+
         result.check("Import create_action_agent", True)
     except ImportError as e:
         result.check("Import create_action_agent", False, str(e))
         return result.summary()
 
     # Test 2: Verify bundled templates exist
-    templates_path = Path(project_root) / "src" / "webaxon" / "automation" / "agents" / "prompt_templates"
+    templates_path = (
+        Path(project_root)
+        / "src"
+        / "webaxon"
+        / "automation"
+        / "agents"
+        / "prompt_templates"
+    )
     result.check(
         "Bundled templates directory exists",
         templates_path.exists(),
-        f"Expected at {templates_path}"
+        f"Expected at {templates_path}",
     )
 
     action_agent_template = templates_path / "action_agent" / "main" / "default.hbs"
     result.check(
         "Action agent template exists",
         action_agent_template.exists(),
-        f"Expected at {action_agent_template}"
+        f"Expected at {action_agent_template}",
     )
 
     # Test 3: Create a mock WebDriver and reasoner to test factory
     class MockWebDriver:
         """Minimal mock for testing factory setup."""
-        def get(self, url): pass
-        def quit(self): pass
-        def __call__(self, **kwargs): return {"status": "mock"}
+
+        def get(self, url):
+            pass
+
+        def quit(self):
+            pass
+
+        def __call__(self, **kwargs):
+            return {"status": "mock"}
 
     class MockReasoner(InferencerBase):
         """Minimal mock reasoner for testing factory setup."""
+
         def __init__(self):
             super().__init__()
 
@@ -109,7 +128,7 @@ def run_dry_run_test() -> bool:
         result.check(
             "Agent is PromptBasedActionAgent",
             isinstance(agent, PromptBasedActionAgent),
-            f"Got {type(agent)}"
+            f"Got {type(agent)}",
         )
     except Exception as e:
         result.check("create_action_agent returns agent", False, str(e))
@@ -118,11 +137,10 @@ def run_dry_run_test() -> bool:
     # Test 5: Agent has correct configuration
     result.check(
         "Agent has prompt_formatter",
-        hasattr(agent, 'prompt_formatter') and agent.prompt_formatter is not None
+        hasattr(agent, "prompt_formatter") and agent.prompt_formatter is not None,
     )
     result.check(
-        "Agent has reasoner",
-        hasattr(agent, 'reasoner') and agent.reasoner is not None
+        "Agent has reasoner", hasattr(agent, "reasoner") and agent.reasoner is not None
     )
 
     return result.summary()
@@ -138,16 +156,22 @@ def run_live_test() -> bool:
     3. Action agent can make LLM call and get response
     4. Browser actually executed the search task
     """
-    from agent_foundation.common.inferencers.api_inferencers.claude_api_inferencer import ClaudeApiInferencer
-    from webaxon.automation.web_driver import WebDriver
+    from agent_foundation.common.inferencers.api_inferencers.claude_api_inferencer import (
+        ClaudeApiInferencer,
+    )
     from webaxon.automation.agents import create_action_agent
+    from webaxon.automation.web_driver import WebDriver
 
     _logger.info("Running LIVE test (browser + API calls)")
     result = TestResult(_logger)
 
     # Check for API key
-    api_key = os.environ.get('ANTHROPIC_API_KEY')
-    result.check("ANTHROPIC_API_KEY is set", bool(api_key), "Set ANTHROPIC_API_KEY environment variable")
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    result.check(
+        "ANTHROPIC_API_KEY is set",
+        bool(api_key),
+        "Set ANTHROPIC_API_KEY environment variable",
+    )
     if not api_key:
         return result.summary()
 
@@ -189,7 +213,7 @@ def run_live_test() -> bool:
         result.check(
             "Initial page navigation to Google",
             "google" in initial_url.lower(),
-            f"URL: {initial_url}"
+            f"URL: {initial_url}",
         )
 
         # Test 5: Call action agent with search task
@@ -203,7 +227,9 @@ def run_live_test() -> bool:
             # Even if action execution fails, we continue to check the browser state
             error_type = type(e).__name__
             _logger.warning(f"Action agent raised {error_type}: {e}")
-            result.check("Action agent call completed", True)  # We still got through the call
+            result.check(
+                "Action agent call completed", True
+            )  # We still got through the call
 
         # Extract and print executed actions summary
         _logger.info("Extracting executed actions from agent state...")
@@ -225,7 +251,7 @@ def run_live_test() -> bool:
         result.check(
             "URL changed to search results",
             url_has_search,
-            f"Current URL: {current_url}"
+            f"Current URL: {current_url}",
         )
 
         # Check if page title contains search query
@@ -234,39 +260,47 @@ def run_live_test() -> bool:
         result.check(
             "Page title contains search query",
             title_has_query,
-            f"Title: '{page_title}', expected words from '{search_query}'"
+            f"Title: '{page_title}', expected words from '{search_query}'",
         )
 
         # Check for search results elements on page
         # Note: Google may block headless browsers with CAPTCHA, which is expected
         try:
             # Google search results typically have these elements
-            search_results = webdriver.find_elements("css selector", "#search, #rso, .g")
+            search_results = webdriver.find_elements(
+                "css selector", "#search, #rso, .g"
+            )
             has_results = len(search_results) > 0
 
             # Check if we hit a CAPTCHA/bot detection page
-            page_source = webdriver.page_source if hasattr(webdriver, 'page_source') else ""
-            is_captcha_page = "unusual traffic" in page_source.lower() or "/sorry/" in current_url
+            page_source = (
+                webdriver.page_source if hasattr(webdriver, "page_source") else ""
+            )
+            is_captcha_page = (
+                "unusual traffic" in page_source.lower() or "/sorry/" in current_url
+            )
 
             if has_results:
                 result.check(
                     "Search results elements found on page",
                     True,
-                    f"Found {len(search_results)} result elements"
+                    f"Found {len(search_results)} result elements",
                 )
             elif is_captcha_page:
                 # CAPTCHA is expected with headless automation - count as partial success
-                _logger.warning("Google CAPTCHA detected (expected with headless automation)")
+                _logger.warning(
+                    "Google CAPTCHA detected (expected with headless automation)"
+                )
                 result.check(
                     "Search navigation attempted (CAPTCHA blocked results)",
                     True,
-                    "Google bot detection triggered - this is expected behavior for headless browsers"
+                    "Google bot detection triggered - this is expected behavior for headless browsers",
                 )
             else:
                 result.check(
                     "Search results elements found on page",
                     False,
-                    f"Found {len(search_results)} result elements, no CAPTCHA detected"
+                    f"Found {len(search_results)} result elements, no CAPTCHA detected",
                 )
         except Exception as e:
             result.check("Search results elements found on page", False, str(e))
@@ -294,17 +328,17 @@ def main():
 Examples:
   python example_action_agent_google_search.py --dry-run   # Fast setup verification (~1-2 sec)
   python example_action_agent_google_search.py --live      # Full browser + API test (~30-60 sec)
-        """
+        """,
     )
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Verify setup without browser/API (fast, no external dependencies)"
+        help="Verify setup without browser/API (fast, no external dependencies)",
     )
     parser.add_argument(
         "--live",
         action="store_true",
-        help="Full test with browser and API calls (requires Chrome + API key)"
+        help="Full test with browser and API calls (requires Chrome + API key)",
     )
 
     args = parser.parse_args()

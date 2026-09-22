@@ -1,5 +1,7 @@
-from ..utils import encode_image
 from PIL import Image
+
+from ..utils import encode_image
+
 
 def AgentTrek_eval(task, last_actions, thoughts, images_path):
     system_msg = """You are an expert in evaluating the performance of a web navigation agent. The agent is designed to help a human user navigate a website to complete a task. Given the user's task goal, the agent's trajectory, your goal is to decide whether the agent's execution is successful or not.
@@ -36,8 +38,12 @@ The last snapshot of the web page is shown in the image."""
     for idx, (thought, action) in enumerate(zip(thoughts, last_actions)):
         thought = thought.replace("\n\n", " ")
         action = action.replace("\n\n", " ")
-        thoughts_and_actions += f"Thought {idx+1}: {thought}\nAction {idx+1}: {action}\n\n"
-    text = prompt.format(task=task, thoughts_and_actions=thoughts_and_actions.strip("\n\n"))
+        thoughts_and_actions += (
+            f"Thought {idx + 1}: {thought}\nAction {idx + 1}: {action}\n\n"
+        )
+    text = prompt.format(
+        task=task, thoughts_and_actions=thoughts_and_actions.strip("\n\n")
+    )
 
     jpg_base64_str = encode_image(Image.open(images_path))
     messages = [
@@ -48,9 +54,12 @@ The last snapshot of the web page is shown in the image."""
                 {"type": "text", "text": text},
                 {
                     "type": "image_url",
-                    "image_url": {"url": f"data:image/jpeg;base64,{jpg_base64_str}", "detail": "high"},
+                    "image_url": {
+                        "url": f"data:image/jpeg;base64,{jpg_base64_str}",
+                        "detail": "high",
+                    },
                 },
             ],
-        }
+        },
     ]
     return messages, text, system_msg

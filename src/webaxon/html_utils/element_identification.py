@@ -1,16 +1,22 @@
-from typing import Mapping, Optional, Any, Sequence, Union, List, Tuple, Dict
 import re
 from enum import StrEnum
-import bs4
-from bs4 import BeautifulSoup, Tag, NavigableString
-from lxml import etree
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
-from webaxon.html_utils.common import parse_html_string, get_text_and_attributes_from_element, \
-    support_input_html, support_input_html2, copy_html_element_name_and_attrs
+import bs4
+from bs4 import BeautifulSoup, NavigableString, Tag
+from lxml import etree
+from webaxon.html_utils.common import (
+    copy_html_element_name_and_attrs,
+    get_text_and_attributes_from_element,
+    parse_html_string,
+    support_input_html,
+    support_input_html2,
+)
 
 # Import readability scoring (optional - graceful degradation if not available)
 try:
     from rich_python_utils.nlp_utils.readability import get_string_readability_score
+
     _HAS_READABILITY = True
 except ImportError:
     _HAS_READABILITY = False
@@ -19,36 +25,77 @@ except ImportError:
 # Import dynamic content detection (optional - graceful degradation if not available)
 try:
     from rich_python_utils.nlp_utils.string_patterns import contains_dynamic_content
+
     _HAS_DYNAMIC_DETECTION = True
 except ImportError:
     _HAS_DYNAMIC_DETECTION = False
     contains_dynamic_content = None
 
-ATTR_NAME_INCREMENTAL_ID = '__id__'
+ATTR_NAME_INCREMENTAL_ID = "__id__"
 
 # Generic CSS framework classes to skip when generating xpaths
 GENERIC_CLASSES = {
-    'btn', 'button', 'container', 'row', 'col', 'form-control', 'd-flex',
-    'flex', 'grid', 'block', 'inline', 'hidden', 'visible', 'active',
-    'disabled', 'selected', 'checked', 'focus', 'hover', 'error', 'success',
-    'warning', 'info', 'primary', 'secondary', 'text', 'bg', 'border',
+    "btn",
+    "button",
+    "container",
+    "row",
+    "col",
+    "form-control",
+    "d-flex",
+    "flex",
+    "grid",
+    "block",
+    "inline",
+    "hidden",
+    "visible",
+    "active",
+    "disabled",
+    "selected",
+    "checked",
+    "focus",
+    "hover",
+    "error",
+    "success",
+    "warning",
+    "info",
+    "primary",
+    "secondary",
+    "text",
+    "bg",
+    "border",
 }
 
 # Tailwind-style utility class prefixes (only match when followed by digits: p-4, mt-2)
 UTILITY_CLASS_PREFIXES = {
-    'p-', 'm-', 'px-', 'py-', 'mx-', 'my-', 'pt-', 'pb-', 'pl-', 'pr-',
-    'mt-', 'mb-', 'ml-', 'mr-', 'w-', 'h-', 'min-', 'max-',
+    "p-",
+    "m-",
+    "px-",
+    "py-",
+    "mx-",
+    "my-",
+    "pt-",
+    "pb-",
+    "pl-",
+    "pr-",
+    "mt-",
+    "mb-",
+    "ml-",
+    "mr-",
+    "w-",
+    "h-",
+    "min-",
+    "max-",
 }
 
 # Patterns for dynamic/hash-like values that should be skipped in xpath generation
 # These patterns indicate auto-generated or minified values that are not stable
 HASH_LIKE_VALUE_PATTERNS = [
-    r'^react-',           # React
-    r'^ember\d+',         # Ember
-    r'^ng-',              # Angular
-    r'^:r\d+:',           # React 18 useId
-    r'^[a-f0-9]{8,}$',    # UUID-like (8+ lowercase hex chars)
-    r'^\d+$',             # Pure numeric
+    r"^react-",  # React
+    r"^ember\d+",  # Ember
+    r"^ng-",  # Angular
+    r"^:r\d+:",  # React 18 useId
+    r"^[a-f0-9]{8,}$",  # UUID-like (8+ lowercase hex chars)
+    r"^\d+$",  # Pure numeric
     # Google-style minified IDs: mixed case with unusual patterns
     # e.g., APjFqb, gLFyf, RNmpXc (not normal words like "Search" or "Submit")
 ]
@@ -71,36 +118,54 @@ def _looks_like_hash(value: str) -> bool:
         return False
 
     # Skip if contains spaces (likely meaningful phrase)
-    if ' ' in value:
+    if " " in value:
         return False
 
     # Check for unusual casing patterns (not standard words or camelCase)
     # Pattern: lowercase followed by uppercase (mid-word caps): gLFyf, APjFqb
-    has_unusual_caps = bool(re.search(r'[a-z][A-Z]', value))
+    has_unusual_caps = bool(re.search(r"[a-z][A-Z]", value))
 
     # Check for consecutive uppercase in the middle (not at start)
-    has_mid_consecutive_upper = bool(re.search(r'.[A-Z]{2}', value))
+    has_mid_consecutive_upper = bool(re.search(r".[A-Z]{2}", value))
 
     # Check for digit mixed with letters (but not just trailing number like button-1)
-    has_mixed_digits = bool(re.search(r'[a-zA-Z]\d[a-zA-Z]', value))
+    has_mixed_digits = bool(re.search(r"[a-zA-Z]\d[a-zA-Z]", value))
 
     # Check for underscore followed by digits (framework pattern): gb_70
-    has_underscore_digits = bool(re.search(r'_\d+$', value))
+    has_underscore_digits = bool(re.search(r"_\d+$", value))
 
-    return has_unusual_caps or has_mid_consecutive_upper or has_mixed_digits or has_underscore_digits
+    return (
+        has_unusual_caps
+        or has_mid_consecutive_upper
+        or has_mixed_digits
+        or has_underscore_digits
+    )
+
 
 # Attribute priority for generating lean xpaths
 # Note: data-stid is used by Expedia and similar sites for stable test identifiers
 XPATH_ATTR_PRIORITY = [
-    'id', 'name', 'title', 'value', 'href', 'for', 'aria-label',
-    'placeholder', 'data-testid', 'data-stid', 'data-qa', 'data-id', 'type', 'role'
+    "id",
+    "name",
+    "title",
+    "value",
+    "href",
+    "for",
+    "aria-label",
+    "placeholder",
+    "data-testid",
+    "data-stid",
+    "data-qa",
+    "data-id",
+    "type",
+    "role",
 ]
 
 # Attributes that typically contain human-readable descriptions
 # These get a readability boost since their purpose is to be descriptive
 # - title, aria-label, placeholder, alt: Always human-facing text
 # - value: User-facing label for submit buttons (input[type=submit], button)
-SEMANTIC_ATTRS = {'title', 'aria-label', 'placeholder', 'alt', 'value'}
+SEMANTIC_ATTRS = {"title", "aria-label", "placeholder", "alt", "value"}
 
 # Readability boost for semantic attributes (added to score)
 # Must be > 0.164 to prioritize "Google Search" (0.336) over "submit" (0.5)
@@ -133,12 +198,12 @@ class XPathResolutionMode(StrEnum):
 
 @support_input_html2
 def compare_elements(
-        element1,
-        element2,
-        ignore_attrs: Optional[Sequence[str]] = None,
-        consider_children: bool = False,
-        consider_immediate_text_only: bool = False,
-        strip_texts_before_concatenation: bool = False,
+    element1,
+    element2,
+    ignore_attrs: Optional[Sequence[str]] = None,
+    consider_children: bool = False,
+    consider_immediate_text_only: bool = False,
+    strip_texts_before_concatenation: bool = False,
 ) -> bool:
     """Compares two HTML elements for equality.
 
@@ -265,12 +330,12 @@ def compare_elements(
     text1, attrs1 = get_text_and_attributes_from_element(
         element1,
         immediate_text_only=consider_immediate_text_only,
-        strip_texts_before_concatenation=strip_texts_before_concatenation
+        strip_texts_before_concatenation=strip_texts_before_concatenation,
     )
     text2, attrs2 = get_text_and_attributes_from_element(
         element2,
         immediate_text_only=consider_immediate_text_only,
-        strip_texts_before_concatenation=strip_texts_before_concatenation
+        strip_texts_before_concatenation=strip_texts_before_concatenation,
     )
 
     if text1.strip() != text2.strip():
@@ -287,8 +352,16 @@ def compare_elements(
         return True
 
     # Recursively compare child elements
-    children1 = [child for child in element1.contents if not isinstance(child, NavigableString) or child.strip()]
-    children2 = [child for child in element2.contents if not isinstance(child, NavigableString) or child.strip()]
+    children1 = [
+        child
+        for child in element1.contents
+        if not isinstance(child, NavigableString) or child.strip()
+    ]
+    children2 = [
+        child
+        for child in element2.contents
+        if not isinstance(child, NavigableString) or child.strip()
+    ]
 
     if len(children1) != len(children2):
         return False
@@ -303,7 +376,9 @@ def compare_elements(
         else:
             if isinstance(child2, str):
                 return False
-            if not compare_elements(child1, child2, ignore_attrs, consider_children=True):
+            if not compare_elements(
+                child1, child2, ignore_attrs, consider_children=True
+            ):
                 return False
 
     return True
@@ -311,12 +386,12 @@ def compare_elements(
 
 @support_input_html
 def get_element_signature(
-        element,
-        ignore_attrs: Optional[Sequence[str]] = None,
-        consider_children: bool = False,
-        consider_text: bool = True,
-        consider_immediate_text_only: bool = False,
-        strip_texts_before_concatenation: bool = False
+    element,
+    ignore_attrs: Optional[Sequence[str]] = None,
+    consider_children: bool = False,
+    consider_text: bool = True,
+    consider_immediate_text_only: bool = False,
+    strip_texts_before_concatenation: bool = False,
 ) -> str:
     """Generates a normalized string signature for an element.
 
@@ -392,7 +467,7 @@ def get_element_signature(
     text, attributes = get_text_and_attributes_from_element(
         element,
         immediate_text_only=consider_immediate_text_only,
-        strip_texts_before_concatenation=strip_texts_before_concatenation
+        strip_texts_before_concatenation=strip_texts_before_concatenation,
     )
 
     # Ignore specified attributes
@@ -400,19 +475,17 @@ def get_element_signature(
 
     # Sort attributes
     sorted_attrs = sorted(
-        (key, ' '.join(sorted(v)) if isinstance(v, list) else v)
+        (key, " ".join(sorted(v)) if isinstance(v, list) else v)
         for key, v in attributes.items()
     )
 
     # Build attribute string
-    attr_str = ''.join(
-        f' {key}="{value}"' for key, value in sorted_attrs
-    )
+    attr_str = "".join(f' {key}="{value}"' for key, value in sorted_attrs)
 
     # Build the signature
     if consider_children:
         # Include children signatures
-        child_signatures = ''
+        child_signatures = ""
         for child in element.contents:
             if isinstance(child, NavigableString):
                 child_text = child
@@ -426,28 +499,28 @@ def get_element_signature(
                     ignore_attrs=ignore_attrs,
                     consider_children=consider_children,
                     consider_text=consider_text,
-                    consider_immediate_text_only=consider_immediate_text_only
+                    consider_immediate_text_only=consider_immediate_text_only,
                 )
-        signature = f'<{tag_name}{attr_str}>{child_signatures}</{tag_name}>'
+        signature = f"<{tag_name}{attr_str}>{child_signatures}</{tag_name}>"
     else:
         # Exclude children, only include text
         if text and consider_text:
-            signature = f'<{tag_name}{attr_str}>{text}</{tag_name}>'
+            signature = f"<{tag_name}{attr_str}>{text}</{tag_name}>"
         else:
-            signature = f'<{tag_name}{attr_str}></{tag_name}>'
+            signature = f"<{tag_name}{attr_str}></{tag_name}>"
 
     return signature
 
 
 @support_input_html2
 def find_incremental_elements(
-        element1,
-        element2,
-        keep_hierarchy: bool = True,
-        consider_text_for_comparison: bool = True,
-        keep_all_text_in_hierarchy_for_incremental_change: bool = True,
-        strip_texts_before_concatenation: bool = False,
-        ignore_attrs_for_comparison=None
+    element1,
+    element2,
+    keep_hierarchy: bool = True,
+    consider_text_for_comparison: bool = True,
+    keep_all_text_in_hierarchy_for_incremental_change: bool = True,
+    strip_texts_before_concatenation: bool = False,
+    ignore_attrs_for_comparison=None,
 ):
     """Finds elements present in `element2` but not in `element1`.
 
@@ -584,14 +657,19 @@ def find_incremental_elements(
             consider_children=False,
             consider_text=consider_text_for_comparison,
             consider_immediate_text_only=True,
-            strip_texts_before_concatenation=strip_texts_before_concatenation
+            strip_texts_before_concatenation=strip_texts_before_concatenation,
         )
         signatures1.add(signature)
 
     if keep_hierarchy:
+
         def find_new_elements_recursive(new_element):
             if isinstance(new_element, NavigableString):
-                return NavigableString(str(new_element)) if keep_all_text_in_hierarchy_for_incremental_change else None
+                return (
+                    NavigableString(str(new_element))
+                    if keep_all_text_in_hierarchy_for_incremental_change
+                    else None
+                )
 
             signature = get_element_signature(
                 new_element,
@@ -599,7 +677,7 @@ def find_incremental_elements(
                 consider_children=False,
                 consider_text=consider_text_for_comparison,
                 consider_immediate_text_only=True,
-                strip_texts_before_concatenation=strip_texts_before_concatenation
+                strip_texts_before_concatenation=strip_texts_before_concatenation,
             )
 
             if signature not in signatures1:
@@ -608,17 +686,20 @@ def find_incremental_elements(
 
             # Element exists in old, but maybe its children contain new elements
             new_element_copy = copy_html_element_name_and_attrs(
-                new_element,
-                copy_children=False
+                new_element, copy_children=False
             )
 
             all_child_strings = True
             new_element_contents = list(new_element.contents)
             for child in new_element_contents:
                 if isinstance(child, NavigableString):
-                    child = str(child).strip('\n')
-                    child_copy = NavigableString(child) if bool(
-                        child) and keep_all_text_in_hierarchy_for_incremental_change else None
+                    child = str(child).strip("\n")
+                    child_copy = (
+                        NavigableString(child)
+                        if bool(child)
+                        and keep_all_text_in_hierarchy_for_incremental_change
+                        else None
+                    )
                 else:
                     child_copy = find_new_elements_recursive(child)
                     all_child_strings = False
@@ -643,7 +724,7 @@ def find_incremental_elements(
                 consider_children=False,
                 consider_text=consider_text_for_comparison,
                 consider_immediate_text_only=True,
-                strip_texts_before_concatenation=strip_texts_before_concatenation
+                strip_texts_before_concatenation=strip_texts_before_concatenation,
             )
             if signature not in signatures1:
                 new_elements.append(elem)
@@ -651,15 +732,15 @@ def find_incremental_elements(
 
 
 def extract_incremental_html_change(
-        html_content_old: str,
-        html_content_new: str,
-        max_relative_change_for_extraction: float = 0.9,
-        max_absolute_change_for_extraction: int = 0,
-        min_relative_change_for_extraction: float = 0,
-        min_absolute_change_for_extraction: int = 0,
-        consider_text_for_comparison: bool = True,
-        keep_all_text_in_hierarchy_for_incremental_change: bool = True,
-        ignore_attrs_for_comparison=(ATTR_NAME_INCREMENTAL_ID,)
+    html_content_old: str,
+    html_content_new: str,
+    max_relative_change_for_extraction: float = 0.9,
+    max_absolute_change_for_extraction: int = 0,
+    min_relative_change_for_extraction: float = 0,
+    min_absolute_change_for_extraction: int = 0,
+    consider_text_for_comparison: bool = True,
+    keep_all_text_in_hierarchy_for_incremental_change: bool = True,
+    ignore_attrs_for_comparison=(ATTR_NAME_INCREMENTAL_ID,),
 ) -> str:
     """
     Extracts the incremental changes between two HTML documents, with minimum and
@@ -814,8 +895,8 @@ def extract_incremental_html_change(
     # region Validate extraction thresholds
     if max_relative_change_for_extraction:
         if not (
-                isinstance(max_relative_change_for_extraction, float)
-                and 0.0 <= max_relative_change_for_extraction <= 1.0
+            isinstance(max_relative_change_for_extraction, float)
+            and 0.0 <= max_relative_change_for_extraction <= 1.0
         ):
             raise ValueError(
                 "'relative_threshold_for_extraction' must be a float in range [0,1]."
@@ -823,8 +904,8 @@ def extract_incremental_html_change(
 
     if max_absolute_change_for_extraction:
         if not (
-                isinstance(max_absolute_change_for_extraction, int)
-                and max_absolute_change_for_extraction > 0
+            isinstance(max_absolute_change_for_extraction, int)
+            and max_absolute_change_for_extraction > 0
         ):
             raise ValueError(
                 "'absolute_threshold_for_extraction' must be a positive integer."
@@ -832,8 +913,8 @@ def extract_incremental_html_change(
 
     if min_relative_change_for_extraction:
         if not (
-                isinstance(min_relative_change_for_extraction, float)
-                and 0.0 <= min_relative_change_for_extraction <= 1.0
+            isinstance(min_relative_change_for_extraction, float)
+            and 0.0 <= min_relative_change_for_extraction <= 1.0
         ):
             raise ValueError(
                 "'min_relative_change_for_extraction' must be a float in range [0, 1]."
@@ -841,8 +922,8 @@ def extract_incremental_html_change(
 
     if min_absolute_change_for_extraction:
         if not (
-                isinstance(min_absolute_change_for_extraction, int)
-                and min_absolute_change_for_extraction > 0
+            isinstance(min_absolute_change_for_extraction, int)
+            and min_absolute_change_for_extraction > 0
         ):
             raise ValueError(
                 "'min_absolute_change_for_extraction' must be a positive integer."
@@ -855,7 +936,7 @@ def extract_incremental_html_change(
         keep_hierarchy=True,
         consider_text_for_comparison=consider_text_for_comparison,
         keep_all_text_in_hierarchy_for_incremental_change=keep_all_text_in_hierarchy_for_incremental_change,
-        ignore_attrs_for_comparison=ignore_attrs_for_comparison
+        ignore_attrs_for_comparison=ignore_attrs_for_comparison,
     )
 
     if incremental_elements is not None:
@@ -863,19 +944,33 @@ def extract_incremental_html_change(
         relative_change = len(html_content_incremental) / len(html_content_new)
         absolute_change = len(html_content_incremental)
         if (
-                # if the change is too significant, then it is not incremental change
-                ((not max_relative_change_for_extraction) or relative_change < max_relative_change_for_extraction)
-                and ((not max_absolute_change_for_extraction) or (absolute_change < max_absolute_change_for_extraction))
-                # if the change is considered minimal, then it is not incremental change
-                and ((not min_relative_change_for_extraction) or relative_change >= min_relative_change_for_extraction)
-                and ((not min_absolute_change_for_extraction) or absolute_change >= min_absolute_change_for_extraction)
+            # if the change is too significant, then it is not incremental change
+            (
+                (not max_relative_change_for_extraction)
+                or relative_change < max_relative_change_for_extraction
+            )
+            and (
+                (not max_absolute_change_for_extraction)
+                or (absolute_change < max_absolute_change_for_extraction)
+            )
+            # if the change is considered minimal, then it is not incremental change
+            and (
+                (not min_relative_change_for_extraction)
+                or relative_change >= min_relative_change_for_extraction
+            )
+            and (
+                (not min_absolute_change_for_extraction)
+                or absolute_change >= min_absolute_change_for_extraction
+            )
         ):
             html_content_new = html_content_incremental
 
     return html_content_new
 
 
-def find_element_by_attribute(html_content: str, attribute_name: str, attribute_value: str) -> str:
+def find_element_by_attribute(
+    html_content: str, attribute_name: str, attribute_value: str
+) -> str:
     """
     Finds the HTML element with the specified attribute and value.
 
@@ -899,13 +994,15 @@ def find_element_by_attribute(html_content: str, attribute_name: str, attribute_
 
         This example demonstrates finding an element with the specified attribute and value ('__id__="123"') within a more complex HTML structure.
     """
-    soup = BeautifulSoup(html_content, 'html.parser')
+    soup = BeautifulSoup(html_content, "html.parser")
     found_element = soup.find(attrs={attribute_name: attribute_value})
     return found_element
 
 
-def find_element_by_any_attribute(html_content: str, attributes: Mapping[str, str]) -> str:
-    soup = BeautifulSoup(html_content, 'html.parser')
+def find_element_by_any_attribute(
+    html_content: str, attributes: Mapping[str, str]
+) -> str:
+    soup = BeautifulSoup(html_content, "html.parser")
     for attribute_name, attribute_value in attributes.items():
         found_element = soup.find(attrs={attribute_name: attribute_value})
         if found_element:
@@ -913,10 +1010,10 @@ def find_element_by_any_attribute(html_content: str, attributes: Mapping[str, st
 
 
 def get_xpath(
-        tag_name: Optional[str] = '*',
-        attributes: Mapping[str, Any] = None,
-        text: str = None,
-        immediate_text: str = None
+    tag_name: Optional[str] = "*",
+    attributes: Mapping[str, Any] = None,
+    text: str = None,
+    immediate_text: str = None,
 ) -> str:
     """
     Generate an XPath expression based on an optional tag name, attribute key-value pairs, and optional text content.
@@ -962,17 +1059,20 @@ def get_xpath(
         'Submit'
     """
     if not tag_name:
-        tag_name = '*'
+        tag_name = "*"
     xpath_parts = [f"//{tag_name}"]
     conditions = []
     if attributes:
         if not isinstance(attributes, Mapping):
             raise TypeError(
-                f"'attributes' must be a key/value mapping; got '{attributes}' of type '{type(attributes)}'")
+                f"'attributes' must be a key/value mapping; got '{attributes}' of type '{type(attributes)}'"
+            )
         for key, value in attributes.items():
             if isinstance(value, str):
                 conditions.append(f'@{key}="{value}"')
-            elif isinstance(value, Sequence):  # Handling attributes with multiple possible values
+            elif isinstance(
+                value, Sequence
+            ):  # Handling attributes with multiple possible values
                 conditions.extend([f'contains(@{key}, "{v}")' for v in value])
             else:
                 conditions.append(f'@{key}="{value}"')
@@ -984,11 +1084,13 @@ def get_xpath(
         conditions.append(f'contains(text(), "{immediate_text}")')
 
     if conditions:
-        xpath_parts.append('[' + ' and '.join(conditions) + ']')
-    return ''.join(xpath_parts)
+        xpath_parts.append("[" + " and ".join(conditions) + "]")
+    return "".join(xpath_parts)
 
 
-def add_unique_index_to_html(html_content: str, index_name: str = ATTR_NAME_INCREMENTAL_ID) -> str:
+def add_unique_index_to_html(
+    html_content: str, index_name: str = ATTR_NAME_INCREMENTAL_ID
+) -> str:
     """
     Adds a unique index to each HTML tag in the provided HTML content using a specified attribute name.
 
@@ -1007,7 +1109,7 @@ def add_unique_index_to_html(html_content: str, index_name: str = ATTR_NAME_INCR
         <div __id__="0"><p __id__="1">Hello</p><p __id__="2">World</p></div>
 
     """
-    soup = BeautifulSoup(html_content, 'html.parser')
+    soup = BeautifulSoup(html_content, "html.parser")
 
     index = 0  # Initialize a counter
     for element in soup.descendants:
@@ -1021,6 +1123,7 @@ def add_unique_index_to_html(html_content: str, index_name: str = ATTR_NAME_INCR
 # ============================================================================
 # Elements to XPath Utility
 # ============================================================================
+
 
 def _escape_xpath_string(value: str) -> str:
     """
@@ -1094,16 +1197,16 @@ def _is_generic_class(class_name: str) -> bool:
     # Check utility class prefixes (only if followed by digits, e.g., p-4, mt-2)
     for prefix in UTILITY_CLASS_PREFIXES:
         if class_name.startswith(prefix):
-            suffix = class_name[len(prefix):]
+            suffix = class_name[len(prefix) :]
             # Only match if suffix starts with digit (utility class like p-4)
             # Not BEM-style like p-top_nav (meaningful)
             if suffix and suffix[0].isdigit():
                 return True
 
     # Check for hash-like classes (random-looking alphanumeric)
-    if re.match(r'^[a-zA-Z][a-zA-Z0-9]{5,}$', class_name):
+    if re.match(r"^[a-zA-Z][a-zA-Z0-9]{5,}$", class_name):
         # Likely a minified/hashed class if it's long alphanumeric
-        if not any(c in class_name for c in '-_'):
+        if not any(c in class_name for c in "-_"):
             return True
     return False
 
@@ -1137,7 +1240,7 @@ def _generate_base_xpath(element: Tag, exclude_attrs: Sequence[str]) -> List[str
         val = element.get(attr)
         if val:
             if isinstance(val, list):
-                val = ' '.join(val)
+                val = " ".join(val)
             # Skip hash-like values - they're unstable
             if _is_hash_like_value(val):
                 continue
@@ -1154,7 +1257,9 @@ def _generate_base_xpath(element: Tag, exclude_attrs: Sequence[str]) -> List[str
             else:
                 # Fallback: use simple heuristics
                 # Longer values with spaces are generally more readable
-                score = min(1.0, len(val) / 20) if ' ' in val else min(0.5, len(val) / 20)
+                score = (
+                    min(1.0, len(val) / 20) if " " in val else min(0.5, len(val) / 20)
+                )
 
             # Boost semantic attributes (title, aria-label, placeholder, alt)
             # These are human-facing descriptors, so prefer them over technical attrs
@@ -1176,9 +1281,9 @@ def _generate_base_xpath(element: Tag, exclude_attrs: Sequence[str]) -> List[str
         candidates_with_scores.append((xpath, score))
 
     # Strategy 4: Attribute combinations (type + another attr)
-    if element.get('type') and 'type' not in exclude_attrs:
-        type_val = element.get('type')
-        for attr in ['name', 'value', 'placeholder']:
+    if element.get("type") and "type" not in exclude_attrs:
+        type_val = element.get("type")
+        for attr in ["name", "value", "placeholder"]:
             if attr in exclude_attrs:
                 continue
             val = element.get(attr)
@@ -1194,7 +1299,7 @@ def _generate_base_xpath(element: Tag, exclude_attrs: Sequence[str]) -> List[str
                 candidates_with_scores.append((xpath, score))
 
     # Strategy 5: Class-based (if distinctive classes exist)
-    classes = element.get('class', [])
+    classes = element.get("class", [])
     if isinstance(classes, str):
         classes = classes.split()
     distinctive_classes = [c for c in classes if not _is_generic_class(c)]
@@ -1223,7 +1328,9 @@ def _generate_base_xpath(element: Tag, exclude_attrs: Sequence[str]) -> List[str
     return candidates
 
 
-def _add_parent_context(element: Tag, base_xpath: str, depth: int, exclude_attrs: Sequence[str]) -> Optional[str]:
+def _add_parent_context(
+    element: Tag, base_xpath: str, depth: int, exclude_attrs: Sequence[str]
+) -> Optional[str]:
     """
     Add parent context to an xpath up to the specified depth.
 
@@ -1243,7 +1350,7 @@ def _add_parent_context(element: Tag, base_xpath: str, depth: int, exclude_attrs
     ancestors = []
     parent = element.parent
     for _ in range(depth):
-        if parent is None or parent.name in ('[document]', None):
+        if parent is None or parent.name in ("[document]", None):
             break
         ancestors.append(parent)
         parent = parent.parent
@@ -1259,7 +1366,7 @@ def _add_parent_context(element: Tag, base_xpath: str, depth: int, exclude_attrs
         if ancestor_candidates:
             # Remove leading // for ancestor parts
             part = ancestor_candidates[0]
-            if part.startswith('//'):
+            if part.startswith("//"):
                 part = part[2:]
             prefix_parts.append(part)
 
@@ -1267,13 +1374,15 @@ def _add_parent_context(element: Tag, base_xpath: str, depth: int, exclude_attrs
         return base_xpath
 
     # Combine: //ancestor1//ancestor2//element
-    prefix = '//' + '//'.join(prefix_parts)
+    prefix = "//" + "//".join(prefix_parts)
     # base_xpath starts with //, we need to append with //
-    element_part = base_xpath[2:] if base_xpath.startswith('//') else base_xpath
+    element_part = base_xpath[2:] if base_xpath.startswith("//") else base_xpath
     return f"{prefix}//{element_part}"
 
 
-def _validate_xpath(xpath: str, html_context: str, expected_elements: List[Tag]) -> bool:
+def _validate_xpath(
+    xpath: str, html_context: str, expected_elements: List[Tag]
+) -> bool:
     """
     Validate that an xpath returns exactly the expected elements.
 
@@ -1299,26 +1408,30 @@ def _validate_xpath(xpath: str, html_context: str, expected_elements: List[Tag])
         for expected in expected_elements:
             expected_id = expected.get(ATTR_NAME_INCREMENTAL_ID)
             if expected_id:
-                expected_identifiers.add(('__id__', expected_id))
+                expected_identifiers.add(("__id__", expected_id))
             else:
                 # Fallback: use tag name + text content as identifier
                 tag_name = expected.name
-                text_content = expected.get_text(strip=True)[:50] if expected.get_text(strip=True) else ''
-                expected_identifiers.add(('tag_text', tag_name, text_content))
+                text_content = (
+                    expected.get_text(strip=True)[:50]
+                    if expected.get_text(strip=True)
+                    else ""
+                )
+                expected_identifiers.add(("tag_text", tag_name, text_content))
 
         # Build set of result identifiers
         result_identifiers = set()
         for result in results:
             result_id = result.get(ATTR_NAME_INCREMENTAL_ID)
             if result_id:
-                result_identifiers.add(('__id__', result_id))
+                result_identifiers.add(("__id__", result_id))
             else:
                 # Fallback: use tag name + text content as identifier
                 tag_name = result.tag
                 # Use itertext() to get ALL nested text (like BeautifulSoup's get_text())
                 # result.text only gets direct text, not nested text
-                text_content = ''.join(result.itertext()).strip()[:50]
-                result_identifiers.add(('tag_text', tag_name, text_content))
+                text_content = "".join(result.itertext()).strip()[:50]
+                result_identifiers.add(("tag_text", tag_name, text_content))
 
         # Check if all expected elements are found in results
         # Note: We check if expected is subset of results (results may have more due to xpath matching)
@@ -1368,8 +1481,8 @@ def _find_matching_element_position(
         # Check each result
         for i, result in enumerate(results, 1):
             # Convert lxml element to BeautifulSoup for comparison
-            result_html = etree.tostring(result, encoding='unicode')
-            result_soup = BeautifulSoup(result_html, 'html.parser').find()
+            result_html = etree.tostring(result, encoding="unicode")
+            result_soup = BeautifulSoup(result_html, "html.parser").find()
 
             if result_soup is None:
                 continue
@@ -1385,12 +1498,12 @@ def _find_matching_element_position(
             elif mode == XPathResolutionMode.MATCH_BY_SIGNATURE:
                 # Compare signatures
                 result_sig = get_element_signature(result_soup, **resolution_args)
-                match_found = (target_sig == result_sig)
+                match_found = target_sig == result_sig
 
             elif mode == XPathResolutionMode.MATCH_BY_TEXT:
                 # Compare text content only
                 result_text = result_soup.get_text(strip=True)
-                match_found = (target_text == result_text)
+                match_found = target_text == result_text
 
             if match_found:
                 return f"({xpath})[{i}]"
@@ -1418,7 +1531,7 @@ def _find_common_ancestor(elements: List[Tag]) -> Optional[Tag]:
     # Get ancestors for first element
     first_ancestors = []
     parent = elements[0].parent
-    while parent and parent.name not in ('[document]', None):
+    while parent and parent.name not in ("[document]", None):
         first_ancestors.append(parent)
         parent = parent.parent
 
@@ -1439,7 +1552,7 @@ def _generate_multi_xpath(
     elements: List[Tag],
     common_ancestor: Optional[Tag],
     depth: int,
-    exclude_attrs: Sequence[str]
+    exclude_attrs: Sequence[str],
 ) -> List[str]:
     """
     Generate xpath candidates for multiple elements.
@@ -1455,7 +1568,7 @@ def _generate_multi_xpath(
     # Check if all elements have same tag
     same_tag = all(e.name == tag_name for e in elements)
     if not same_tag:
-        tag_name = '*'
+        tag_name = "*"
 
     # Strategy M1: Common parent + child tag
     if common_ancestor:
@@ -1468,16 +1581,18 @@ def _generate_multi_xpath(
 
     # Strategy M2: Common attribute pattern
     # Check if all elements share the same attribute value
-    for attr in ['name', 'type', 'class']:
+    for attr in ["name", "type", "class"]:
         if attr in exclude_attrs:
             continue
         first_val = elements[0].get(attr)
         if first_val:
             if isinstance(first_val, list):
-                first_val = ' '.join(first_val)
+                first_val = " ".join(first_val)
             all_same = all(
-                e.get(attr) == first_val or
-                (isinstance(e.get(attr), list) and ' '.join(e.get(attr)) == first_val)
+                e.get(attr) == first_val
+                or (
+                    isinstance(e.get(attr), list) and " ".join(e.get(attr)) == first_val
+                )
                 for e in elements
             )
             if all_same:
@@ -1559,14 +1674,18 @@ def elements_to_xpath(
 
         # Try each candidate at increasing depths
         current_depth = 0
-        max_iterations = max_depth if max_depth >= 0 else 100  # Reasonable limit for unlimited
+        max_iterations = (
+            max_depth if max_depth >= 0 else 100
+        )  # Reasonable limit for unlimited
 
         while current_depth <= max_iterations:
             for base_xpath in base_candidates:
                 if current_depth == 0:
                     xpath = base_xpath
                 else:
-                    xpath = _add_parent_context(element, base_xpath, current_depth, exclude_attrs)
+                    xpath = _add_parent_context(
+                        element, base_xpath, current_depth, exclude_attrs
+                    )
                     if xpath is None:
                         continue
 
@@ -1589,7 +1708,9 @@ def elements_to_xpath(
                 for i, match in enumerate(all_matching, 1):
                     if match.get(ATTR_NAME_INCREMENTAL_ID) == elem_id:
                         positional_xpath = f"({base_xpath})[{i}]"
-                        if _validate_xpath(positional_xpath, html_context, element_list):
+                        if _validate_xpath(
+                            positional_xpath, html_context, element_list
+                        ):
                             return positional_xpath
                         break
             except Exception:
@@ -1597,7 +1718,9 @@ def elements_to_xpath(
 
         # Apply resolution mode for non-unique xpath
         if resolution_mode == XPathResolutionMode.UNIQUE_ONLY:
-            raise ValueError(f"Could not generate unique xpath for element within max_depth={max_depth}")
+            raise ValueError(
+                f"Could not generate unique xpath for element within max_depth={max_depth}"
+            )
 
         elif resolution_mode == XPathResolutionMode.FIRST_MATCH:
             # Return best candidate with [1] index
@@ -1605,25 +1728,34 @@ def elements_to_xpath(
                 best_xpath = base_candidates[0]
                 return f"({best_xpath})[1]"
 
-        elif resolution_mode in (XPathResolutionMode.MATCH_BY_HTML,
-                                  XPathResolutionMode.MATCH_BY_SIGNATURE,
-                                  XPathResolutionMode.MATCH_BY_TEXT):
+        elif resolution_mode in (
+            XPathResolutionMode.MATCH_BY_HTML,
+            XPathResolutionMode.MATCH_BY_SIGNATURE,
+            XPathResolutionMode.MATCH_BY_TEXT,
+        ):
             # Try each candidate xpath, find matching element by comparison
             for xpath_candidate in base_candidates:
                 result = _find_matching_element_position(
-                    xpath_candidate, html_context, element,
-                    resolution_mode, **resolution_args
+                    xpath_candidate,
+                    html_context,
+                    element,
+                    resolution_mode,
+                    **resolution_args,
                 )
                 if result:
                     return result
 
-        raise ValueError(f"Could not find matching element with resolution_mode={resolution_mode}")
+        raise ValueError(
+            f"Could not find matching element with resolution_mode={resolution_mode}"
+        )
 
     # Multiple elements case
     common_ancestor = _find_common_ancestor(element_list)
 
     # Get multi-element xpath candidates
-    multi_candidates = _generate_multi_xpath(element_list, common_ancestor, 0, exclude_attrs)
+    multi_candidates = _generate_multi_xpath(
+        element_list, common_ancestor, 0, exclude_attrs
+    )
 
     # Try each candidate
     for xpath in multi_candidates:
@@ -1635,15 +1767,19 @@ def elements_to_xpath(
     for elem in element_list:
         try:
             single_xpath = elements_to_xpath(
-                elem, html_context, exclude_attrs, max_depth,
-                resolution_mode, **resolution_args
+                elem,
+                html_context,
+                exclude_attrs,
+                max_depth,
+                resolution_mode,
+                **resolution_args,
             )
             individual_xpaths.append(single_xpath)
         except ValueError:
             pass
 
     if individual_xpaths:
-        union_xpath = ' | '.join(individual_xpaths)
+        union_xpath = " | ".join(individual_xpaths)
         if _validate_xpath(union_xpath, html_context, element_list):
             return union_xpath
 

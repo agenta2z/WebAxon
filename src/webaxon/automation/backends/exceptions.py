@@ -16,6 +16,7 @@ class WebDriverError(Exception):
     All other WebDriver exceptions inherit from this class, allowing
     callers to catch all WebDriver-related errors with a single handler.
     """
+
     pass
 
 
@@ -37,7 +38,7 @@ class ElementNotFoundError(WebDriverError):
         strategy: str,
         target: str,
         message: Optional[str] = None,
-        original_exception: Optional[Exception] = None
+        original_exception: Optional[Exception] = None,
     ):
         self.strategy = strategy
         self.target = target
@@ -67,7 +68,7 @@ class StaleElementError(WebDriverError):
         self,
         message: Optional[str] = None,
         element_description: Optional[str] = None,
-        original_exception: Optional[Exception] = None
+        original_exception: Optional[Exception] = None,
     ):
         self.element_description = element_description
         self.original_exception = original_exception
@@ -100,7 +101,7 @@ class WebDriverTimeoutError(WebDriverError):
         operation: str,
         timeout: float,
         message: Optional[str] = None,
-        original_exception: Optional[Exception] = None
+        original_exception: Optional[Exception] = None,
     ):
         self.operation = operation
         self.timeout = timeout
@@ -132,7 +133,7 @@ class ElementNotInteractableError(WebDriverError):
         message: Optional[str] = None,
         element_description: Optional[str] = None,
         action_attempted: Optional[str] = None,
-        original_exception: Optional[Exception] = None
+        original_exception: Optional[Exception] = None,
     ):
         self.element_description = element_description
         self.action_attempted = action_attempted
@@ -166,11 +167,12 @@ class UnsupportedOperationError(WebDriverError):
         operation: str,
         backend_type: str,
         message: Optional[str] = None,
-        original_exception: Optional[Exception] = None
+        original_exception: Optional[Exception] = None,
     ):
         self.operation = operation
         self.backend_type = backend_type
         self.original_exception = original_exception
         super().__init__(
-            message or f"Operation '{operation}' not supported by {backend_type} backend"
+            message
+            or f"Operation '{operation}' not supported by {backend_type} backend"
         )

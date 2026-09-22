@@ -7,6 +7,7 @@ grouping + formatting pipeline.
 
 Results are written as JSON files to an output/ directory alongside this script.
 """
+
 import json
 import sys
 from datetime import datetime, timezone
@@ -14,22 +15,38 @@ from pathlib import Path
 
 # Resolve paths relative to the monorepo root (CoreProjects/)
 SCRIPT_DIR = Path(__file__).resolve().parent
-REPO_ROOT = SCRIPT_DIR.parents[4]  # WebAxon/test/webaxon/knowledge/retrieval -> CoreProjects
+REPO_ROOT = SCRIPT_DIR.parents[
+    4
+]  # WebAxon/test/webaxon/knowledge/retrieval -> CoreProjects
 
 sys.path.insert(0, str(REPO_ROOT / "AgentFoundation" / "src"))
 sys.path.insert(0, str(REPO_ROOT / "RichPythonUtils" / "src"))
 sys.path.insert(0, str(REPO_ROOT / "SciencePythonUtils" / "src"))
 
 from agent_foundation.knowledge import KnowledgeBase
-from agent_foundation.knowledge.retrieval.retrieval_pipeline import RetrievalPipeline
-from agent_foundation.knowledge.retrieval.post_processors import GroupedDictPostProcessor
+from agent_foundation.knowledge.retrieval.post_processors import (
+    GroupedDictPostProcessor,
+)
 from agent_foundation.knowledge.retrieval.provider import _default_formatter
-from agent_foundation.knowledge.stores.metadata.keyvalue_adapter import KeyValueMetadataStore
-from agent_foundation.knowledge.stores.pieces.retrieval_adapter import RetrievalKnowledgePieceStore
-from agent_foundation.knowledge.stores.graph.graph_adapter import GraphServiceEntityGraphStore
-from rich_python_utils.service_utils.keyvalue_service.file_keyvalue_service import FileKeyValueService
-from rich_python_utils.service_utils.retrieval_service.file_retrieval_service import FileRetrievalService
-from rich_python_utils.service_utils.graph_service.file_graph_service import FileGraphService
+from agent_foundation.knowledge.retrieval.retrieval_pipeline import RetrievalPipeline
+from agent_foundation.knowledge.stores.graph.graph_adapter import (
+    GraphServiceEntityGraphStore,
+)
+from agent_foundation.knowledge.stores.metadata.keyvalue_adapter import (
+    KeyValueMetadataStore,
+)
+from agent_foundation.knowledge.stores.pieces.retrieval_adapter import (
+    RetrievalKnowledgePieceStore,
+)
+from rich_python_utils.service_utils.graph_service.file_graph_service import (
+    FileGraphService,
+)
+from rich_python_utils.service_utils.keyvalue_service.file_keyvalue_service import (
+    FileKeyValueService,
+)
+from rich_python_utils.service_utils.retrieval_service.file_retrieval_service import (
+    FileRetrievalService,
+)
 
 STORE_BASE = (
     REPO_ROOT
@@ -146,10 +163,16 @@ def main():
 
         # Print summary (replace unicode arrows for cp1252 console)
         spaces_str = str(spaces) if spaces else "None"
-        print(f"  {test_name:35s}  spaces={spaces_str:25s}  -> feed keys: {data['feed_keys']}")
+        print(
+            f"  {test_name:35s}  spaces={spaces_str:25s}  -> feed keys: {data['feed_keys']}"
+        )
         for key in data["feed_keys"]:
             text = data["feed"][key]
-            preview = text[:120].replace("\n", " | ").replace("\u2192", "->") if text else "(empty)"
+            preview = (
+                text[:120].replace("\n", " | ").replace("\u2192", "->")
+                if text
+                else "(empty)"
+            )
             print(f"    {key:20s}: {preview}")
         print()
 

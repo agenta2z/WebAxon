@@ -5,19 +5,18 @@ from __future__ import annotations
 import json
 import threading
 from pathlib import Path
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import call, MagicMock, patch
 
 import pytest
-
 from webaxon.devsuite.web_agent_service_nextgen.agents.meta_agent_adapter import (
     MetaAgentAdapter,
     MetaAgentRunResult,
 )
-from webaxon.devsuite.web_agent_service_nextgen.communication.message_handlers import (
-    MessageHandlers,
-    _serialize_pipeline_result,
-)
 from webaxon.devsuite.web_agent_service_nextgen.cli.client import CLIClient
+from webaxon.devsuite.web_agent_service_nextgen.communication.message_handlers import (
+    _serialize_pipeline_result,
+    MessageHandlers,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -233,10 +232,12 @@ class TestHandleRunMetaAgent:
 
     def test_missing_query_sends_error(self):
         handlers = self._make_handlers()
-        handlers.handle_run_meta_agent({
-            "message": {},
-            "timestamp": "2025-01-01",
-        })
+        handlers.handle_run_meta_agent(
+            {
+                "message": {},
+                "timestamp": "2025-01-01",
+            }
+        )
 
         put_call = handlers._queue_service.put.call_args
         assert put_call.args[0] == "CLIENT_CONTROL"
@@ -249,10 +250,12 @@ class TestHandleRunMetaAgent:
         handlers = self._make_handlers()
 
         with patch.object(threading.Thread, "start"):
-            handlers.handle_run_meta_agent({
-                "message": {"query": "Navigate to login"},
-                "timestamp": "2025-01-01",
-            })
+            handlers.handle_run_meta_agent(
+                {
+                    "message": {"query": "Navigate to login"},
+                    "timestamp": "2025-01-01",
+                }
+            )
 
         # First put should be the "started" ack
         first_put = handlers._queue_service.put.call_args_list[0]
@@ -264,10 +267,12 @@ class TestHandleRunMetaAgent:
         handlers = self._make_handlers()
 
         with patch.object(threading.Thread, "start"):
-            handlers.handle_run_meta_agent({
-                "message": {"query": "Test", "run_count": 10},
-                "timestamp": "2025-01-01",
-            })
+            handlers.handle_run_meta_agent(
+                {
+                    "message": {"query": "Test", "run_count": 10},
+                    "timestamp": "2025-01-01",
+                }
+            )
 
         first_put = handlers._queue_service.put.call_args_list[0]
         assert first_put.args[1]["run_count"] == 10
@@ -279,10 +284,12 @@ class TestHandleRunMetaAgent:
             mock_thread = MagicMock()
             MockThread.return_value = mock_thread
 
-            handlers.handle_run_meta_agent({
-                "message": {"query": "Navigate to login"},
-                "timestamp": "2025-01-01",
-            })
+            handlers.handle_run_meta_agent(
+                {
+                    "message": {"query": "Navigate to login"},
+                    "timestamp": "2025-01-01",
+                }
+            )
 
             MockThread.assert_called_once()
             kwargs = MockThread.call_args.kwargs
@@ -294,10 +301,12 @@ class TestHandleRunMetaAgent:
         handlers = self._make_handlers()
 
         with patch.object(handlers, "_run_meta_agent_pipeline") as mock_run:
-            handlers.handle_run_meta_agent({
-                "message": {"query": "Test task", "debug": True},
-                "timestamp": "2025-01-01",
-            })
+            handlers.handle_run_meta_agent(
+                {
+                    "message": {"query": "Test task", "debug": True},
+                    "timestamp": "2025-01-01",
+                }
+            )
 
             # Should call pipeline directly, not via thread
             mock_run.assert_called_once()
@@ -309,10 +318,12 @@ class TestHandleRunMetaAgent:
             patch.object(handlers, "_run_meta_agent_pipeline"),
             patch("threading.Thread") as MockThread,
         ):
-            handlers.handle_run_meta_agent({
-                "message": {"query": "Test task", "debug": True},
-                "timestamp": "2025-01-01",
-            })
+            handlers.handle_run_meta_agent(
+                {
+                    "message": {"query": "Test task", "debug": True},
+                    "timestamp": "2025-01-01",
+                }
+            )
 
             MockThread.assert_not_called()
 
@@ -320,10 +331,12 @@ class TestHandleRunMetaAgent:
         handlers = self._make_handlers()
 
         with patch.object(handlers, "_run_meta_agent_pipeline"):
-            handlers.handle_run_meta_agent({
-                "message": {"query": "Test task", "debug": True},
-                "timestamp": "2025-01-01",
-            })
+            handlers.handle_run_meta_agent(
+                {
+                    "message": {"query": "Test task", "debug": True},
+                    "timestamp": "2025-01-01",
+                }
+            )
 
         first_put = handlers._queue_service.put.call_args_list[0]
         msg = first_put.args[1]
@@ -622,6 +635,7 @@ class TestStageGateController:
         # Resume immediately in another thread so hook doesn't block
         def resume_soon():
             import time
+
             time.sleep(0.05)
             controller.resume()
 
@@ -670,7 +684,9 @@ class TestStageGateController:
 
         def run_hook():
             try:
-                controller.stage_hook("evaluation", {"passed_count": 3, "total_count": 5})
+                controller.stage_hook(
+                    "evaluation", {"passed_count": 3, "total_count": 5}
+                )
             except PipelineAborted as e:
                 exc_holder.append(e)
 
@@ -684,6 +700,7 @@ class TestStageGateController:
         t.start()
 
         import time
+
         time.sleep(0.05)
         controller.abort()
 
@@ -831,9 +848,11 @@ class TestMetaDebugCommand:
 
     def test_unknown_command_sends_error(self):
         handlers = self._make_handlers()
-        handlers.handle_meta_debug_command({
-            "message": {"command": "foobar"},
-        })
+        handlers.handle_meta_debug_command(
+            {
+                "message": {"command": "foobar"},
+            }
+        )
 
         msg = handlers._queue_service.put.call_args.args[1]
         assert msg["type"] == "meta_debug_error"
@@ -841,9 +860,11 @@ class TestMetaDebugCommand:
 
     def test_collect_missing_query_sends_error(self):
         handlers = self._make_handlers()
-        handlers.handle_meta_debug_command({
-            "message": {"command": "collect", "query": ""},
-        })
+        handlers.handle_meta_debug_command(
+            {
+                "message": {"command": "collect", "query": ""},
+            }
+        )
 
         msg = handlers._queue_service.put.call_args.args[1]
         assert msg["type"] == "meta_debug_error"
@@ -861,9 +882,15 @@ class TestMetaDebugCommand:
             mock_thread = MagicMock()
             MockThread.return_value = mock_thread
 
-            handlers.handle_meta_debug_command({
-                "message": {"command": "collect", "query": "find prices", "run_count": 3},
-            })
+            handlers.handle_meta_debug_command(
+                {
+                    "message": {
+                        "command": "collect",
+                        "query": "find prices",
+                        "run_count": 3,
+                    },
+                }
+            )
 
             # Thread started
             MockThread.assert_called_once()
@@ -888,9 +915,11 @@ class TestMetaDebugCommand:
         for i in range(5):
             handlers._debug_sessions[f"session_{i}"] = MagicMock()
 
-        handlers.handle_meta_debug_command({
-            "message": {"command": "collect", "query": "test"},
-        })
+        handlers.handle_meta_debug_command(
+            {
+                "message": {"command": "collect", "query": "test"},
+            }
+        )
 
         msg = handlers._queue_service.put.call_args.args[1]
         assert msg["type"] == "meta_debug_error"
@@ -898,9 +927,11 @@ class TestMetaDebugCommand:
 
     def test_advance_session_not_found_sends_error(self):
         handlers = self._make_handlers()
-        handlers.handle_meta_debug_command({
-            "message": {"command": "evaluate", "session_id": "nonexistent"},
-        })
+        handlers.handle_meta_debug_command(
+            {
+                "message": {"command": "evaluate", "session_id": "nonexistent"},
+            }
+        )
 
         msg = handlers._queue_service.put.call_args.args[1]
         assert msg["type"] == "meta_debug_error"
@@ -918,9 +949,11 @@ class TestMetaDebugCommand:
 
         handlers._debug_sessions["sid_1"] = controller
 
-        handlers.handle_meta_debug_command({
-            "message": {"command": "synthesize", "session_id": "sid_1"},
-        })
+        handlers.handle_meta_debug_command(
+            {
+                "message": {"command": "synthesize", "session_id": "sid_1"},
+            }
+        )
 
         msg = handlers._queue_service.put.call_args.args[1]
         assert msg["type"] == "meta_debug_error"
@@ -936,9 +969,11 @@ class TestMetaDebugCommand:
 
         handlers._debug_sessions["sid_1"] = controller
 
-        handlers.handle_meta_debug_command({
-            "message": {"command": "evaluate", "session_id": "sid_1"},
-        })
+        handlers.handle_meta_debug_command(
+            {
+                "message": {"command": "evaluate", "session_id": "sid_1"},
+            }
+        )
 
         controller.resume.assert_called_once()
         # No error message sent
@@ -953,9 +988,11 @@ class TestMetaDebugCommand:
 
         handlers._debug_sessions["sid_1"] = controller
 
-        handlers.handle_meta_debug_command({
-            "message": {"command": "evaluate", "session_id": "sid_1"},
-        })
+        handlers.handle_meta_debug_command(
+            {
+                "message": {"command": "evaluate", "session_id": "sid_1"},
+            }
+        )
 
         msg = handlers._queue_service.put.call_args.args[1]
         assert msg["type"] == "meta_debug_error"
@@ -967,17 +1004,21 @@ class TestMetaDebugCommand:
         controller = MagicMock()
         handlers._debug_sessions["sid_1"] = controller
 
-        handlers.handle_meta_debug_command({
-            "message": {"command": "abort", "session_id": "sid_1"},
-        })
+        handlers.handle_meta_debug_command(
+            {
+                "message": {"command": "abort", "session_id": "sid_1"},
+            }
+        )
 
         controller.abort.assert_called_once()
 
     def test_abort_session_not_found_sends_error(self):
         handlers = self._make_handlers()
-        handlers.handle_meta_debug_command({
-            "message": {"command": "abort", "session_id": "nonexistent"},
-        })
+        handlers.handle_meta_debug_command(
+            {
+                "message": {"command": "abort", "session_id": "nonexistent"},
+            }
+        )
 
         msg = handlers._queue_service.put.call_args.args[1]
         assert msg["type"] == "meta_debug_error"
@@ -998,9 +1039,11 @@ class TestMetaDebugCommand:
 
         handlers._debug_sessions["sid_1"] = controller
 
-        handlers.handle_meta_debug_command({
-            "message": {"command": "status", "session_id": "sid_1"},
-        })
+        handlers.handle_meta_debug_command(
+            {
+                "message": {"command": "status", "session_id": "sid_1"},
+            }
+        )
 
         msg = handlers._queue_service.put.call_args.args[1]
         assert msg["type"] == "meta_debug_status"
@@ -1028,9 +1071,11 @@ class TestMetaDebugCommand:
         handlers._debug_sessions["sid_1"] = c1
         handlers._debug_sessions["sid_2"] = c2
 
-        handlers.handle_meta_debug_command({
-            "message": {"command": "status"},
-        })
+        handlers.handle_meta_debug_command(
+            {
+                "message": {"command": "status"},
+            }
+        )
 
         msg = handlers._queue_service.put.call_args.args[1]
         assert msg["type"] == "meta_debug_status"
@@ -1060,9 +1105,11 @@ class TestMetaDebugCommand:
             ("abort", "_handle_debug_abort"),
         ]:
             with patch.object(handlers, method_name) as mock_method:
-                handlers.handle_meta_debug_command({
-                    "message": {"command": cmd, "session_id": "sid"},
-                })
+                handlers.handle_meta_debug_command(
+                    {
+                        "message": {"command": cmd, "session_id": "sid"},
+                    }
+                )
                 mock_method.assert_called_once()
 
 
@@ -1131,13 +1178,15 @@ class TestMetaDebugCLI:
         assert msg["message"]["session_id"] == "sid_123"
 
     def test_display_stage_result_collect(self, tmp_path, capsys):
-        CLIClient._display_stage_result({
-            "state": "COLLECT",
-            "session_id": "sid_1",
-            "summary": {"trace_count": 5},
-            "next_command": "evaluate",
-            "checkpoint_path": "/tmp/checkpoint.json",
-        })
+        CLIClient._display_stage_result(
+            {
+                "state": "COLLECT",
+                "session_id": "sid_1",
+                "summary": {"trace_count": 5},
+                "next_command": "evaluate",
+                "checkpoint_path": "/tmp/checkpoint.json",
+            }
+        )
 
         captured = capsys.readouterr()
         assert "COLLECT completed" in captured.out
@@ -1146,59 +1195,69 @@ class TestMetaDebugCLI:
         assert "checkpoint.json" in captured.out
 
     def test_display_stage_result_evaluate(self, tmp_path, capsys):
-        CLIClient._display_stage_result({
-            "state": "EVALUATE",
-            "session_id": "sid_1",
-            "summary": {"passed_count": 3, "total_count": 5},
-            "next_command": "synthesize",
-            "checkpoint_path": "",
-        })
+        CLIClient._display_stage_result(
+            {
+                "state": "EVALUATE",
+                "session_id": "sid_1",
+                "summary": {"passed_count": 3, "total_count": 5},
+                "next_command": "synthesize",
+                "checkpoint_path": "",
+            }
+        )
 
         captured = capsys.readouterr()
         assert "EVALUATE completed" in captured.out
         assert "Passed: 3/5" in captured.out
 
     def test_display_stage_result_validate_skipped(self, tmp_path, capsys):
-        CLIClient._display_stage_result({
-            "state": "VALIDATE",
-            "session_id": "sid_1",
-            "summary": {"skipped": True},
-            "next_command": None,
-            "checkpoint_path": "",
-        })
+        CLIClient._display_stage_result(
+            {
+                "state": "VALIDATE",
+                "session_id": "sid_1",
+                "summary": {"skipped": True},
+                "next_command": None,
+                "checkpoint_path": "",
+            }
+        )
 
         captured = capsys.readouterr()
         assert "skipped" in captured.out.lower()
 
     def test_display_stage_result_validate_with_results(self, tmp_path, capsys):
-        CLIClient._display_stage_result({
-            "state": "VALIDATE",
-            "session_id": "sid_1",
-            "summary": {"all_passed": True, "success_rate": 1.0, "result_count": 3},
-            "next_command": None,
-            "checkpoint_path": "",
-        })
+        CLIClient._display_stage_result(
+            {
+                "state": "VALIDATE",
+                "session_id": "sid_1",
+                "summary": {"all_passed": True, "success_rate": 1.0, "result_count": 3},
+                "next_command": None,
+                "checkpoint_path": "",
+            }
+        )
 
         captured = capsys.readouterr()
         assert "All passed: True" in captured.out
         assert "100.0%" in captured.out
 
     def test_display_final_result_success(self, tmp_path, capsys):
-        CLIClient._display_final_result({
-            "success": True,
-            "output_path": "/tmp/result.json",
-            "summary": "3 traces collected",
-        })
+        CLIClient._display_final_result(
+            {
+                "success": True,
+                "output_path": "/tmp/result.json",
+                "summary": "3 traces collected",
+            }
+        )
 
         captured = capsys.readouterr()
         assert "Completed successfully" in captured.out
         assert "/tmp/result.json" in captured.out
 
     def test_display_final_result_failure(self, tmp_path, capsys):
-        CLIClient._display_final_result({
-            "success": False,
-            "error": "Agent timeout in collection",
-        })
+        CLIClient._display_final_result(
+            {
+                "success": False,
+                "error": "Agent timeout in collection",
+            }
+        )
 
         captured = capsys.readouterr()
         assert "failed" in captured.out.lower()

@@ -4,11 +4,10 @@ Tests specific error paths and edge cases for the six kb_* handlers
 and the dispatch map registration.
 """
 
-import resolve_path  # Setup import paths  # noqa: F401
-
-import pytest
 from unittest.mock import MagicMock, patch
 
+import pytest
+import resolve_path  # Setup import paths  # noqa: F401
 from webaxon.devsuite.web_agent_service_nextgen.communication.message_handlers import (
     MessageHandlers,
 )
@@ -45,8 +44,14 @@ def _sent_response(queue_service):
     return queue_service.put.call_args[0][1]
 
 
-def _make_knowledge_piece(piece_id, content, domain="general", tags=None,
-                          knowledge_type="fact", is_active=True):
+def _make_knowledge_piece(
+    piece_id,
+    content,
+    domain="general",
+    tags=None,
+    knowledge_type="fact",
+    is_active=True,
+):
     """Create a MagicMock that looks like a KnowledgePiece."""
     piece = MagicMock()
     piece.piece_id = piece_id
@@ -315,7 +320,15 @@ class TestDispatchMapRegistration:
 
     @pytest.mark.parametrize(
         "msg_type",
-        ["kb_add", "kb_update", "kb_del", "kb_get", "kb_list", "kb_restore", "kb_review_spaces"],
+        [
+            "kb_add",
+            "kb_update",
+            "kb_del",
+            "kb_get",
+            "kb_list",
+            "kb_restore",
+            "kb_review_spaces",
+        ],
     )
     def test_dispatch_calls_handler(self, msg_type):
         handlers, agent_factory, queue_service = _make_handlers()
@@ -510,9 +523,7 @@ class TestKbListSpacesPassthrough:
         message = {"type": "kb_list", "message": {}}
         handlers.handle_kb_list(message)
 
-        mock_piece_store.list_all.assert_called_once_with(
-            entity_id=None, spaces=None
-        )
+        mock_piece_store.list_all.assert_called_once_with(entity_id=None, spaces=None)
 
 
 # ---------------------------------------------------------------------------
@@ -596,7 +607,10 @@ class TestKbReviewSpacesApproveMode:
         kb.piece_store.get_by_id.return_value = piece
         agent_factory.get_knowledge_base.return_value = kb
 
-        message = {"type": "kb_review_spaces", "message": {"mode": "approve", "piece_id": "p1"}}
+        message = {
+            "type": "kb_review_spaces",
+            "message": {"mode": "approve", "piece_id": "p1"},
+        }
         handlers.handle_kb_review_spaces(message)
 
         resp = _sent_response(queue_service)
@@ -624,7 +638,10 @@ class TestKbReviewSpacesApproveMode:
         kb.piece_store.get_by_id.return_value = piece
         agent_factory.get_knowledge_base.return_value = kb
 
-        message = {"type": "kb_review_spaces", "message": {"mode": "approve", "piece_id": "p1"}}
+        message = {
+            "type": "kb_review_spaces",
+            "message": {"mode": "approve", "piece_id": "p1"},
+        }
         handlers.handle_kb_review_spaces(message)
 
         resp = _sent_response(queue_service)
@@ -639,7 +656,10 @@ class TestKbReviewSpacesApproveMode:
         kb.piece_store.get_by_id.return_value = None
         agent_factory.get_knowledge_base.return_value = kb
 
-        message = {"type": "kb_review_spaces", "message": {"mode": "approve", "piece_id": "missing"}}
+        message = {
+            "type": "kb_review_spaces",
+            "message": {"mode": "approve", "piece_id": "missing"},
+        }
         handlers.handle_kb_review_spaces(message)
 
         resp = _sent_response(queue_service)
@@ -674,7 +694,10 @@ class TestKbReviewSpacesRejectMode:
         kb.piece_store.get_by_id.return_value = piece
         agent_factory.get_knowledge_base.return_value = kb
 
-        message = {"type": "kb_review_spaces", "message": {"mode": "reject", "piece_id": "p1"}}
+        message = {
+            "type": "kb_review_spaces",
+            "message": {"mode": "reject", "piece_id": "p1"},
+        }
         handlers.handle_kb_review_spaces(message)
 
         resp = _sent_response(queue_service)
@@ -694,7 +717,10 @@ class TestKbReviewSpacesRejectMode:
         kb.piece_store.get_by_id.return_value = None
         agent_factory.get_knowledge_base.return_value = kb
 
-        message = {"type": "kb_review_spaces", "message": {"mode": "reject", "piece_id": "missing"}}
+        message = {
+            "type": "kb_review_spaces",
+            "message": {"mode": "reject", "piece_id": "missing"},
+        }
         handlers.handle_kb_review_spaces(message)
 
         resp = _sent_response(queue_service)

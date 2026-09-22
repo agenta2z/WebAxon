@@ -35,18 +35,19 @@ import traceback
 
 # Enable debug logging to trace execution flow
 logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
 # Suppress verbose third-party loggers
-logging.getLogger('selenium').setLevel(logging.WARNING)
-logging.getLogger('urllib3').setLevel(logging.WARNING)
-logging.getLogger('WDM').setLevel(logging.WARNING)
-logging.getLogger('playwright').setLevel(logging.WARNING)
+logging.getLogger("selenium").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("WDM").setLevel(logging.WARNING)
+logging.getLogger("playwright").setLevel(logging.WARNING)
 
-from webaxon.automation.web_driver import WebDriver, WebAutomationDrivers
-from create_google_search_action_graph_with_monitor import create_google_search_action_graph
+from create_google_search_action_graph_with_monitor import (
+    create_google_search_action_graph,
+)
+from webaxon.automation.web_driver import WebAutomationDrivers, WebDriver
 
 
 def create_driver(backend: str, browser: str, headless: bool = False) -> WebDriver:
@@ -61,41 +62,35 @@ def create_driver(backend: str, browser: str, headless: bool = False) -> WebDriv
     Returns:
         WebDriver instance
     """
-    if backend == 'selenium':
+    if backend == "selenium":
         # Map browser names to WebAutomationDrivers enum
         browser_map = {
-            'chrome': WebAutomationDrivers.Chrome,
-            'firefox': WebAutomationDrivers.Firefox,
-            'edge': WebAutomationDrivers.Edge,
-            'undetected_chrome': WebAutomationDrivers.UndetectedChrome,
+            "chrome": WebAutomationDrivers.Chrome,
+            "firefox": WebAutomationDrivers.Firefox,
+            "edge": WebAutomationDrivers.Edge,
+            "undetected_chrome": WebAutomationDrivers.UndetectedChrome,
         }
         driver_type = browser_map.get(browser.lower(), WebAutomationDrivers.Chrome)
         print(f"Using Selenium backend with {driver_type.value}")
-        return WebDriver(
-            driver_type=driver_type,
-            headless=headless
-        )
+        return WebDriver(driver_type=driver_type, headless=headless)
 
-    elif backend == 'playwright':
+    elif backend == "playwright":
         from webaxon.automation.backends import PlaywrightBackend
 
         # Map browser names to Playwright browser types
         browser_map = {
-            'chrome': 'chromium',
-            'chromium': 'chromium',
-            'firefox': 'firefox',
-            'webkit': 'webkit',
-            'safari': 'webkit',
+            "chrome": "chromium",
+            "chromium": "chromium",
+            "firefox": "firefox",
+            "webkit": "webkit",
+            "safari": "webkit",
         }
-        browser_type = browser_map.get(browser.lower(), 'chromium')
+        browser_type = browser_map.get(browser.lower(), "chromium")
         print(f"Using Playwright backend with {browser_type}")
 
         # Create and initialize Playwright backend
         playwright_backend = PlaywrightBackend()
-        playwright_backend.initialize(
-            browser_type=browser_type,
-            headless=headless
-        )
+        playwright_backend.initialize(browser_type=browser_type, headless=headless)
 
         # Create WebDriver with the backend
         return WebDriver(backend=playwright_backend)
@@ -112,8 +107,7 @@ def run_google_search_with_monitor(backend: str, browser: str, headless: bool):
     try:
         print("Creating ActionGraph with monitor...")
         graph = create_google_search_action_graph(
-            action_executor=driver,
-            search_query="hello world"
+            action_executor=driver, search_query="hello world"
         )
 
         # Print graph structure for user review
@@ -124,8 +118,10 @@ def run_google_search_with_monitor(backend: str, browser: str, headless: bool):
 
         # Ask user if they want to proceed
         print("=" * 60)
-        response = input("Do you want to proceed with this example? (y/n): ").strip().lower()
-        if response != 'y':
+        response = (
+            input("Do you want to proceed with this example? (y/n): ").strip().lower()
+        )
+        if response != "y":
             print("Aborted by user.")
             return
 
@@ -160,7 +156,9 @@ def run_google_search_with_monitor(backend: str, browser: str, headless: bool):
             # Print full traceback for debugging
             if result.error:
                 print("\n--- Full Traceback ---")
-                traceback.print_exception(type(result.error), result.error, result.error.__traceback__)
+                traceback.print_exception(
+                    type(result.error), result.error, result.error.__traceback__
+                )
 
         # Wait 10 seconds before closing to observe the result
         print("\nWaiting 100 seconds before closing browser...")
@@ -176,20 +174,19 @@ def main():
         description="Run ActionGraph with monitor example using Selenium or Playwright backend."
     )
     parser.add_argument(
-        '--backend', '-b',
-        choices=['selenium', 'playwright'],
-        default='selenium',
-        help="Backend to use: 'selenium' (default) or 'playwright'"
+        "--backend",
+        "-b",
+        choices=["selenium", "playwright"],
+        default="selenium",
+        help="Backend to use: 'selenium' (default) or 'playwright'",
     )
     parser.add_argument(
-        '--browser',
-        default='chrome',
-        help="Browser to use: 'chrome' (default), 'firefox', 'chromium', 'webkit', 'edge'"
+        "--browser",
+        default="chrome",
+        help="Browser to use: 'chrome' (default), 'firefox', 'chromium', 'webkit', 'edge'",
     )
     parser.add_argument(
-        '--headless',
-        action='store_true',
-        help="Run browser in headless mode"
+        "--headless", action="store_true", help="Run browser in headless mode"
     )
 
     args = parser.parse_args()
@@ -202,9 +199,7 @@ def main():
     print("=" * 60)
 
     run_google_search_with_monitor(
-        backend=args.backend,
-        browser=args.browser,
-        headless=args.headless
+        backend=args.backend, browser=args.browser, headless=args.headless
     )
 
 

@@ -16,9 +16,7 @@ import sys
 from pathlib import Path
 
 import pytest
-from hypothesis import given, settings, assume
-from hypothesis import strategies as st
-
+from hypothesis import assume, given, settings, strategies as st
 from webaxon.evaluation.export import export_result
 from webaxon.evaluation.protocol import EvalResult
 from webaxon.evaluation.tasks import EvaluationTask
@@ -75,7 +73,9 @@ _EXTENDED_FIELD_NAMES = [
 # ── Strategies for extended fields ────────────────────────────────────────────
 
 _extended_str_value = st.text(min_size=1, max_size=50).filter(lambda s: s.strip())
-_extended_list_value = st.lists(st.text(min_size=1, max_size=30), min_size=1, max_size=5)
+_extended_list_value = st.lists(
+    st.text(min_size=1, max_size=30), min_size=1, max_size=5
+)
 
 _EXTENDED_FIELD_STRATEGIES = {
     "clarified_plan": _extended_str_value,
@@ -89,11 +89,16 @@ _EXTENDED_FIELD_STRATEGIES = {
     "assumptions": _extended_str_value,
     "clarifier_dialogue": _extended_list_value,
     "clarifier_contract": st.dictionaries(
-        st.text(min_size=1, max_size=10), st.text(max_size=20), min_size=1, max_size=3,
+        st.text(min_size=1, max_size=10),
+        st.text(max_size=20),
+        min_size=1,
+        max_size=3,
     ),
     "observer_summary": _extended_str_value,
     "observer_window_range": st.lists(
-        st.integers(min_value=0, max_value=100), min_size=2, max_size=2,
+        st.integers(min_value=0, max_value=100),
+        min_size=2,
+        max_size=2,
     ),
     "reflection_history": _extended_list_value,
     "judge_history": _extended_list_value,
@@ -118,7 +123,6 @@ def extended_kwargs_strategy(draw):
         else:
             kwargs[name] = None
     return kwargs, present_keys
-
 
 
 # ── Property 5: Backward compatibility ────────────────────────────────────────
@@ -170,7 +174,11 @@ class TestExtendedFieldsOnlyWhenNotNone:
     )
     @settings(max_examples=100)
     def test_non_none_fields_present_none_fields_absent(
-        self, task, result, ext, tmp_path_factory,
+        self,
+        task,
+        result,
+        ext,
+        tmp_path_factory,
     ):
         """Non-None extended kwargs appear in result dict; None ones do not."""
         tmp_path = tmp_path_factory.mktemp("extended")
@@ -182,7 +190,9 @@ class TestExtendedFieldsOnlyWhenNotNone:
                 assert name in rd, f"Expected '{name}' in result dict"
                 assert rd[name] == kwargs[name]
             else:
-                assert name not in rd, f"'{name}' should not be in result dict (was None)"
+                assert name not in rd, (
+                    f"'{name}' should not be in result dict (was None)"
+                )
 
 
 # ── raw_model_generations.json written when non-empty ─────────────────────────
@@ -200,7 +210,10 @@ class TestRawModelGenerationsWritten:
     )
     @settings(max_examples=100)
     def test_raw_generations_file_written_iff_non_empty(
-        self, task, result, tmp_path_factory,
+        self,
+        task,
+        result,
+        tmp_path_factory,
     ):
         """raw_model_generations.json exists iff result.raw_generations is non-empty."""
         tmp_path = tmp_path_factory.mktemp("rawgen")
@@ -212,7 +225,9 @@ class TestRawModelGenerationsWritten:
             data = json.loads(raw_gen_path.read_text(encoding="utf-8"))
             assert data == result.raw_generations
         else:
-            assert not raw_gen_path.exists(), "raw_model_generations.json should not exist"
+            assert not raw_gen_path.exists(), (
+                "raw_model_generations.json should not exist"
+            )
 
 
 # ── result.json is always valid JSON ──────────────────────────────────────────

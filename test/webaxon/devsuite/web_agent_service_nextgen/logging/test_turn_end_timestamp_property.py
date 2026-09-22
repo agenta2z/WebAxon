@@ -8,16 +8,13 @@ either when the next turn starts or when the session is finalized. The
 turn's `end_timestamp` SHALL be set during `finalize()`.
 """
 
-import resolve_path  # noqa: F401 - must be first import
-
 import shutil
 import tempfile
 from datetime import datetime
 from pathlib import Path
 
-from hypothesis import given, settings, HealthCheck
-from hypothesis import strategies as st
-
+import resolve_path  # noqa: F401 - must be first import
+from hypothesis import given, HealthCheck, settings, strategies as st
 from rich_python_utils.service_utils.session_management import (
     SessionLogger as SessionLogManager,
 )
@@ -111,7 +108,9 @@ class TestTurnEndTimestampProperty:
 
     @given(session_id=session_ids, num_turns=turn_counts)
     @settings(max_examples=50, suppress_health_check=[HealthCheck.too_slow])
-    def test_last_turn_has_no_end_timestamp_before_finalize(self, session_id, num_turns):
+    def test_last_turn_has_no_end_timestamp_before_finalize(
+        self, session_id, num_turns
+    ):
         """The last turn's end_timestamp is None before finalize() is called.
 
         **Validates: Requirements 6.4, 6.5**
@@ -139,7 +138,9 @@ class TestTurnEndTimestampProperty:
 
     @given(session_id=session_ids, num_turns=turn_counts)
     @settings(max_examples=50, suppress_health_check=[HealthCheck.too_slow])
-    def test_start_turn_directly_sets_previous_end_timestamp(self, session_id, num_turns):
+    def test_start_turn_directly_sets_previous_end_timestamp(
+        self, session_id, num_turns
+    ):
         """Calling start_turn() directly also sets end_timestamp on previous turn
         via the turn-aware logger mechanism.
 

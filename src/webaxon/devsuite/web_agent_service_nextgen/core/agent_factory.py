@@ -3,46 +3,89 @@
 This module provides centralized agent creation with support for different
 agent types and template version switching.
 """
+
 import logging
 from functools import partial
 from pathlib import Path
-from typing import Callable, List, Dict, Any, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from agent_foundation.agents.agent_response import AgentResponseFormat
+from agent_foundation.agents.prompt_based_agents.prompt_based_action_agent import (
+    PromptBasedActionAgent,
+)
+from agent_foundation.agents.prompt_based_agents.prompt_based_planning_agent import (
+    PromptBasedActionPlanningAgent,
+)
+from agent_foundation.agents.prompt_based_agents.prompt_based_response_agent import (
+    PromptBasedResponseActionAgent,
+)
+from agent_foundation.agents.prompt_based_agents.prompt_based_summary_agent import (
+    PromptBasedSummaryActionAgent,
+)
+from agent_foundation.common.inferencers.agentic_inferencers.common import (
+    ReflectionStyles,
+    ResponseSelectors,
+)
+from agent_foundation.common.inferencers.agentic_inferencers.reflective_inferencer import (
+    ReflectiveInferencer,
+)
+from agent_foundation.common.inferencers.api_inferencers.claude_api_inferencer import (
+    ClaudeApiInferencer,
+)
+from agent_foundation.common.inferencers.mock_inferencers import (
+    MockClarificationInferencer,
+)
 from agent_foundation.knowledge import KnowledgeBase, KnowledgeDataLoader
-from agent_foundation.knowledge.stores.metadata.keyvalue_adapter import KeyValueMetadataStore
-from agent_foundation.knowledge.stores.pieces.retrieval_adapter import RetrievalKnowledgePieceStore
-from agent_foundation.knowledge.stores.graph.graph_adapter import GraphServiceEntityGraphStore
-from rich_python_utils.service_utils.keyvalue_service.file_keyvalue_service import FileKeyValueService
-from rich_python_utils.service_utils.retrieval_service.file_retrieval_service import FileRetrievalService
-from rich_python_utils.service_utils.graph_service.file_graph_service import FileGraphService
-from agent_foundation.agents.prompt_based_agents.prompt_based_action_agent import PromptBasedActionAgent
-from agent_foundation.agents.prompt_based_agents.prompt_based_planning_agent import PromptBasedActionPlanningAgent
-from agent_foundation.agents.prompt_based_agents.prompt_based_response_agent import PromptBasedResponseActionAgent
-from agent_foundation.agents.prompt_based_agents.prompt_based_summary_agent import PromptBasedSummaryActionAgent
-from agent_foundation.common.inferencers.agentic_inferencers.common import ReflectionStyles, ResponseSelectors
-from agent_foundation.common.inferencers.agentic_inferencers.flow_inferencers.reflective_inferencer import ReflectiveInferencer
-from agent_foundation.common.inferencers.api_inferencers.claude_api_inferencer import ClaudeApiInferencer
-from agent_foundation.common.inferencers.mock_inferencers import MockClarificationInferencer
+from agent_foundation.knowledge.stores.graph.graph_adapter import (
+    GraphServiceEntityGraphStore,
+)
+from agent_foundation.knowledge.stores.metadata.keyvalue_adapter import (
+    KeyValueMetadataStore,
+)
+from agent_foundation.knowledge.stores.pieces.retrieval_adapter import (
+    RetrievalKnowledgePieceStore,
+)
 from agent_foundation.ui.input_modes import (
-    InputModeConfig, ChoiceOption, single_choice, multiple_choices,
+    ChoiceOption,
+    InputModeConfig,
+    multiple_choices,
+    single_choice,
 )
 from agent_foundation.ui.queue_interactive import QueueInteractive
+from rich_python_utils.service_utils.graph_service.file_graph_service import (
+    FileGraphService,
+)
+from rich_python_utils.service_utils.keyvalue_service.file_keyvalue_service import (
+    FileKeyValueService,
+)
+from rich_python_utils.service_utils.retrieval_service.file_retrieval_service import (
+    FileRetrievalService,
+)
 from rich_python_utils.string_utils.formatting.common import KeyValueStringFormat
-from rich_python_utils.string_utils.formatting.handlebars_format import format_template as handlebars_template_format
+from rich_python_utils.string_utils.formatting.handlebars_format import (
+    format_template as handlebars_template_format,
+)
 from rich_python_utils.string_utils.formatting.template_manager import TemplateManager
-from webaxon.devsuite.config import OPTION_BASE_REASONER, OPTION_DEFAULT_PROMPT_VERSION, MOCK_USER_PROFILE, \
-    DEFAULT_AGENT_REASONER_ARGS, RESPONSE_AGENT_REASONER_ARGS
+from webaxon.automation.backends.config import BrowserConfig, UndetectedChromeConfig
 from webaxon.automation.web_agent_actors.common import WebActor
 from webaxon.automation.web_agent_actors.constants import ACTION_TYPE_INFO_ASK_QUESTION
-from webaxon.automation.web_agent_actors.webpage_make_answer_actor import WebPageMakeAnswerActor, \
-    ACTION_TYPE_WEBPAGE_MAKE_ANSWER
-from webaxon.automation.backends.config import BrowserConfig, UndetectedChromeConfig
+from webaxon.automation.web_agent_actors.webpage_make_answer_actor import (
+    ACTION_TYPE_WEBPAGE_MAKE_ANSWER,
+    WebPageMakeAnswerActor,
+)
 from webaxon.automation.web_driver import WebDriver
+from webaxon.devsuite.config import (
+    DEFAULT_AGENT_REASONER_ARGS,
+    MOCK_USER_PROFILE,
+    OPTION_BASE_REASONER,
+    OPTION_DEFAULT_PROMPT_VERSION,
+    RESPONSE_AGENT_REASONER_ARGS,
+)
 
 try:
-    from agent_foundation.common.inferencers.api_inferencers.ag.ag_claude_api_inferencer import \
-        AgClaudeApiInferencer
+    from agent_foundation.common.inferencers.api_inferencers.ag.ag_claude_api_inferencer import (
+        AgClaudeApiInferencer,
+    )
 except ImportError:
     AgClaudeApiInferencer = None
 
@@ -63,9 +106,13 @@ class _PipelineKnowledgeProvider:
         self._consolidator = consolidator
 
     def __call__(self, query: str) -> Dict[str, str]:
-        from agent_foundation.knowledge.retrieval.retrieval_pipeline import RetrievalPipeline
-        from agent_foundation.knowledge.retrieval.post_processors import GroupedDictPostProcessor
+        from agent_foundation.knowledge.retrieval.post_processors import (
+            GroupedDictPostProcessor,
+        )
         from agent_foundation.knowledge.retrieval.provider import _default_formatter
+        from agent_foundation.knowledge.retrieval.retrieval_pipeline import (
+            RetrievalPipeline,
+        )
 
         post_processor = GroupedDictPostProcessor(
             type_formatters={},
@@ -87,17 +134,17 @@ class _PipelineKnowledgeProvider:
 
 class AgentFactory:
     """Factory for creating different agent types.
-    
+
     This class centralizes agent creation logic and provides:
     - Support for multiple agent types (default, mock)
     - Template version switching per agent
     - Consistent agent configuration
     - User profile and response format management
-    
+
     The factory ensures all agents are properly configured with the
     necessary dependencies (reasoner, interactive, logger, etc.).
     """
-    
+
     def __init__(
         self,
         template_manager: TemplateManager,
@@ -122,59 +169,59 @@ class AgentFactory:
         self._provider = self._create_knowledge_provider()
         self._user_profile = self._load_user_profile()
         self._response_format_config = self._load_response_format_config()
-    
+
     def create_agent(
         self,
         interactive: QueueInteractive,
         logger: Callable,
-        agent_type: str = 'DefaultAgent',
-        template_version: str = ""
+        agent_type: str = "DefaultAgent",
+        template_version: str = "",
     ) -> PromptBasedActionPlanningAgent:
         """Create agent based on type and template version.
-        
+
         This method:
         1. Switches template version if provided
         2. Validates agent type
         3. Creates agent based on type
         4. Returns configured agent
-        
+
         Args:
             interactive: QueueInteractive instance for agent communication
             logger: Logger function for agent execution
             agent_type: Type of agent to create ('DefaultAgent' or 'MockClarificationAgent')
             template_version: Template version to use (empty string for default)
-            
+
         Returns:
             Configured agent instance
-            
+
         Raises:
             ValueError: If agent_type is not supported
         """
         # Switch template version if provided
         # NOTE: switch() returns a new TemplateManager copy — must reassign
         if template_version:
-            self._template_manager = self._template_manager.switch(template_version=template_version)
-        
+            self._template_manager = self._template_manager.switch(
+                template_version=template_version
+            )
+
         # Validate agent type
         if agent_type not in self.get_available_types():
             raise ValueError(
                 f"Unknown agent type: {agent_type}. "
                 f"Available types: {', '.join(self.get_available_types())}"
             )
-        
+
         # Create agent based on type
-        if agent_type == 'MockClarificationAgent':
+        if agent_type == "MockClarificationAgent":
             return self._create_mock_agent(interactive, logger)
         else:  # DefaultAgent
             return self._create_default_agent(interactive, logger)
-    
+
     def _create_default_agent(
-        self,
-        interactive: QueueInteractive,
-        logger: Callable
+        self, interactive: QueueInteractive, logger: Callable
     ) -> PromptBasedActionPlanningAgent:
         """Create default planning agent with full capabilities.
-        
+
         This creates a full-featured planning agent with:
         - Claude API reasoner (with optional reflection)
         - Response agent for direct responses
@@ -182,30 +229,30 @@ class AgentFactory:
         - WebDriver actor for web automation
         - Master action agent coordinating all actions
         - Planning agent orchestrating the workflow
-        
+
         Args:
             interactive: QueueInteractive instance for agent communication
             logger: Logger function for agent execution
-            
+
         Returns:
             Configured planning agent
         """
         # Agent configuration
-        raw_response_start_delimiter = '<StructuredResponse>'
-        raw_response_end_delimiter = '</StructuredResponse>'
+        raw_response_start_delimiter = "<StructuredResponse>"
+        raw_response_end_delimiter = "</StructuredResponse>"
         raw_response_format = AgentResponseFormat.XML
         debug_mode = True
         always_add_logging_based_logger = False
-        anchor_action_types = {'Search', 'ElementInteraction.BrowseLink'}
-        
+        anchor_action_types = {"Search", "ElementInteraction.BrowseLink"}
+
         # Create base reasoner
-        if OPTION_BASE_REASONER == 'AgClaude' and AgClaudeApiInferencer is not None:
+        if OPTION_BASE_REASONER == "AgClaude" and AgClaudeApiInferencer is not None:
             reasoner = AgClaudeApiInferencer(
                 max_retry=3,
                 default_inference_args=DEFAULT_AGENT_REASONER_ARGS,
                 logger=logger,
                 debug_mode=debug_mode,
-                id='reasoner'
+                id="reasoner",
             )
         else:
             reasoner = ClaudeApiInferencer(
@@ -213,31 +260,37 @@ class AgentFactory:
                 default_inference_args=DEFAULT_AGENT_REASONER_ARGS,
                 logger=logger,
                 debug_mode=debug_mode,
-                id='reasoner'
+                id="reasoner",
             )
-        
+
         # Create reflective reasoner wrapper
         reflective_reasoner = ReflectiveInferencer(
             base_inferencer=reasoner,
             max_retry=1,
             reflection_inferencer=reasoner,
-            reflection_prompt_formatter=self._template_manager.switch(active_template_type='reflection'),
+            reflection_prompt_formatter=self._template_manager.switch(
+                active_template_type="reflection"
+            ),
             num_reflections=1,
             reflection_style=ReflectionStyles.Sequential,
             response_selector=ResponseSelectors.LastReflection,
             logger=logger,
             always_add_logging_based_logger=always_add_logging_based_logger,
             debug_mode=debug_mode,
-            id='reflective_reasoner'
+            id="reflective_reasoner",
         )
-        
+
         # Create response agent
         response_agent = PromptBasedResponseActionAgent(
-            prompt_formatter=self._template_manager.switch(active_template_root_space='response_agent'),
+            prompt_formatter=self._template_manager.switch(
+                active_template_root_space="response_agent"
+            ),
             raw_response_start_delimiter=raw_response_start_delimiter,
             raw_response_end_delimiter=raw_response_end_delimiter,
             raw_response_format=raw_response_format,
-            raw_response_parsing_args={'exclude_paths': ['InstantResponse.Response.Answer']},
+            raw_response_parsing_args={
+                "exclude_paths": ["InstantResponse.Response.Answer"]
+            },
             use_conversational_user_input=True,
             input_string_formatter=KeyValueStringFormat.XML,
             response_string_formatter=KeyValueStringFormat.XML,
@@ -250,12 +303,14 @@ class AgentFactory:
             debug_mode=debug_mode,
             only_keep_parent_debuggable_ids=True,
             knowledge_provider=self._provider,
-            id='response_agent'
+            id="response_agent",
         )
-        
+
         # Create summary agent
         summary_agent = PromptBasedSummaryActionAgent(
-            prompt_formatter=self._template_manager.switch(active_template_root_space='response_agent'),
+            prompt_formatter=self._template_manager.switch(
+                active_template_root_space="response_agent"
+            ),
             raw_response_start_delimiter=raw_response_start_delimiter,
             raw_response_end_delimiter=raw_response_end_delimiter,
             raw_response_format=raw_response_format,
@@ -270,15 +325,21 @@ class AgentFactory:
             debug_mode=debug_mode,
             only_keep_parent_debuggable_ids=True,
             knowledge_provider=self._provider,
-            id='summary_agent'
+            id="summary_agent",
         )
-        
+
         # Create WebDriver actor
         import os
+
         is_headless = os.getenv("WEBAXON_HEADLESS", "false").lower() == "true"
 
         # Allow injecting a pre-initialized WebDriver (e.g., from sidecar)
-        webdriver_actor = self._config.injected_webdriver if hasattr(self._config, 'injected_webdriver') and self._config.injected_webdriver else None
+        webdriver_actor = (
+            self._config.injected_webdriver
+            if hasattr(self._config, "injected_webdriver")
+            and self._config.injected_webdriver
+            else None
+        )
 
         if webdriver_actor is None:
             browser_config = None
@@ -301,25 +362,25 @@ class AgentFactory:
                 user_data_dir=self._config.chrome_user_data_dir,
                 profile_directory=self._config.chrome_profile_directory,
                 copy_profile=self._config.chrome_copy_profile,
-                id='webdriver',
+                id="webdriver",
                 logger=logger,
                 debug_mode=debug_mode,
                 always_add_logging_based_logger=always_add_logging_based_logger,
                 config=browser_config,
             )
-        
+
         # Create info ask question actor
         info_ask_question_actor = WebActor(
             actor=PromptBasedActionAgent(
                 prompt_formatter=self._template_manager.switch(
-                    active_template_root_space='action_agent',
-                    default_template_name=ACTION_TYPE_INFO_ASK_QUESTION
+                    active_template_root_space="action_agent",
+                    default_template_name=ACTION_TYPE_INFO_ASK_QUESTION,
                 ),
                 anchor_action_types=anchor_action_types,
                 raw_response_start_delimiter=raw_response_start_delimiter,
                 raw_response_end_delimiter=raw_response_end_delimiter,
                 raw_response_format=raw_response_format,
-                response_field_task_status_description='PlannedActions',
+                response_field_task_status_description="PlannedActions",
                 use_conversational_user_input=True,
                 input_string_formatter=KeyValueStringFormat.XML,
                 response_string_formatter=KeyValueStringFormat.XML,
@@ -327,8 +388,10 @@ class AgentFactory:
                 reasoner=reasoner,
                 interactive=interactive,
                 actor={
-                    'default': webdriver_actor,
-                    ACTION_TYPE_WEBPAGE_MAKE_ANSWER: WebPageMakeAnswerActor(actor=response_agent, id='make_answer_actor')
+                    "default": webdriver_actor,
+                    ACTION_TYPE_WEBPAGE_MAKE_ANSWER: WebPageMakeAnswerActor(
+                        actor=response_agent, id="make_answer_actor"
+                    ),
                 },
                 summarizer=summary_agent,
                 logger=logger,
@@ -336,20 +399,22 @@ class AgentFactory:
                 debug_mode=debug_mode,
                 only_keep_parent_debuggable_ids=True,
                 knowledge_provider=self._provider,
-                id='info_ask_question_agent'
+                id="info_ask_question_agent",
             ),
             target_action_type=ACTION_TYPE_INFO_ASK_QUESTION,
-            init_url='https://home.atlassian.com/chat'
+            init_url="https://home.atlassian.com/chat",
         )
-        
+
         # Create master action agent
         master_action_agent = PromptBasedActionAgent(
-            prompt_formatter=self._template_manager.switch(active_template_root_space='action_agent'),
+            prompt_formatter=self._template_manager.switch(
+                active_template_root_space="action_agent"
+            ),
             anchor_action_types=anchor_action_types,
             raw_response_start_delimiter=raw_response_start_delimiter,
             raw_response_end_delimiter=raw_response_end_delimiter,
             raw_response_format=raw_response_format,
-            response_field_task_status_description='PlannedActions',
+            response_field_task_status_description="PlannedActions",
             use_conversational_user_input=True,
             input_string_formatter=KeyValueStringFormat.XML,
             response_string_formatter=KeyValueStringFormat.XML,
@@ -357,9 +422,11 @@ class AgentFactory:
             reasoner=reasoner,
             interactive=interactive,
             actor={
-                'default': webdriver_actor,
-                ACTION_TYPE_WEBPAGE_MAKE_ANSWER: WebPageMakeAnswerActor(actor=response_agent, id='make_answer_actor'),
-                ACTION_TYPE_INFO_ASK_QUESTION: info_ask_question_actor
+                "default": webdriver_actor,
+                ACTION_TYPE_WEBPAGE_MAKE_ANSWER: WebPageMakeAnswerActor(
+                    actor=response_agent, id="make_answer_actor"
+                ),
+                ACTION_TYPE_INFO_ASK_QUESTION: info_ask_question_actor,
             },
             summarizer=summary_agent,
             user_input_mode_mapping=self._get_user_input_mode_mapping(),
@@ -368,14 +435,16 @@ class AgentFactory:
             debug_mode=debug_mode,
             only_keep_parent_debuggable_ids=True,
             knowledge_provider=self._provider,
-            id='action_agent'
+            id="action_agent",
         )
-        
+
         # Create planning agent
         planning_agent = PromptBasedActionPlanningAgent(
-            prompt_formatter=self._template_manager.switch(active_template_root_space='planning_agent'),
-            direct_response_start_delimiter='<DirectResponse>',
-            direct_response_end_delimiter='</DirectResponse>',
+            prompt_formatter=self._template_manager.switch(
+                active_template_root_space="planning_agent"
+            ),
+            direct_response_start_delimiter="<DirectResponse>",
+            direct_response_end_delimiter="</DirectResponse>",
             raw_response_start_delimiter=raw_response_start_delimiter,
             raw_response_end_delimiter=raw_response_end_delimiter,
             raw_response_format=raw_response_format,
@@ -387,58 +456,60 @@ class AgentFactory:
             interactive=interactive,
             actor=master_action_agent,
             actor_args_transformation={
-                'Request': 'user_input',
-                'SolutionRequirement': 'task_requirement',
-                'ProblemID': 'task_label'
+                "Request": "user_input",
+                "SolutionRequirement": "task_requirement",
+                "ProblemID": "task_label",
             },
             user_input_mode_mapping=self._get_user_input_mode_mapping(),
             logger=logger,
             always_add_logging_based_logger=always_add_logging_based_logger,
             debug_mode=debug_mode,
             only_keep_parent_debuggable_ids=True,
-            ensure_consistent_session_metadata_fields=['session_id'],  # Ensure session_id stays consistent
+            ensure_consistent_session_metadata_fields=[
+                "session_id"
+            ],  # Ensure session_id stays consistent
             knowledge_provider=self._provider,
-            id='planning_agent'
+            id="planning_agent",
         )
-        
+
         return planning_agent
-    
+
     def _create_mock_agent(
-        self,
-        interactive: QueueInteractive,
-        logger: Callable
+        self, interactive: QueueInteractive, logger: Callable
     ) -> PromptBasedActionAgent:
         """Create mock clarification agent for testing.
-        
+
         This creates a simplified agent for testing that uses a mock
         reasoner instead of calling the actual Claude API.
-        
+
         Args:
             interactive: QueueInteractive instance for agent communication
             logger: Logger function for agent execution
-            
+
         Returns:
             Configured mock agent
         """
         # Agent configuration
-        raw_response_start_delimiter = '<StructuredResponse>'
-        raw_response_end_delimiter = '</StructuredResponse>'
+        raw_response_start_delimiter = "<StructuredResponse>"
+        raw_response_end_delimiter = "</StructuredResponse>"
         raw_response_format = AgentResponseFormat.XML
         debug_mode = True
         always_add_logging_based_logger = False
-        anchor_action_types = {'Search', 'ElementInteraction.BrowseLink'}
-        
+        anchor_action_types = {"Search", "ElementInteraction.BrowseLink"}
+
         # Create mock reasoner
         mock_reasoner = MockClarificationInferencer()
-        
+
         # Create simple action agent with mock reasoner
         root_agent = PromptBasedActionAgent(
-            prompt_formatter=self._template_manager.switch(active_template_root_space='action_agent'),
+            prompt_formatter=self._template_manager.switch(
+                active_template_root_space="action_agent"
+            ),
             anchor_action_types=anchor_action_types,
             raw_response_start_delimiter=raw_response_start_delimiter,
             raw_response_end_delimiter=raw_response_end_delimiter,
             raw_response_format=raw_response_format,
-            response_field_task_status_description='PlannedActions',
+            response_field_task_status_description="PlannedActions",
             use_conversational_user_input=True,
             input_string_formatter=KeyValueStringFormat.XML,
             response_string_formatter=KeyValueStringFormat.XML,
@@ -449,11 +520,11 @@ class AgentFactory:
             logger=logger,
             always_add_logging_based_logger=always_add_logging_based_logger,
             debug_mode=debug_mode,
-            only_keep_parent_debuggable_ids=True
+            only_keep_parent_debuggable_ids=True,
         )
-        
+
         return root_agent
-    
+
     # -- UserInputsRequired input mode builders ---------------------------------
 
     @staticmethod
@@ -461,7 +532,11 @@ class AgentFactory:
         """Build PREDEFINED SINGLE_CHOICE for Authentication based on AllowRelayInfo."""
         allow_relay = False
         if action.args:
-            allow_relay = str(action.args.get('AllowRelayInfo', 'False')).lower() in ('true', '1', 'yes')
+            allow_relay = str(action.args.get("AllowRelayInfo", "False")).lower() in (
+                "true",
+                "1",
+                "yes",
+            )
 
         options = [
             ChoiceOption(
@@ -471,12 +546,14 @@ class AgentFactory:
             ),
         ]
         if allow_relay:
-            options.append(ChoiceOption(
-                label="Enter password or passcode",
-                value="",
-                follow_up_prompt="[Enter password/passcode]: ",
-                needs_user_copilot=False,
-            ))
+            options.append(
+                ChoiceOption(
+                    label="Enter password or passcode",
+                    value="",
+                    follow_up_prompt="[Enter password/passcode]: ",
+                    needs_user_copilot=False,
+                )
+            )
 
         return single_choice(options, allow_custom=True)
 
@@ -499,38 +576,55 @@ class AgentFactory:
         if not action.args:
             return InputModeConfig()
 
-        options_raw = action.args.get('Options', '')
-        allow_multiple = str(action.args.get('AllowMultiple', 'False')).lower() in ('true', '1', 'yes')
-        allow_free_text = str(action.args.get('AllowFreeText', 'True')).lower() not in ('false', '0', 'no')
-        needs_user_copilot = str(action.args.get('NeedsUserCopilot', 'False')).lower() in ('true', '1', 'yes')
+        options_raw = action.args.get("Options", "")
+        allow_multiple = str(action.args.get("AllowMultiple", "False")).lower() in (
+            "true",
+            "1",
+            "yes",
+        )
+        allow_free_text = str(action.args.get("AllowFreeText", "True")).lower() not in (
+            "false",
+            "0",
+            "no",
+        )
+        needs_user_copilot = str(
+            action.args.get("NeedsUserCopilot", "False")
+        ).lower() in ("true", "1", "yes")
 
         choice_options = []
 
         if isinstance(options_raw, str) and options_raw.strip():
             # Simple format: "A|B|C" -> label=value for each
-            for label in options_raw.split('|'):
+            for label in options_raw.split("|"):
                 label = label.strip()
                 if label:
-                    choice_options.append(ChoiceOption(
-                        label=label, value=label,
-                        needs_user_copilot=needs_user_copilot
-                    ))
+                    choice_options.append(
+                        ChoiceOption(
+                            label=label,
+                            value=label,
+                            needs_user_copilot=needs_user_copilot,
+                        )
+                    )
 
         elif isinstance(options_raw, dict):
             # Full XML format: {'Option': [{Content, Value, FollowUpPrompt}, ...]}
-            option_items = options_raw.get('Option', [])
+            option_items = options_raw.get("Option", [])
             # Handle single Option (parser returns dict instead of list)
             if isinstance(option_items, dict):
                 option_items = [option_items]
             for item in option_items:
-                content = item.get('Content', '')
-                value = item.get('Value', content)  # defaults to Content if omitted
-                follow_up = item.get('FollowUpPrompt', '')
+                content = item.get("Content", "")
+                value = item.get("Value", content)  # defaults to Content if omitted
+                follow_up = item.get("FollowUpPrompt", "")
                 if content:
-                    choice_options.append(ChoiceOption(
-                        label=content, value=value, follow_up_prompt=follow_up,
-                        needs_user_copilot=needs_user_copilot
-                    ))
+                    choice_options.append(
+                        ChoiceOption(
+                            label=content,
+                            value=value,
+                            follow_up_prompt=follow_up,
+                            needs_user_copilot=needs_user_copilot,
+                        )
+                    )
 
         if choice_options:
             if allow_multiple:
@@ -542,9 +636,9 @@ class AgentFactory:
     def _get_user_input_mode_mapping(self) -> dict:
         """Get mapping from UserInputsRequired subtypes to input mode builders."""
         return {
-            'Authentication': self._build_auth_input_mode,
-            'MissingInformation': self._build_options_input_mode,
-            'Clarification': self._build_options_input_mode,
+            "Authentication": self._build_auth_input_mode,
+            "MissingInformation": self._build_options_input_mode,
+            "Clarification": self._build_options_input_mode,
         }
 
     def get_available_types(self) -> List[str]:
@@ -553,8 +647,8 @@ class AgentFactory:
         Returns:
             List of supported agent type names
         """
-        return ['DefaultAgent', 'MockClarificationAgent']
-    
+        return ["DefaultAgent", "MockClarificationAgent"]
+
     def _create_knowledge_provider(self) -> Optional["_PipelineKnowledgeProvider"]:
         """Create a pipeline-based knowledge provider with file-based persistent stores.
 
@@ -566,7 +660,10 @@ class AgentFactory:
             _PipelineKnowledgeProvider instance wrapping RetrievalPipeline +
             GroupedDictPostProcessor.
         """
-        from webaxon.devsuite.web_agent_service_nextgen.constants import KNOWLEDGE_STORE_DIR
+        from webaxon.devsuite.web_agent_service_nextgen.constants import (
+            KNOWLEDGE_STORE_DIR,
+        )
+
         store_base = self._testcase_root / KNOWLEDGE_STORE_DIR
 
         logger = logging.getLogger(__name__)
@@ -577,7 +674,9 @@ class AgentFactory:
                 kv_service=FileKeyValueService(base_dir=str(store_base / "metadata"))
             ),
             piece_store=RetrievalKnowledgePieceStore(
-                retrieval_service=FileRetrievalService(base_dir=str(store_base / "pieces"))
+                retrieval_service=FileRetrievalService(
+                    base_dir=str(store_base / "pieces")
+                )
             ),
             graph_store=GraphServiceEntityGraphStore(
                 graph_service=FileGraphService(base_dir=str(store_base / "graph"))
@@ -592,13 +691,17 @@ class AgentFactory:
         # Seed from knowledge_data_file only if stores are empty (first run)
         if self._config.knowledge_data_file:
             if kb.piece_store.retrieval_service.size() == 0:
-                logger.info("Seeding knowledge from %s", self._config.knowledge_data_file)
+                logger.info(
+                    "Seeding knowledge from %s", self._config.knowledge_data_file
+                )
                 KnowledgeDataLoader.load(kb, self._config.knowledge_data_file)
             else:
                 logger.info("Knowledge store already populated, skipping seed")
 
         # Optional knowledge consolidation (deduplication + conflict detection)
-        from agent_foundation.knowledge.retrieval.knowledge_consolidator import KnowledgeConsolidator
+        from agent_foundation.knowledge.retrieval.knowledge_consolidator import (
+            KnowledgeConsolidator,
+        )
         from agent_foundation.knowledge.retrieval.models.enums import ConsolidationMode
 
         consolidator = None
@@ -606,7 +709,9 @@ class AgentFactory:
         try:
             mode = ConsolidationMode(mode_str)
         except ValueError:
-            logger.warning("Unknown consolidation mode '%s', defaulting to DISABLED", mode_str)
+            logger.warning(
+                "Unknown consolidation mode '%s', defaulting to DISABLED", mode_str
+            )
             mode = ConsolidationMode.DISABLED
 
         if mode != ConsolidationMode.DISABLED:
@@ -670,7 +775,7 @@ class AgentFactory:
 
         # Create a lightweight inferencer for knowledge structuring (reused across calls)
         if self._ingestion_inferencer is None:
-            if OPTION_BASE_REASONER == 'AgClaude' and AgClaudeApiInferencer is not None:
+            if OPTION_BASE_REASONER == "AgClaude" and AgClaudeApiInferencer is not None:
                 self._ingestion_inferencer = AgClaudeApiInferencer(
                     max_retry=3,
                     default_inference_args=DEFAULT_AGENT_REASONER_ARGS,
@@ -706,7 +811,7 @@ class AgentFactory:
         Follows the same pattern as ingest_knowledge().
         """
         if self._ingestion_inferencer is None:
-            if OPTION_BASE_REASONER == 'AgClaude' and AgClaudeApiInferencer is not None:
+            if OPTION_BASE_REASONER == "AgClaude" and AgClaudeApiInferencer is not None:
                 self._ingestion_inferencer = AgClaudeApiInferencer(
                     max_retry=3,
                     default_inference_args=DEFAULT_AGENT_REASONER_ARGS,
@@ -740,14 +845,18 @@ class AgentFactory:
 
     def get_document_ingester(self):
         """Return a DocumentIngester with the LLM inferencer."""
-        from agent_foundation.knowledge.ingestion.document_ingester import DocumentIngester
+        from agent_foundation.knowledge.ingestion.document_ingester import (
+            DocumentIngester,
+        )
 
         self.ensure_knowledge_provider()
         return DocumentIngester(inferencer=self._make_llm_fn())
 
     def get_knowledge_updater(self):
         """Return a KnowledgeUpdater with piece_store and LLM function."""
-        from agent_foundation.knowledge.ingestion.knowledge_updater import KnowledgeUpdater
+        from agent_foundation.knowledge.ingestion.knowledge_updater import (
+            KnowledgeUpdater,
+        )
 
         self.ensure_knowledge_provider()
         return KnowledgeUpdater(
@@ -757,7 +866,9 @@ class AgentFactory:
 
     def get_knowledge_deleter(self):
         """Return a KnowledgeDeleter with piece_store."""
-        from agent_foundation.knowledge.ingestion.knowledge_deleter import KnowledgeDeleter
+        from agent_foundation.knowledge.ingestion.knowledge_deleter import (
+            KnowledgeDeleter,
+        )
 
         self.ensure_knowledge_provider()
         return KnowledgeDeleter(piece_store=self._provider.kb.piece_store)
@@ -769,19 +880,21 @@ class AgentFactory:
 
     def _load_user_profile(self) -> Optional[Dict[str, Any]]:
         """Load user profile configuration.
-        
+
         Returns None if a knowledge provider is active (the provider supplies
         user_profile via dict merge in additional_reasoner_input_feed).
         Falls back to MOCK_USER_PROFILE if no provider is configured.
-        
+
         Returns:
             User profile dictionary for the configured prompt version, or None
             if a knowledge provider is active.
         """
         if self._provider:
             return None
-        return MOCK_USER_PROFILE.get(OPTION_DEFAULT_PROMPT_VERSION, MOCK_USER_PROFILE['default'])
-    
+        return MOCK_USER_PROFILE.get(
+            OPTION_DEFAULT_PROMPT_VERSION, MOCK_USER_PROFILE["default"]
+        )
+
     def close(self):
         """Close the knowledge provider if it exists. Called during service shutdown."""
         if self._provider:
@@ -789,13 +902,12 @@ class AgentFactory:
 
     def _load_response_format_config(self) -> Dict[str, Any]:
         """Load response format configuration.
-        
+
         Returns:
             Response format configuration dictionary
         """
         return {
-            'raw_response_start_delimiter': '<StructuredResponse>',
-            'raw_response_end_delimiter': '</StructuredResponse>',
-            'raw_response_format': AgentResponseFormat.XML
+            "raw_response_start_delimiter": "<StructuredResponse>",
+            "raw_response_end_delimiter": "</StructuredResponse>",
+            "raw_response_format": AgentResponseFormat.XML,
         }
-

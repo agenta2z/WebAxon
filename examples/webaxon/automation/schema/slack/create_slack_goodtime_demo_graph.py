@@ -7,7 +7,7 @@ from agent_foundation.automation.schema.action_metadata import ActionMetadataReg
 def create_slack_good_time_demo_graph(
     action_executor,
     search_query: str = "test query",
-    url: str = "https://app.slack.com/client/EE8HJA7RS/C097JUKSEQJ"
+    url: str = "https://app.slack.com/client/EE8HJA7RS/C097JUKSEQJ",
 ):
     """
     Create an ActionGraph that visits Google, inputs text, and clicks search button.
@@ -22,66 +22,70 @@ def create_slack_good_time_demo_graph(
     """
 
     graph = ActionGraph(
-        action_executor=action_executor,
-        action_metadata=ActionMetadataRegistry()
+        action_executor=action_executor, action_metadata=ActionMetadataRegistry()
     )
 
-    graph.action(
-        "wait",
-        target=5
-    )
+    graph.action("wait", target=5)
 
     # Action 1: Visit Goodtime dashboard
-    graph.action(
-        "visit_url",
-        target='https://eu.goodtime.io/dashboard'
-    )
+    graph.action("visit_url", target="https://eu.goodtime.io/dashboard")
 
     # Action 2: Click on reschedule
     graph.action(
         "click",
-        target=TargetSpec(strategy="xpath", value="//a[contains(@class, '_Interview_1kmia_9') and contains(., 'Anakin')]")
+        target=TargetSpec(
+            strategy="xpath",
+            value="//a[contains(@class, '_Interview_1kmia_9') and contains(., 'Anakin')]",
+        ),
     )
 
+    graph.action("wait", target=5)
+
     graph.action(
-        "wait",
-        target=5
+        "click",
+        target=TargetSpec(
+            strategy="xpath", value="//button[contains(., 'Set Availability')]"
+        ),
     )
 
     graph.action(
         "click",
-        target=TargetSpec(strategy="xpath", value="//button[contains(., 'Set Availability')]")
+        target=TargetSpec(strategy="xpath", value="//td[@title='December 23, 2025']"),
     )
 
     graph.action(
         "click",
-        target=TargetSpec(strategy="xpath", value="//td[@title='December 23, 2025']")
+        target=TargetSpec(
+            strategy="xpath",
+            value="//div[contains(@class,'gui-modal-footer')]//button[contains(., 'Set Availability')]",
+        ),
     )
 
     graph.action(
         "click",
-        target=TargetSpec(strategy="xpath", value="//div[contains(@class,'gui-modal-footer')]//button[contains(., 'Set Availability')]")
+        target=TargetSpec(
+            strategy="xpath",
+            value="//a[contains(@class, '_buttonTitle_yjkez_24') and contains(., 'Reschedule')]",
+        ),
     )
 
     graph.action(
         "click",
-        target=TargetSpec(strategy="xpath", value="//a[contains(@class, '_buttonTitle_yjkez_24') and contains(., 'Reschedule')]")
+        target=TargetSpec(
+            strategy="xpath",
+            value="//div[contains(@class,'_footer_6daik_188')]//button[contains(., 'Reschedule')]",
+        ),
     )
 
     graph.action(
         "click",
-        target=TargetSpec(strategy="xpath", value="//div[contains(@class,'_footer_6daik_188')]//button[contains(., 'Reschedule')]")
+        target=TargetSpec(
+            strategy="xpath",
+            value="//a[contains(@class, '_buttonTitle_yjkez_24') and contains(., 'Continue')]",
+        ),
     )
 
-    graph.action(
-        "click",
-        target=TargetSpec(strategy="xpath", value="//a[contains(@class, '_buttonTitle_yjkez_24') and contains(., 'Continue')]")
-    )
-
-    graph.action(
-        "wait",
-        target=5
-    )
+    graph.action("wait", target=5)
 
     # _TimeListItem_1mfa3_1784
     # svg-inline--fa fa-xmark
@@ -93,9 +97,11 @@ def create_slack_good_time_demo_graph(
 
     graph.action(
         "click",
-        target=TargetSpec(strategy="xpath", value="//div[contains(@class, '_TimeListItem_1mfa3_1784') and contains(., 'Dec 19')]//div[contains(@class, '_TimeListItemCloseIcon_1mfa3_1843')]")
+        target=TargetSpec(
+            strategy="xpath",
+            value="//div[contains(@class, '_TimeListItem_1mfa3_1784') and contains(., 'Dec 19')]//div[contains(@class, '_TimeListItemCloseIcon_1mfa3_1843')]",
+        ),
     )
-
 
     # graph.action(
     #     "click",
@@ -139,28 +145,31 @@ def create_slack_good_time_demo_graph(
 
     graph.action(
         "click",
-        target=TargetSpec(strategy="xpath", value="//div[contains(@class,'_toast_90z3e_6')]//button[contains(., 'Refresh')]")
+        target=TargetSpec(
+            strategy="xpath",
+            value="//div[contains(@class,'_toast_90z3e_6')]//button[contains(., 'Refresh')]",
+        ),
     )
 
-    graph.action(
-        "wait",
-        target=15
-    )
+    graph.action("wait", target=15)
 
     graph.action(
         "click",
-        target=TargetSpec(strategy="xpath", value="//div[contains(@class,'_timelineContainer_1ghxd_1889') and contains(., '11:00 AM - 12:00 PM (PST)')]//button[contains(., 'Select this option')]")
+        target=TargetSpec(
+            strategy="xpath",
+            value="//div[contains(@class,'_timelineContainer_1ghxd_1889') and contains(., '11:00 AM - 12:00 PM (PST)')]//button[contains(., 'Select this option')]",
+        ),
     )
 
     graph.action(
-        action_type='scroll_up_to_element',
-        target=TargetSpec(strategy='xpath', value="//div[contains(@class, '_labelText_1qicp_28') and contains(., 'Candidate Email')]")
+        action_type="scroll_up_to_element",
+        target=TargetSpec(
+            strategy="xpath",
+            value="//div[contains(@class, '_labelText_1qicp_28') and contains(., 'Candidate Email')]",
+        ),
     )
 
-    graph.action(
-        "wait",
-        target=5
-    )
+    graph.action("wait", target=5)
 
     # graph.action(
     #     "click",
@@ -179,13 +188,10 @@ def create_slack_good_time_demo_graph(
 
     graph.action(
         "click",
-        target=TargetSpec(strategy="xpath", value="//a[contains(., 'Schedule Now')]")
+        target=TargetSpec(strategy="xpath", value="//a[contains(., 'Schedule Now')]"),
     )
 
-    graph.action(
-        "wait",
-        target=5
-    )
+    graph.action("wait", target=5)
 
     # graph.action(
     #     "click",
@@ -194,7 +200,10 @@ def create_slack_good_time_demo_graph(
 
     graph.action(
         "click",
-        target=TargetSpec(strategy="xpath", value="//button[contains(@class, 'ant-btn') and contains(., 'Skip')]")
+        target=TargetSpec(
+            strategy="xpath",
+            value="//button[contains(@class, 'ant-btn') and contains(., 'Skip')]",
+        ),
     )
 
     # graph.action(
@@ -202,39 +211,39 @@ def create_slack_good_time_demo_graph(
     #     target=TargetSpec(strategy="xpath", value="//input[contains(@class, 'ant-select-selection-search-input')]")
     # )
 
-    graph.action(
-        "wait",
-        target=5
-    )
+    graph.action("wait", target=5)
 
     graph.action(
-        "visit_url",
-        target='https://app.slack.com/client/EE8HJA7RS/C097JUKSEQJ'
+        "visit_url", target="https://app.slack.com/client/EE8HJA7RS/C097JUKSEQJ"
     )
 
-    graph.action(
-        "wait",
-        target=5
-    )
+    graph.action("wait", target=5)
 
     graph.action(
         "click",
-        target=TargetSpec(strategy="xpath", value="//div[contains(@class, 'p-channel_sidebar__channel') and contains(., 'goodtime-demo')]")
+        target=TargetSpec(
+            strategy="xpath",
+            value="//div[contains(@class, 'p-channel_sidebar__channel') and contains(., 'goodtime-demo')]",
+        ),
     )
 
     graph.action(
         "input_text",
-        target=TargetSpec(strategy="xpath", value="//div[contains(@class, 'ql-editor')]"),
-        args={"text": "✅ Interview rescheduled for Anakin\n\n• New time: Dec 23, 2025 @ 11:00 AM - 12:00 PM (PST)\n• Previous slot (Dec 19) removed\n• Candidate email notification sent"}
+        target=TargetSpec(
+            strategy="xpath", value="//div[contains(@class, 'ql-editor')]"
+        ),
+        args={
+            "text": "✅ Interview rescheduled for Anakin\n\n• New time: Dec 23, 2025 @ 11:00 AM - 12:00 PM (PST)\n• Previous slot (Dec 19) removed\n• Candidate email notification sent"
+        },
     )
 
     graph.action(
         "click",
-        target=TargetSpec(strategy="xpath", value="//button[contains(@class, 'c-wysiwyg_container__button--send') and contains(@aria-label, 'Send now')]")
+        target=TargetSpec(
+            strategy="xpath",
+            value="//button[contains(@class, 'c-wysiwyg_container__button--send') and contains(@aria-label, 'Send now')]",
+        ),
     )
-
-
-
 
     # # Action 3: Click the Google Search button
     # # XPath: find input tag with value='Google Search' (semantic & stable)

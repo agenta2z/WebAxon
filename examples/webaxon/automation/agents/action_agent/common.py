@@ -8,10 +8,10 @@ This module provides shared functionality for action agent example scripts:
 - Action extraction and summarization
 """
 
+import logging
 import os
 import sys
-import logging
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
 
 def setup_project_paths():
@@ -49,8 +49,7 @@ def setup_logging(name: str = __name__, level: int = logging.INFO):
         logging.Logger: Configured logger instance
     """
     logging.basicConfig(
-        level=level,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        level=level, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
     return logging.getLogger(name)
 
@@ -120,18 +119,18 @@ def extract_executed_actions(agent) -> List[Dict[str, Any]]:
     """
     executed_actions = []
 
-    if not hasattr(agent, 'states') or agent.states is None:
+    if not hasattr(agent, "states") or agent.states is None:
         return executed_actions
 
     # Iterate through agent states to extract actions
     for i, state_item in enumerate(agent.states):
-        if not hasattr(state_item, 'response') or state_item.response is None:
+        if not hasattr(state_item, "response") or state_item.response is None:
             continue
 
         response = state_item.response
 
         # AgentResponse.next_actions contains the planned/executed actions
-        if hasattr(response, 'next_actions') and response.next_actions:
+        if hasattr(response, "next_actions") and response.next_actions:
             for action_group in response.next_actions:
                 # action_group can be a tuple of alternative actions
                 if isinstance(action_group, (list, tuple)):
@@ -162,17 +161,17 @@ def _extract_action_info(action, step_index: int) -> Optional[Dict[str, Any]]:
         return None
 
     # Handle AgentAction objects
-    action_type = getattr(action, 'type', None) or getattr(action, 'action_type', None)
+    action_type = getattr(action, "type", None) or getattr(action, "action_type", None)
     if not action_type:
         return None
 
     return {
-        'step': step_index + 1,
-        'type': action_type,
-        'target': getattr(action, 'target', None),
-        'args': getattr(action, 'args', None),
-        'reasoning': getattr(action, 'reasoning', None),
-        'result': getattr(action, 'result', None),
+        "step": step_index + 1,
+        "type": action_type,
+        "target": getattr(action, "target", None),
+        "args": getattr(action, "args", None),
+        "reasoning": getattr(action, "reasoning", None),
+        "result": getattr(action, "result", None),
     }
 
 
@@ -200,7 +199,7 @@ def print_action_summary(actions: List[Dict[str, Any]]):
         print(f"  Target:    {action.get('target', 'N/A')}")
 
         # Format args nicely
-        args = action.get('args')
+        args = action.get("args")
         if args:
             if isinstance(args, dict):
                 args_str = ", ".join(f"{k}={repr(v)}" for k, v in args.items())
@@ -209,17 +208,17 @@ def print_action_summary(actions: List[Dict[str, Any]]):
             print(f"  Args:      {args_str}")
 
         # Truncate reasoning if too long
-        reasoning = action.get('reasoning', '')
+        reasoning = action.get("reasoning", "")
         if reasoning:
             if len(reasoning) > 100:
                 reasoning = reasoning[:100] + "..."
             print(f"  Reasoning: {reasoning}")
 
         # Show result status if available
-        result = action.get('result')
+        result = action.get("result")
         if result:
             if isinstance(result, dict):
-                status = result.get('status', 'completed')
+                status = result.get("status", "completed")
                 print(f"  Result:    {status}")
             else:
                 print(f"  Result:    (data returned)")
@@ -231,7 +230,7 @@ def print_action_summary(actions: List[Dict[str, Any]]):
     print("Actions by Type:")
     action_types: Dict[str, int] = {}
     for action in actions:
-        atype = action.get('type', 'Unknown')
+        atype = action.get("type", "Unknown")
         action_types[atype] = action_types.get(atype, 0) + 1
 
     for atype, count in sorted(action_types.items()):

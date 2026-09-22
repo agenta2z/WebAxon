@@ -4,6 +4,8 @@ This package contains modular UI components:
 - settings_panel: Settings configuration UI
 """
 
-from webaxon.devsuite.agent_debugger_nextgen.ui.components.settings_panel import SettingsPanel
+from webaxon.devsuite.agent_debugger_nextgen.ui.components.settings_panel import (
+    SettingsPanel,
+)
 
-__all__ = ['SettingsPanel']
+__all__ = ["SettingsPanel"]

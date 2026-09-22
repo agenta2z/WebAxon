@@ -3,59 +3,81 @@ import logging
 import time
 import warnings
 from enum import StrEnum
-from typing import Optional, Iterable, Mapping, List, Sequence, TYPE_CHECKING
-from typing import Union, Tuple
+from typing import (
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Tuple,
+    TYPE_CHECKING,
+    Union,
+)
 
 if TYPE_CHECKING:
     from rich_python_utils.common_objects.debuggable import Debuggable
 
 _logger = logging.getLogger(__name__)
 
+from urllib.parse import urljoin, urlparse
+
 import undetected_chromedriver as uc
+from rich_python_utils.common_utils.system_helper import (
+    get_current_platform,
+    OperatingSystem,
+)
+from rich_python_utils.console_utils import hprint_message
+from rich_python_utils.datetime_utils.common import random_sleep
+from rich_python_utils.string_utils.misc import camel_to_snake_case
 from selenium import webdriver
 from selenium.common.exceptions import (
-    TimeoutException,
     ElementClickInterceptedException,
-    ElementNotInteractableException
+    ElementNotInteractableException,
+    TimeoutException,
 )
-from selenium.webdriver import Keys, ActionChains
+from selenium.webdriver import ActionChains, Keys
 from selenium.webdriver.chrome.webdriver import WebDriver
+from selenium.webdriver.common.actions.wheel_input import ScrollOrigin
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.common.actions.wheel_input import ScrollOrigin
 from urllib3.exceptions import ReadTimeoutError
-
-from rich_python_utils.common_utils.system_helper import get_current_platform, OperatingSystem
-from rich_python_utils.console_utils import hprint_message
-from rich_python_utils.string_utils.misc import camel_to_snake_case
-from rich_python_utils.datetime_utils.common import random_sleep
-from .common import wait_for_page_loading, get_element_text, get_element_html, \
-    solve_scrollable_child, scroll_element_into_view, get_body_html, get_body_text
-from webaxon.automation.backends.shared.text_sanitization import (
-    sanitize_input_text_for_webdriver,
-    NonBMPHandling,
-    NewlineHandling,
-    WhitespaceHandling
-)
 from webaxon.automation.backends.shared.click_types import (
-    OpenInNewTabMode,
-    NewTabClickStrategy,
-    NewTabClickResult,
-    NewTabFallbackMode,
     ClickImplementation,
-    DEFAULT_NEW_TAB_STRATEGY_ORDER,
     DEFAULT_CLICK_IMPLEMENTATION_ORDER,
+    DEFAULT_NEW_TAB_STRATEGY_ORDER,
+    NewTabClickResult,
+    NewTabClickStrategy,
+    NewTabFallbackMode,
+    OpenInNewTabMode,
     STRATEGY_TO_RESULT,
 )
 from webaxon.automation.backends.shared.scroll_constants import (
-    RELATIVE_DISTANCE_PERCENTAGES,
-    FIXED_DISTANCE_PIXELS,
     compute_scroll_delta,
+    FIXED_DISTANCE_PIXELS,
+    RELATIVE_DISTANCE_PERCENTAGES,
 )
-from webaxon.html_utils.common import ElementInteractionTypes, DEFAULT_HTML_INTERACTIVE_ATTRIBUTES_AND_VALUES
-from webaxon.html_utils.common import get_element_interaction_type as _get_element_interaction_type
-from webaxon.html_utils.common import parse_onclick_for_url
-from urllib.parse import urljoin, urlparse
+from webaxon.automation.backends.shared.text_sanitization import (
+    NewlineHandling,
+    NonBMPHandling,
+    sanitize_input_text_for_webdriver,
+    WhitespaceHandling,
+)
+from webaxon.html_utils.common import (
+    DEFAULT_HTML_INTERACTIVE_ATTRIBUTES_AND_VALUES,
+    ElementInteractionTypes,
+    get_element_interaction_type as _get_element_interaction_type,
+    parse_onclick_for_url,
+)
+
+from .common import (
+    get_body_html,
+    get_body_text,
+    get_element_html,
+    get_element_text,
+    scroll_element_into_view,
+    solve_scrollable_child,
+    wait_for_page_loading,
+)
 
 
 class ClearMethod(StrEnum):
@@ -69,18 +91,25 @@ class ClearMethod(StrEnum):
             silently on framework-controlled inputs (React comboboxes, etc.)
             because it doesn't trigger synthetic event handlers.
     """
-    SELECT_ALL = 'select_all'
-    ELEMENT_CLEAR = 'element_clear'
+
+    SELECT_ALL = "select_all"
+    ELEMENT_CLEAR = "element_clear"
 
 
 def _get_select_all_keys() -> str:
     """Return the platform-appropriate 'select all' key chord (Ctrl+A or Cmd+A)."""
     current_os = get_current_platform()
-    modifier = Keys.COMMAND if current_os in (OperatingSystem.MACOS, OperatingSystem.IOS) else Keys.CONTROL
+    modifier = (
+        Keys.COMMAND
+        if current_os in (OperatingSystem.MACOS, OperatingSystem.IOS)
+        else Keys.CONTROL
+    )
     return modifier + "a"
 
 
-def _get_attachments_text(attachments, original_text: str = '', separator: str = '\n\n') -> str:
+def _get_attachments_text(
+    attachments, original_text: str = "", separator: str = "\n\n"
+) -> str:
     """
     Extract text from attachments, filtering out those already present in original text.
 
@@ -93,34 +122,33 @@ def _get_attachments_text(attachments, original_text: str = '', separator: str =
         Combined text from attachments that are not already in the original text
     """
     if not attachments:
-        return ''
+        return ""
 
     attachment_texts = []
     for att in attachments:
         # Check if attachment ID is already in original text
-        att_id = getattr(att, 'id', None)
+        att_id = getattr(att, "id", None)
         if att_id and att_id in original_text:
             # Extract text from attachment
-            if hasattr(att, 'full_text'):
+            if hasattr(att, "full_text"):
                 # Use full_text property if available (e.g., AgentAttachment)
                 attachment_texts.append(str(att.full_text))
-            elif hasattr(att, 'content'):
+            elif hasattr(att, "content"):
                 # Fallback to content attribute
                 attachment_texts.append(str(att.content))
             else:
                 # Fall back to string representation
                 attachment_texts.append(str(att))
 
-    return separator.join(attachment_texts) if attachment_texts else ''
+    return separator.join(attachment_texts) if attachment_texts else ""
 
 
 def get_element_interaction_type(
-        element: WebElement,
-        driver: WebDriver,
-        interactive_attrs_and_values: Mapping[
-            str,
-            Union[Iterable, Mapping[str, ElementInteractionTypes], None]
-        ] = DEFAULT_HTML_INTERACTIVE_ATTRIBUTES_AND_VALUES,
+    element: WebElement,
+    driver: WebDriver,
+    interactive_attrs_and_values: Mapping[
+        str, Union[Iterable, Mapping[str, ElementInteractionTypes], None]
+    ] = DEFAULT_HTML_INTERACTIVE_ATTRIBUTES_AND_VALUES,
 ) -> ElementInteractionTypes:
     """
     Classifies a Selenium WebElement's interaction type relative to the current page's domain.
@@ -153,9 +181,9 @@ def get_element_interaction_type(
     # "https://example.com/#"). Detect resolved same-page anchors before delegating,
     # since classify_url_domain's url.startswith('#') check won't catch them.
     href = element.get_attribute("href")
-    if href and '#' in href:
-        url_base = href.split('#', 1)[0]
-        current_base = driver.current_url.split('#', 1)[0]
+    if href and "#" in href:
+        url_base = href.split("#", 1)[0]
+        current_base = driver.current_url.split("#", 1)[0]
         if url_base == current_base:
             return ElementInteractionTypes.SAME_PAGE_ANCHOR_LINK
 
@@ -163,8 +191,8 @@ def get_element_interaction_type(
         element=element,
         current_domain=urlparse(driver.current_url).netloc,
         interactive_attrs_and_values=interactive_attrs_and_values,
-        element_get_attr_method_name='get_attribute',
-        element_has_attr_method_name='get_attribute'
+        element_get_attr_method_name="get_attribute",
+        element_has_attr_method_name="get_attribute",
     )
 
 
@@ -200,22 +228,27 @@ def extract_url_from_element(element: WebElement, driver: WebDriver) -> Optional
         Absolute URL string if found, None otherwise.
     """
     # Priority order for URL attributes
-    url_attributes = ['href', 'data-href', 'data-url', 'data-link', 'data-navigate']
+    url_attributes = ["href", "data-href", "data-url", "data-link", "data-navigate"]
 
     for attr in url_attributes:
         url = element.get_attribute(attr)
-        if url and url.strip() and not url.startswith('#') and not url.startswith('javascript:'):
+        if (
+            url
+            and url.strip()
+            and not url.startswith("#")
+            and not url.startswith("javascript:")
+        ):
             # Resolve relative URLs to absolute
-            if not url.startswith(('http://', 'https://', '//')):
+            if not url.startswith(("http://", "https://", "//")):
                 url = urljoin(driver.current_url, url)
             return url
 
     # Try parsing onclick for URL
-    onclick = element.get_attribute('onclick')
+    onclick = element.get_attribute("onclick")
     if onclick:
         parsed_url = parse_onclick_for_url(onclick)
         if parsed_url:
-            if not parsed_url.startswith(('http://', 'https://', '//')):
+            if not parsed_url.startswith(("http://", "https://", "//")):
                 parsed_url = urljoin(driver.current_url, parsed_url)
             return parsed_url
 
@@ -223,13 +256,15 @@ def extract_url_from_element(element: WebElement, driver: WebDriver) -> Optional
 
 
 def _try_open_in_new_tab(
-        driver: WebDriver,
-        element: WebElement,
-        handles_before: List[str],
-        wait_time: float = 0.5,
-        strategy_order: Tuple[NewTabClickStrategy, ...] = DEFAULT_NEW_TAB_STRATEGY_ORDER,
-        implementation: Union[ClickImplementation, Tuple[ClickImplementation, ...]] = DEFAULT_CLICK_IMPLEMENTATION_ORDER,
-        logger: 'Union[logging.Logger, Debuggable, None]' = None
+    driver: WebDriver,
+    element: WebElement,
+    handles_before: List[str],
+    wait_time: float = 0.5,
+    strategy_order: Tuple[NewTabClickStrategy, ...] = DEFAULT_NEW_TAB_STRATEGY_ORDER,
+    implementation: Union[
+        ClickImplementation, Tuple[ClickImplementation, ...]
+    ] = DEFAULT_CLICK_IMPLEMENTATION_ORDER,
+    logger: "Union[logging.Logger, Debuggable, None]" = None,
 ) -> Tuple[NewTabClickResult, List[str]]:
     """
     Attempt to open an element in a new tab using multiple strategies.
@@ -264,9 +299,18 @@ def _try_open_in_new_tab(
     """
 
     # Normalize implementation to tuple and derive preferences
-    _implementations = (implementation,) if isinstance(implementation, ClickImplementation) else implementation
-    _primary_impl = _implementations[0] if _implementations else ClickImplementation.NATIVE
-    _prefer_js = _primary_impl in (ClickImplementation.JAVASCRIPT, ClickImplementation.EVENT_DISPATCH)
+    _implementations = (
+        (implementation,)
+        if isinstance(implementation, ClickImplementation)
+        else implementation
+    )
+    _primary_impl = (
+        _implementations[0] if _implementations else ClickImplementation.NATIVE
+    )
+    _prefer_js = _primary_impl in (
+        ClickImplementation.JAVASCRIPT,
+        ClickImplementation.EVENT_DISPATCH,
+    )
 
     def _check_new_tab() -> List[str]:
         """Check if new tabs appeared after an action."""
@@ -279,14 +323,20 @@ def _try_open_in_new_tab(
 
     # Pre-determine tag name
     try:
-        tag_name = element.tag_name.lower() if element.tag_name else ''
+        tag_name = element.tag_name.lower() if element.tag_name else ""
     except Exception as e:
-        tag_name = ''
-        (logger or _logger).debug(f"[_try_open_in_new_tab] tag_name extraction failed: {e}")
+        tag_name = ""
+        (logger or _logger).debug(
+            f"[_try_open_in_new_tab] tag_name extraction failed: {e}"
+        )
 
     # Determine OS-specific modifier key
     current_os = get_current_platform()
-    modifier_key = Keys.COMMAND if current_os in [OperatingSystem.MACOS, OperatingSystem.IOS] else Keys.CONTROL
+    modifier_key = (
+        Keys.COMMAND
+        if current_os in [OperatingSystem.MACOS, OperatingSystem.IOS]
+        else Keys.CONTROL
+    )
 
     _log = logger or _logger
     _log.debug(
@@ -298,7 +348,6 @@ def _try_open_in_new_tab(
 
     # Try each strategy in order
     for strategy in strategy_order:
-
         # Strategy: URL extraction + window.open()
         if strategy == NewTabClickStrategy.URL_EXTRACT:
             if url:
@@ -306,17 +355,21 @@ def _try_open_in_new_tab(
                     driver.execute_script("window.open(arguments[0], '_blank');", url)
                     new_handles = _check_new_tab()
                     if new_handles:
-                        _log.debug(f"[_try_open_in_new_tab] {strategy.name} succeeded: new_handles={new_handles}")
+                        _log.debug(
+                            f"[_try_open_in_new_tab] {strategy.name} succeeded: new_handles={new_handles}"
+                        )
                         return (STRATEGY_TO_RESULT[strategy], new_handles)
                 except Exception as e:
                     _log.debug(f"[_try_open_in_new_tab] {strategy.name} failed: {e}")
 
         # Strategy: Set target='_blank' on element + click
         elif strategy == NewTabClickStrategy.TARGET_BLANK:
-            if tag_name == 'a':
+            if tag_name == "a":
                 try:
                     current_target = element.get_attribute("target")
-                    driver.execute_script("arguments[0].setAttribute('target','_blank');", element)
+                    driver.execute_script(
+                        "arguments[0].setAttribute('target','_blank');", element
+                    )
 
                     # Click using the implementation sequence with fallback
                     for _method in _implementations:
@@ -326,25 +379,38 @@ def _try_open_in_new_tab(
                             elif _method == ClickImplementation.JAVASCRIPT:
                                 driver.execute_script("arguments[0].click();", element)
                             elif _method == ClickImplementation.ACTION_CHAIN:
-                                ActionChains(driver).move_to_element(element).pause(0.3).click().perform()
+                                ActionChains(driver).move_to_element(element).pause(
+                                    0.3
+                                ).click().perform()
                             elif _method == ClickImplementation.EVENT_DISPATCH:
                                 driver.execute_script(
                                     "var e = new MouseEvent('click', {bubbles: true, cancelable: true, view: window}); "
-                                    "arguments[0].dispatchEvent(e);", element
+                                    "arguments[0].dispatchEvent(e);",
+                                    element,
                                 )
                             break
-                        except (ElementClickInterceptedException, ElementNotInteractableException):
+                        except (
+                            ElementClickInterceptedException,
+                            ElementNotInteractableException,
+                        ):
                             continue
 
                     # Restore original target
                     if current_target:
-                        driver.execute_script(f"arguments[0].setAttribute('target','{current_target}');", element)
+                        driver.execute_script(
+                            f"arguments[0].setAttribute('target','{current_target}');",
+                            element,
+                        )
                     else:
-                        driver.execute_script("arguments[0].removeAttribute('target');", element)
+                        driver.execute_script(
+                            "arguments[0].removeAttribute('target');", element
+                        )
 
                     new_handles = _check_new_tab()
                     if new_handles:
-                        _log.debug(f"[_try_open_in_new_tab] {strategy.name} succeeded: new_handles={new_handles}")
+                        _log.debug(
+                            f"[_try_open_in_new_tab] {strategy.name} succeeded: new_handles={new_handles}"
+                        )
                         return (STRATEGY_TO_RESULT[strategy], new_handles)
                 except Exception as e:
                     _log.debug(f"[_try_open_in_new_tab] {strategy.name} failed: {e}")
@@ -354,7 +420,8 @@ def _try_open_in_new_tab(
             if _prefer_js:
                 # Try JS-based modifier click first
                 try:
-                    driver.execute_script("""
+                    driver.execute_script(
+                        """
                         var element = arguments[0];
                         var evt = new MouseEvent('click', {
                             bubbles: true,
@@ -364,48 +431,66 @@ def _try_open_in_new_tab(
                             metaKey: arguments[2]
                         });
                         element.dispatchEvent(evt);
-                    """, element,
-                        current_os not in [OperatingSystem.MACOS, OperatingSystem.IOS],  # ctrlKey for non-Mac
-                        current_os in [OperatingSystem.MACOS, OperatingSystem.IOS]  # metaKey for Mac
+                    """,
+                        element,
+                        current_os
+                        not in [
+                            OperatingSystem.MACOS,
+                            OperatingSystem.IOS,
+                        ],  # ctrlKey for non-Mac
+                        current_os
+                        in [
+                            OperatingSystem.MACOS,
+                            OperatingSystem.IOS,
+                        ],  # metaKey for Mac
                     )
                     new_handles = _check_new_tab()
                     if new_handles:
-                        _log.debug(f"[_try_open_in_new_tab] {strategy.name} (JS) succeeded: new_handles={new_handles}")
+                        _log.debug(
+                            f"[_try_open_in_new_tab] {strategy.name} (JS) succeeded: new_handles={new_handles}"
+                        )
                         return (STRATEGY_TO_RESULT[strategy], new_handles)
                 except Exception as e:
-                    _log.debug(f"[_try_open_in_new_tab] {strategy.name} (JS) failed: {e}")
+                    _log.debug(
+                        f"[_try_open_in_new_tab] {strategy.name} (JS) failed: {e}"
+                    )
 
                 # Fallback to ActionChains
                 try:
-                    ActionChains(driver) \
-                        .key_down(modifier_key) \
-                        .click(element) \
-                        .key_up(modifier_key) \
-                        .perform()
+                    ActionChains(driver).key_down(modifier_key).click(element).key_up(
+                        modifier_key
+                    ).perform()
                     new_handles = _check_new_tab()
                     if new_handles:
-                        _log.debug(f"[_try_open_in_new_tab] {strategy.name} (ActionChains) succeeded: new_handles={new_handles}")
+                        _log.debug(
+                            f"[_try_open_in_new_tab] {strategy.name} (ActionChains) succeeded: new_handles={new_handles}"
+                        )
                         return (STRATEGY_TO_RESULT[strategy], new_handles)
                 except Exception as e:
-                    _log.debug(f"[_try_open_in_new_tab] {strategy.name} (ActionChains) failed: {e}")
+                    _log.debug(
+                        f"[_try_open_in_new_tab] {strategy.name} (ActionChains) failed: {e}"
+                    )
             else:
                 # Try ActionChains first
                 try:
-                    ActionChains(driver) \
-                        .key_down(modifier_key) \
-                        .click(element) \
-                        .key_up(modifier_key) \
-                        .perform()
+                    ActionChains(driver).key_down(modifier_key).click(element).key_up(
+                        modifier_key
+                    ).perform()
                     new_handles = _check_new_tab()
                     if new_handles:
-                        _log.debug(f"[_try_open_in_new_tab] {strategy.name} (ActionChains) succeeded: new_handles={new_handles}")
+                        _log.debug(
+                            f"[_try_open_in_new_tab] {strategy.name} (ActionChains) succeeded: new_handles={new_handles}"
+                        )
                         return (STRATEGY_TO_RESULT[strategy], new_handles)
                 except Exception as e:
-                    _log.debug(f"[_try_open_in_new_tab] {strategy.name} (ActionChains) failed: {e}")
+                    _log.debug(
+                        f"[_try_open_in_new_tab] {strategy.name} (ActionChains) failed: {e}"
+                    )
 
                 # Fallback to JS-based modifier click
                 try:
-                    driver.execute_script("""
+                    driver.execute_script(
+                        """
                         var element = arguments[0];
                         var evt = new MouseEvent('click', {
                             bubbles: true,
@@ -415,16 +500,21 @@ def _try_open_in_new_tab(
                             metaKey: arguments[2]
                         });
                         element.dispatchEvent(evt);
-                    """, element,
+                    """,
+                        element,
                         current_os not in [OperatingSystem.MACOS, OperatingSystem.IOS],
-                        current_os in [OperatingSystem.MACOS, OperatingSystem.IOS]
+                        current_os in [OperatingSystem.MACOS, OperatingSystem.IOS],
                     )
                     new_handles = _check_new_tab()
                     if new_handles:
-                        _log.debug(f"[_try_open_in_new_tab] {strategy.name} (JS) succeeded: new_handles={new_handles}")
+                        _log.debug(
+                            f"[_try_open_in_new_tab] {strategy.name} (JS) succeeded: new_handles={new_handles}"
+                        )
                         return (STRATEGY_TO_RESULT[strategy], new_handles)
                 except Exception as e:
-                    _log.debug(f"[_try_open_in_new_tab] {strategy.name} (JS) failed: {e}")
+                    _log.debug(
+                        f"[_try_open_in_new_tab] {strategy.name} (JS) failed: {e}"
+                    )
 
         # Strategy: CDP Target.createTarget (Chrome/Chromium only)
         elif strategy == NewTabClickStrategy.CDP_CREATE_TARGET:
@@ -435,7 +525,9 @@ def _try_open_in_new_tab(
                     if target_id:
                         new_handles = _check_new_tab()
                         if new_handles:
-                            _log.debug(f"[_try_open_in_new_tab] {strategy.name} succeeded: new_handles={new_handles}")
+                            _log.debug(
+                                f"[_try_open_in_new_tab] {strategy.name} succeeded: new_handles={new_handles}"
+                            )
                             return (STRATEGY_TO_RESULT[strategy], new_handles)
                 except Exception as e:
                     _log.debug(f"[_try_open_in_new_tab] {strategy.name} failed: {e}")
@@ -443,7 +535,8 @@ def _try_open_in_new_tab(
         # Strategy: Middle mouse button click
         elif strategy == NewTabClickStrategy.MIDDLE_CLICK:
             try:
-                driver.execute_script("""
+                driver.execute_script(
+                    """
                     var element = arguments[0];
                     var evt = new MouseEvent('click', {
                         bubbles: true,
@@ -452,10 +545,14 @@ def _try_open_in_new_tab(
                         button: 1
                     });
                     element.dispatchEvent(evt);
-                """, element)
+                """,
+                    element,
+                )
                 new_handles = _check_new_tab()
                 if new_handles:
-                    _log.debug(f"[_try_open_in_new_tab] {strategy.name} succeeded: new_handles={new_handles}")
+                    _log.debug(
+                        f"[_try_open_in_new_tab] {strategy.name} succeeded: new_handles={new_handles}"
+                    )
                     return (STRATEGY_TO_RESULT[strategy], new_handles)
             except Exception as e:
                 _log.debug(f"[_try_open_in_new_tab] {strategy.name} failed: {e}")
@@ -465,18 +562,22 @@ def _try_open_in_new_tab(
 
 
 def click_element(
-        driver: WebDriver,
-        element: WebElement,
-        try_open_in_new_tab: Union[bool, OpenInNewTabMode] = False,
-        wait_before_checking_new_tab: float = 0.5,
-        additional_max_wait_for_tab_timeout: float = 5.0,
-        only_enable_additional_wait_for_non_anchor_links: bool = True,
-        implementation: Union[ClickImplementation, Tuple[ClickImplementation, ...]] = DEFAULT_CLICK_IMPLEMENTATION_ORDER,
-        new_tab_strategy_order: Tuple[NewTabClickStrategy, ...] = DEFAULT_NEW_TAB_STRATEGY_ORDER,
-        return_strategy_result: bool = False,
-        new_tab_fallback_to_normal_click: Union[bool, str, NewTabFallbackMode] = False,
-        raise_exception: bool = False,
-        logger: 'Union[logging.Logger, Debuggable, None]' = None
+    driver: WebDriver,
+    element: WebElement,
+    try_open_in_new_tab: Union[bool, OpenInNewTabMode] = False,
+    wait_before_checking_new_tab: float = 0.5,
+    additional_max_wait_for_tab_timeout: float = 5.0,
+    only_enable_additional_wait_for_non_anchor_links: bool = True,
+    implementation: Union[
+        ClickImplementation, Tuple[ClickImplementation, ...]
+    ] = DEFAULT_CLICK_IMPLEMENTATION_ORDER,
+    new_tab_strategy_order: Tuple[
+        NewTabClickStrategy, ...
+    ] = DEFAULT_NEW_TAB_STRATEGY_ORDER,
+    return_strategy_result: bool = False,
+    new_tab_fallback_to_normal_click: Union[bool, str, NewTabFallbackMode] = False,
+    raise_exception: bool = False,
+    logger: "Union[logging.Logger, Debuggable, None]" = None,
 ) -> Union[Optional[List[str]], Tuple[Optional[List[str]], NewTabClickResult]]:
     """
     Clicks a Selenium WebElement, optionally opening it in a new browser tab, and returns any newly opened tab handles.
@@ -568,17 +669,20 @@ def click_element(
 
     # region STEP1: Normalize arguments
     element_type = get_element_interaction_type(element, driver)
-    is_non_same_page_interaction = (element_type in (
+    is_non_same_page_interaction = element_type in (
         ElementInteractionTypes.EXTERNAL_DOMAIN_LINK,
         ElementInteractionTypes.SAME_DOMAIN_LINK,
-        ElementInteractionTypes.UNKNOWN_INTERACTABLE
-    ))
+        ElementInteractionTypes.UNKNOWN_INTERACTABLE,
+    )
 
     if not isinstance(try_open_in_new_tab, bool):
-        if try_open_in_new_tab == OpenInNewTabMode.ENABLED_FOR_NON_SAME_PAGE_INTERACTION:
+        if (
+            try_open_in_new_tab
+            == OpenInNewTabMode.ENABLED_FOR_NON_SAME_PAGE_INTERACTION
+        ):
             try_open_in_new_tab = is_non_same_page_interaction
         elif try_open_in_new_tab == OpenInNewTabMode.ENABLED_FOR_INTERACTABLE:
-            try_open_in_new_tab = (element_type != ElementInteractionTypes.NO_INTERACTION)
+            try_open_in_new_tab = element_type != ElementInteractionTypes.NO_INTERACTION
         elif try_open_in_new_tab == OpenInNewTabMode.ENABLED:
             try_open_in_new_tab = True
         else:
@@ -590,17 +694,21 @@ def click_element(
         f"try_open_in_new_tab={try_open_in_new_tab}"
     )
 
-    if only_enable_additional_wait_for_non_anchor_links and (not is_non_same_page_interaction):
+    if only_enable_additional_wait_for_non_anchor_links and (
+        not is_non_same_page_interaction
+    ):
         additional_max_wait_for_tab_timeout = 0
 
     # Resolve new-tab fallback mode
     _use_text_fallback = (
         new_tab_fallback_to_normal_click is True
-        or new_tab_fallback_to_normal_click == NewTabFallbackMode.ENABLED_WHEN_NO_TEXT_CHANGE
+        or new_tab_fallback_to_normal_click
+        == NewTabFallbackMode.ENABLED_WHEN_NO_TEXT_CHANGE
         or new_tab_fallback_to_normal_click == "no_text_change"
     )
     _use_html_fallback = (
-        new_tab_fallback_to_normal_click == NewTabFallbackMode.ENABLED_WHEN_NO_HTML_CHANGE
+        new_tab_fallback_to_normal_click
+        == NewTabFallbackMode.ENABLED_WHEN_NO_HTML_CHANGE
         or new_tab_fallback_to_normal_click == "no_html_change"
     )
     _fallback_enabled = _use_text_fallback or _use_html_fallback
@@ -633,7 +741,7 @@ def click_element(
             wait_time=wait_before_checking_new_tab,
             strategy_order=new_tab_strategy_order,
             implementation=implementation,
-            logger=logger
+            logger=logger,
         )
 
         _log.debug(
@@ -643,7 +751,9 @@ def click_element(
 
         # Additional wait if no new tab yet and timeout is configured
         if not new_handles and additional_max_wait_for_tab_timeout:
-            _log.debug(f"[click_element] No new tab yet, waiting up to {additional_max_wait_for_tab_timeout}s")
+            _log.debug(
+                f"[click_element] No new tab yet, waiting up to {additional_max_wait_for_tab_timeout}s"
+            )
             try:
                 wait = WebDriverWait(driver, additional_max_wait_for_tab_timeout)
 
@@ -669,31 +779,45 @@ def click_element(
             # By this point, ~6.5s have elapsed (strategy waits + additional_max_wait polling),
             # giving ample time for any page reactions to manifest.
             time.sleep(wait_before_checking_new_tab)
-            url_changed = (driver.current_url != _fallback_url_before)
+            url_changed = driver.current_url != _fallback_url_before
             if not url_changed:
                 if _use_text_fallback:
                     current_content = get_body_text(driver)
                 else:
                     current_content = get_body_html(driver)
-                content_changed = (current_content != _fallback_content_before)
+                content_changed = current_content != _fallback_content_before
                 if not content_changed:
-                    _log.debug("[click_element] New-tab failed, url and content unchanged — falling back to normal click")
+                    _log.debug(
+                        "[click_element] New-tab failed, url and content unchanged — falling back to normal click"
+                    )
                     try:
                         _click_element(driver, element, implementation)
-                    except (ElementClickInterceptedException, ElementNotInteractableException) as exc:
+                    except (
+                        ElementClickInterceptedException,
+                        ElementNotInteractableException,
+                    ) as exc:
                         if raise_exception:
                             raise
-                        _log.warning(f"All click implementations exhausted. Last exception: {exc}")
+                        _log.warning(
+                            f"All click implementations exhausted. Last exception: {exc}"
+                        )
                 else:
-                    _log.debug("[click_element] New-tab failed, but content changed — NOT falling back")
+                    _log.debug(
+                        "[click_element] New-tab failed, but content changed — NOT falling back"
+                    )
             else:
-                _log.debug(f"[click_element] New-tab failed, but url changed ({_fallback_url_before} → {driver.current_url}) — NOT falling back")
+                _log.debug(
+                    f"[click_element] New-tab failed, but url changed ({_fallback_url_before} → {driver.current_url}) — NOT falling back"
+                )
         # endregion
     else:
         # STEP3b: Normal click
         try:
             _click_element(driver, element, implementation)
-        except (ElementClickInterceptedException, ElementNotInteractableException) as exc:
+        except (
+            ElementClickInterceptedException,
+            ElementNotInteractableException,
+        ) as exc:
             if raise_exception:
                 raise
             _log.warning(f"All click implementations exhausted. Last exception: {exc}")
@@ -708,10 +832,12 @@ def click_element(
 
 
 def _click_element(
-        driver: WebDriver,
-        element: WebElement,
-        implementation: Union[ClickImplementation, Tuple[ClickImplementation, ...]] = DEFAULT_CLICK_IMPLEMENTATION_ORDER,
-        raise_exception: bool = True,
+    driver: WebDriver,
+    element: WebElement,
+    implementation: Union[
+        ClickImplementation, Tuple[ClickImplementation, ...]
+    ] = DEFAULT_CLICK_IMPLEMENTATION_ORDER,
+    raise_exception: bool = True,
 ):
     """Lightweight click with fallback chain.
 
@@ -729,7 +855,11 @@ def _click_element(
         raise_exception: If True, raises the last exception when all
             implementations fail. If False, silently returns. Defaults to True.
     """
-    methods = (implementation,) if isinstance(implementation, ClickImplementation) else implementation
+    methods = (
+        (implementation,)
+        if isinstance(implementation, ClickImplementation)
+        else implementation
+    )
     last_exc = None
     for method in methods:
         try:
@@ -738,14 +868,20 @@ def _click_element(
             elif method == ClickImplementation.JAVASCRIPT:
                 driver.execute_script("arguments[0].click();", element)
             elif method == ClickImplementation.ACTION_CHAIN:
-                ActionChains(driver).move_to_element(element).pause(0.3).click().perform()
+                ActionChains(driver).move_to_element(element).pause(
+                    0.3
+                ).click().perform()
             elif method == ClickImplementation.EVENT_DISPATCH:
                 driver.execute_script(
                     "var e = new MouseEvent('click', {bubbles: true, cancelable: true, view: window}); "
-                    "arguments[0].dispatchEvent(e);", element
+                    "arguments[0].dispatchEvent(e);",
+                    element,
                 )
             return  # Success
-        except (ElementClickInterceptedException, ElementNotInteractableException) as exc:
+        except (
+            ElementClickInterceptedException,
+            ElementNotInteractableException,
+        ) as exc:
             last_exc = exc
             continue
         except ReadTimeoutError:
@@ -754,10 +890,12 @@ def _click_element(
         raise last_exc
 
 
-def _verify_input_value(element: WebElement, expected_text: str, was_cleared: bool) -> None:
+def _verify_input_value(
+    element: WebElement, expected_text: str, was_cleared: bool
+) -> None:
     """Check that the element's value matches what was typed and log a warning on mismatch."""
     try:
-        actual = element.get_property('value')
+        actual = element.get_property("value")
     except Exception:
         return  # Element may have been detached or is not an input; skip verification
 
@@ -770,27 +908,29 @@ def _verify_input_value(element: WebElement, expected_text: str, was_cleared: bo
             _logger.warning(
                 "Input verification mismatch: expected %r but got %r "
                 "(element.clear/select-all may not have worked on this input)",
-                expected_text, actual
+                expected_text,
+                actual,
             )
     else:
         # When not clearing, text was appended; just check it ends with the typed text
         if not actual.endswith(expected_text):
             _logger.warning(
                 "Input verification mismatch: expected value to end with %r but got %r",
-                expected_text, actual
+                expected_text,
+                actual,
             )
 
 
 def send_keys_with_random_delay(
-        driver: WebDriver,
-        element: WebElement,
-        text: str,
-        min_delay: float = 0.1,
-        max_delay: float = 1,
-        clear_content: bool = False,
-        clear_method: ClearMethod = ClearMethod.SELECT_ALL,
-        verify_input: bool = True,
-        raise_exception: bool = False,
+    driver: WebDriver,
+    element: WebElement,
+    text: str,
+    min_delay: float = 0.1,
+    max_delay: float = 1,
+    clear_content: bool = False,
+    clear_method: ClearMethod = ClearMethod.SELECT_ALL,
+    verify_input: bool = True,
+    raise_exception: bool = False,
 ):
     """Send keys to an element, character by character, with a random delay between each key.
 
@@ -834,23 +974,23 @@ def send_keys_with_random_delay(
 
 
 def input_text(
-        driver: WebDriver,
-        element: WebElement,
-        text: str,
-        clear_content: bool = False,
-        clear_method: ClearMethod = ClearMethod.SELECT_ALL,
-        verify_input: bool = True,
-        implementation: str = 'auto',
-        default_implementation: str = 'send_keys',
-        fast_implementation: str = 'send_keys_fast',
-        fast_threshold: int = 20,
-        min_delay: float = 0.1,
-        max_delay: float = 1,
-        sanitize: bool = True,
-        auto_sanitization: bool = True,
-        non_bmp_handling: NonBMPHandling = NonBMPHandling.REMOVE,
-        newline_handling: NewlineHandling = NewlineHandling.SPACE,
-        whitespace_handling: WhitespaceHandling = WhitespaceHandling.NORMALIZE
+    driver: WebDriver,
+    element: WebElement,
+    text: str,
+    clear_content: bool = False,
+    clear_method: ClearMethod = ClearMethod.SELECT_ALL,
+    verify_input: bool = True,
+    implementation: str = "auto",
+    default_implementation: str = "send_keys",
+    fast_implementation: str = "send_keys_fast",
+    fast_threshold: int = 20,
+    min_delay: float = 0.1,
+    max_delay: float = 1,
+    sanitize: bool = True,
+    auto_sanitization: bool = True,
+    non_bmp_handling: NonBMPHandling = NonBMPHandling.REMOVE,
+    newline_handling: NewlineHandling = NewlineHandling.SPACE,
+    whitespace_handling: WhitespaceHandling = WhitespaceHandling.NORMALIZE,
 ):
     """
     Generic master function for inputting text into an element with different implementation strategies.
@@ -939,8 +1079,12 @@ def input_text(
         See: webaxon/automation/backends/docs/input_text_comparison.md for full details.
     """
     # Auto-select implementation based on text length (before sanitization to determine strategy)
-    if implementation == 'auto':
-        implementation = default_implementation if len(text) <= fast_threshold else fast_implementation
+    if implementation == "auto":
+        implementation = (
+            default_implementation
+            if len(text) <= fast_threshold
+            else fast_implementation
+        )
 
     # Apply sanitization if enabled
     if sanitize:
@@ -948,21 +1092,21 @@ def input_text(
             # Implementation-aware sanitization: choose optimal settings based on implementation
             # - send_keys/send_keys_fast: Must remove non-BMP (ChromeDriver limitation), newlines act as Enter
             # - javascript: Can handle non-BMP and newlines natively (sets element.value directly)
-            if implementation in ('send_keys', 'send_keys_fast'):
+            if implementation in ("send_keys", "send_keys_fast"):
                 text = sanitize_input_text_for_webdriver(
                     text,
                     non_bmp_handling=NonBMPHandling.REMOVE,
                     newline_handling=NewlineHandling.SPACE,
                     whitespace_handling=WhitespaceHandling.NORMALIZE,
-                    remove_control_chars=True
+                    remove_control_chars=True,
                 )
-            elif implementation == 'javascript':
+            elif implementation == "javascript":
                 text = sanitize_input_text_for_webdriver(
                     text,
                     non_bmp_handling=NonBMPHandling.KEEP,
                     newline_handling=NewlineHandling.KEEP,
                     whitespace_handling=WhitespaceHandling.KEEP,
-                    remove_control_chars=True
+                    remove_control_chars=True,
                 )
         else:
             # Manual sanitization: use user-provided parameters exactly
@@ -971,11 +1115,11 @@ def input_text(
                 non_bmp_handling=non_bmp_handling,
                 newline_handling=newline_handling,
                 whitespace_handling=whitespace_handling,
-                remove_control_chars=True
+                remove_control_chars=True,
             )
 
     try:
-        if implementation == 'send_keys':
+        if implementation == "send_keys":
             # Character-by-character with random delays (most human-like)
             send_keys_with_random_delay(
                 driver=driver,
@@ -985,10 +1129,10 @@ def input_text(
                 clear_method=clear_method,
                 verify_input=verify_input,
                 min_delay=min_delay,
-                max_delay=max_delay
+                max_delay=max_delay,
             )
 
-        elif implementation == 'send_keys_fast':
+        elif implementation == "send_keys_fast":
             # Send entire string at once (faster, still triggers keyboard events)
             _click_element(driver, element)
             if clear_content:
@@ -1000,10 +1144,11 @@ def input_text(
             if verify_input:
                 _verify_input_value(element, text, clear_content)
 
-        elif implementation == 'javascript':
+        elif implementation == "javascript":
             # Direct value setting via JavaScript (fastest)
             _click_element(driver, element)  # Focus the element
-            driver.execute_script("""
+            driver.execute_script(
+                """
                 const element = arguments[0];
                 const text = arguments[1];
                 const clearFirst = arguments[2];
@@ -1017,7 +1162,11 @@ def input_text(
                 element.dispatchEvent(new Event('input', { bubbles: true }));
                 element.dispatchEvent(new Event('change', { bubbles: true }));
                 element.dispatchEvent(new Event('blur', { bubbles: true }));
-            """, element, text, clear_content)
+            """,
+                element,
+                text,
+                clear_content,
+            )
             if verify_input:
                 _verify_input_value(element, text, clear_content)
 
@@ -1040,18 +1189,21 @@ def center_element_in_view(driver: WebDriver, element: WebElement) -> None:
         driver (WebDriver): The Selenium WebDriver instance.
         element (WebElement): The WebElement to bring to the center of the view.
     """
-    driver.execute_script("""
+    driver.execute_script(
+        """
         var element = arguments[0];
         element.scrollIntoView({block: 'center', inline: 'center', behavior: 'smooth'});
-    """, element)
+    """,
+        element,
+    )
 
 
 def _scroll_element_with_javascript(
-        driver: WebDriver,
-        element: WebElement,
-        direction: str,
-        distance: str,
-        relative_distance: bool = False
+    driver: WebDriver,
+    element: WebElement,
+    direction: str,
+    distance: str,
+    relative_distance: bool = False,
 ) -> None:
     """
     Scroll using JavaScript execution.
@@ -1065,9 +1217,10 @@ def _scroll_element_with_javascript(
     # Get viewport dimensions for distance calculation
     viewport_width, viewport_height = get_viewport_size(driver)
 
-    if relative_distance and distance in ['Small', 'Medium', 'Large']:
+    if relative_distance and distance in ["Small", "Medium", "Large"]:
         # Use relative distance (percentage-based) JavaScript
-        driver.execute_script("""
+        driver.execute_script(
+            """
             var element = arguments[0];
             var direction = arguments[1];
             var distance = arguments[2];
@@ -1106,10 +1259,15 @@ def _scroll_element_with_javascript(
                 left: deltaX,
                 behavior: 'smooth'
             });
-        """, element, direction, distance)
+        """,
+            element,
+            direction,
+            distance,
+        )
     else:
         # Use fixed distance (pixel-based) JavaScript
-        driver.execute_script("""
+        driver.execute_script(
+            """
             var element = arguments[0];
             var direction = arguments[1];
             var distance = arguments[2];
@@ -1153,16 +1311,22 @@ def _scroll_element_with_javascript(
                 left: deltaX,
                 behavior: 'smooth'
             });
-    """, element, direction, distance, viewport_width, viewport_height)
+    """,
+            element,
+            direction,
+            distance,
+            viewport_width,
+            viewport_height,
+        )
 
 
 def _scroll_element_with_action_chains(
-        driver: WebDriver,
-        element: WebElement,
-        direction: str,
-        distance: str,
-        relative_distance: bool = False,
-        mode: str = 'from_origin'
+    driver: WebDriver,
+    element: WebElement,
+    direction: str,
+    distance: str,
+    relative_distance: bool = False,
+    mode: str = "from_origin",
 ) -> None:
     """
     Scroll targeting a specific element using Selenium ActionChains (Selenium 4+).
@@ -1176,7 +1340,7 @@ def _scroll_element_with_action_chains(
     Cons: Requires Selenium 4+, may not work with all elements
     """
     # Focus element first if requested
-    if mode == 'focus_first':
+    if mode == "focus_first":
         try:
             element.click()
         except (ElementClickInterceptedException, ElementNotInteractableException):
@@ -1187,43 +1351,46 @@ def _scroll_element_with_action_chains(
     # Calculate scroll amount
     viewport_width, viewport_height = get_viewport_size(driver)
 
-    if relative_distance and distance in ['Small', 'Medium', 'Large']:
+    if relative_distance and distance in ["Small", "Medium", "Large"]:
         # Use relative distance (percentage of element size)
         percentage = RELATIVE_DISTANCE_PERCENTAGES[distance]
         # Get element dimensions for reference
         element_size = element.size
-        element_height = element_size['height']
-        element_width = element_size['width']
-        ref_dimension = element_height if direction in ['Up', 'Down'] else element_width
+        element_height = element_size["height"]
+        element_width = element_size["width"]
+        ref_dimension = element_height if direction in ["Up", "Down"] else element_width
         amount = int(ref_dimension * percentage)
     else:
         # Use fixed distance (pixels)
         distance_map = {
-            'Small': 600,
-            'Medium': 1800,
-            'Large': 3600,
-            'Half': viewport_height // 2 if direction in ['Up', 'Down'] else viewport_width // 2,
-            'Full': viewport_height if direction in ['Up', 'Down'] else viewport_width
+            "Small": 600,
+            "Medium": 1800,
+            "Large": 3600,
+            "Half": viewport_height // 2
+            if direction in ["Up", "Down"]
+            else viewport_width // 2,
+            "Full": viewport_height if direction in ["Up", "Down"] else viewport_width,
         }
         amount = distance_map.get(distance, 600)
 
     # Calculate deltas
-    delta_x = amount if direction == 'Right' else (-amount if direction == 'Left' else 0)
-    delta_y = amount if direction == 'Down' else (-amount if direction == 'Up' else 0)
+    delta_x = (
+        amount if direction == "Right" else (-amount if direction == "Left" else 0)
+    )
+    delta_y = amount if direction == "Down" else (-amount if direction == "Up" else 0)
 
     # Scroll based on mode
-    if mode == 'from_origin':
+    if mode == "from_origin":
         scroll_origin = ScrollOrigin.from_element(element)
-        ActionChains(driver).scroll_from_origin(scroll_origin, delta_x, delta_y).perform()
+        ActionChains(driver).scroll_from_origin(
+            scroll_origin, delta_x, delta_y
+        ).perform()
     else:  # focus_first
         ActionChains(driver).scroll_by_amount(delta_x, delta_y).perform()
 
 
 def _scroll_element_with_keystrokes(
-        driver: WebDriver,
-        element: WebElement,
-        direction: str,
-        distance: str
+    driver: WebDriver, element: WebElement, direction: str, distance: str
 ) -> None:
     """
     Scroll using keyboard keystrokes.
@@ -1241,30 +1408,38 @@ def _scroll_element_with_keystrokes(
     time.sleep(0.1)
 
     # Map direction and distance to keystrokes
-    if direction in ('Down', 'Up'):
-        key = Keys.PAGE_DOWN if direction == 'Down' else Keys.PAGE_UP
-        repetitions = {'Small': 1, 'Medium': 2, 'Large': 4, 'Half': 6, 'Full': 10}.get(distance, 2)
+    if direction in ("Down", "Up"):
+        key = Keys.PAGE_DOWN if direction == "Down" else Keys.PAGE_UP
+        repetitions = {"Small": 1, "Medium": 2, "Large": 4, "Half": 6, "Full": 10}.get(
+            distance, 2
+        )
         for _ in range(repetitions):
             element.send_keys(key)
             time.sleep(0.5)
-    elif direction in ['Left', 'Right']:
+    elif direction in ["Left", "Right"]:
         # Horizontal scrolling with keystrokes is limited
         # Try arrow keys multiple times
-        key = Keys.ARROW_LEFT if direction == 'Left' else Keys.ARROW_RIGHT
-        repetitions = {'Small': 5, 'Medium': 10, 'Large': 20, 'Half': 15, 'Full': 30}.get(distance, 10)
+        key = Keys.ARROW_LEFT if direction == "Left" else Keys.ARROW_RIGHT
+        repetitions = {
+            "Small": 5,
+            "Medium": 10,
+            "Large": 20,
+            "Half": 15,
+            "Full": 30,
+        }.get(distance, 10)
         for _ in range(repetitions):
             element.send_keys(key)
             time.sleep(0.1)
 
 
 def scroll_element(
-        driver: WebDriver,
-        element: WebElement,
-        direction: str = 'Down',
-        distance: str = 'Large',
-        implementation: str = 'javascript',
-        relative_distance: bool = False,
-        try_solve_scrollable_child: Union[bool, str] = True
+    driver: WebDriver,
+    element: WebElement,
+    direction: str = "Down",
+    distance: str = "Large",
+    implementation: str = "javascript",
+    relative_distance: bool = False,
+    try_solve_scrollable_child: Union[bool, str] = True,
 ) -> None:
     """
     Master scroll function that scrolls an element or viewport using the specified implementation.
@@ -1303,51 +1478,80 @@ def scroll_element(
         - 'keystrokes': Most natural, requires focusable element
     """
     # Normalize inputs
-    direction = direction.capitalize() if direction else 'Down'
-    distance = distance.capitalize() if distance else 'Medium'
-    implementation = implementation.lower() if implementation else 'javascript'
+    direction = direction.capitalize() if direction else "Down"
+    distance = distance.capitalize() if distance else "Medium"
+    implementation = implementation.lower() if implementation else "javascript"
 
     # Validate direction
-    if direction not in ['Up', 'Down', 'Left', 'Right']:
+    if direction not in ["Up", "Down", "Left", "Right"]:
         print(f"[Warning] Invalid scroll direction '{direction}', defaulting to 'Down'")
-        direction = 'Down'
+        direction = "Down"
 
     # Validate distance
-    if distance not in ['Small', 'Medium', 'Large', 'Half', 'Full']:
+    if distance not in ["Small", "Medium", "Large", "Half", "Full"]:
         print(f"[Warning] Invalid scroll distance '{distance}', defaulting to 'Medium'")
-        distance = 'Medium'
+        distance = "Medium"
 
     # Validate implementation
-    valid_implementations = ['javascript', 'action_chains_from_origin', 'action_chains_focus_first', 'keystrokes']
+    valid_implementations = [
+        "javascript",
+        "action_chains_from_origin",
+        "action_chains_focus_first",
+        "keystrokes",
+    ]
     if implementation not in valid_implementations:
-        print(f"[Warning] Invalid scroll implementation '{implementation}', defaulting to 'javascript'")
-        implementation = 'javascript'
+        print(
+            f"[Warning] Invalid scroll implementation '{implementation}', defaulting to 'javascript'"
+        )
+        implementation = "javascript"
 
     # Solve for scrollable child if requested
     if try_solve_scrollable_child is not False:
         # Determine strategy
         if try_solve_scrollable_child is True:
-            strategy = 'first_largest_scrollable'  # Default strategy
+            strategy = "first_largest_scrollable"  # Default strategy
         else:
             strategy = try_solve_scrollable_child  # Use provided strategy name
 
         # Find the actual scrollable element (using builtin implementation by default)
-        element = solve_scrollable_child(driver, element, strategy=strategy, implementation='builtin', direction=direction)
+        element = solve_scrollable_child(
+            driver,
+            element,
+            strategy=strategy,
+            implementation="builtin",
+            direction=direction,
+        )
 
     # First ensure element is in view (except for keystroke and focus_first methods which handle focus differently)
-    if implementation not in ['keystrokes', 'action_chains_focus_first']:
+    if implementation not in ["keystrokes", "action_chains_focus_first"]:
         center_element_in_view(driver, element)
         time.sleep(0.3)  # Allow smooth scroll to complete
 
     # Execute scroll using the specified implementation
     try:
-        if implementation == 'javascript':
-            _scroll_element_with_javascript(driver, element, direction, distance, relative_distance)
-        elif implementation == 'action_chains_from_origin':
-            _scroll_element_with_action_chains(driver, element, direction, distance, relative_distance, mode='from_origin')
-        elif implementation == 'action_chains_focus_first':
-            _scroll_element_with_action_chains(driver, element, direction, distance, relative_distance, mode='focus_first')
-        elif implementation == 'keystrokes':
+        if implementation == "javascript":
+            _scroll_element_with_javascript(
+                driver, element, direction, distance, relative_distance
+            )
+        elif implementation == "action_chains_from_origin":
+            _scroll_element_with_action_chains(
+                driver,
+                element,
+                direction,
+                distance,
+                relative_distance,
+                mode="from_origin",
+            )
+        elif implementation == "action_chains_focus_first":
+            _scroll_element_with_action_chains(
+                driver,
+                element,
+                direction,
+                distance,
+                relative_distance,
+                mode="focus_first",
+            )
+        elif implementation == "keystrokes":
             _scroll_element_with_keystrokes(driver, element, direction, distance)
 
         # Wait for scroll to complete
@@ -1356,9 +1560,11 @@ def scroll_element(
     except Exception as e:
         print(f"[Warning] Scroll with {implementation} failed: {e}")
         # Fallback to JavaScript if the chosen method fails
-        if implementation != 'javascript':
+        if implementation != "javascript":
             print(f"[Info] Falling back to JavaScript scroll")
-            _scroll_element_with_javascript(driver, element, direction, distance, relative_distance)
+            _scroll_element_with_javascript(
+                driver, element, direction, distance, relative_distance
+            )
             time.sleep(0.5)
 
 
@@ -1380,7 +1586,9 @@ def set_zoom(driver: WebDriver, percentage: Union[int, float]) -> None:
 
 
 def get_zoom(driver: WebDriver) -> float:
-    zoom = driver.execute_script("return document.body.style.zoom || '100%'").rstrip('%')
+    zoom = driver.execute_script("return document.body.style.zoom || '100%'").rstrip(
+        "%"
+    )
     return float(zoom) / 100
 
 
@@ -1400,10 +1608,12 @@ def get_viewport_size(driver: WebDriver) -> Tuple[int, int]:
             height: window.innerHeight
         };
     """)
-    return viewport_size['width'], viewport_size['height']
+    return viewport_size["width"], viewport_size["height"]
 
 
-def zoom_out_to_fit_element(driver: WebDriver, element: WebElement, buffer: float = 0.05) -> None:
+def zoom_out_to_fit_element(
+    driver: WebDriver, element: WebElement, buffer: float = 0.05
+) -> None:
     """
     Zooms out the page until the given WebElement is entirely within the viewport,
     considering a buffer to zoom out more and taking into account the current zoom level.
@@ -1415,7 +1625,8 @@ def zoom_out_to_fit_element(driver: WebDriver, element: WebElement, buffer: floa
     """
     current_zoom = get_zoom(driver)
 
-    driver.execute_script("""
+    driver.execute_script(
+        """
         var element = arguments[0];
         var buffer = arguments[1];
         var currentZoom = arguments[2];
@@ -1426,42 +1637,59 @@ def zoom_out_to_fit_element(driver: WebDriver, element: WebElement, buffer: floa
         var viewportWidth = window.innerWidth;
         var zoomFactor = Math.min(viewportHeight / elementHeight, viewportWidth / elementWidth);
         document.body.style.zoom = zoomFactor - buffer;
-    """, element, buffer, current_zoom)
+    """,
+        element,
+        buffer,
+        current_zoom,
+    )
 
 
 def capture_full_page_screenshot(
-        driver: WebDriver,
-        output_path,
-        center_element: WebElement = None,
-        restore_window_size: bool = False,
-        reset_zoom: bool = True,
-        use_cdp_cmd_for_chrome: bool = False,
-        scale_based_on_content_size: bool = True,
-        scale: float = 1.0
+    driver: WebDriver,
+    output_path,
+    center_element: WebElement = None,
+    restore_window_size: bool = False,
+    reset_zoom: bool = True,
+    use_cdp_cmd_for_chrome: bool = False,
+    scale_based_on_content_size: bool = True,
+    scale: float = 1.0,
 ):
     if scale_based_on_content_size:
         scale *= 1 / driver.execute_script("return window.devicePixelRatio")
 
     if use_cdp_cmd_for_chrome and isinstance(driver, (webdriver.Chrome, uc.Chrome)):
-        total_width = driver.execute_script("return document.body.parentNode.scrollWidth")
-        total_height = driver.execute_script("return document.body.parentNode.scrollHeight")
-        screenshot = base64.b64decode(driver.execute_cdp_cmd("Page.captureScreenshot", {
-            "clip": {
-                "x": 0,
-                "y": 0,
-                "width": total_width,
-                "height": total_height,
-                "scale": scale
-            },
-            "captureBeyondViewport": True
-        })['data'])
+        total_width = driver.execute_script(
+            "return document.body.parentNode.scrollWidth"
+        )
+        total_height = driver.execute_script(
+            "return document.body.parentNode.scrollHeight"
+        )
+        screenshot = base64.b64decode(
+            driver.execute_cdp_cmd(
+                "Page.captureScreenshot",
+                {
+                    "clip": {
+                        "x": 0,
+                        "y": 0,
+                        "width": total_width,
+                        "height": total_height,
+                        "scale": scale,
+                    },
+                    "captureBeyondViewport": True,
+                },
+            )["data"]
+        )
 
         with open(output_path, "wb") as file:
             file.write(screenshot)
     else:
         original_size = driver.get_window_size()
-        total_width = driver.execute_script('return document.body.parentNode.scrollWidth')
-        total_height = driver.execute_script('return document.body.parentNode.scrollHeight')
+        total_width = driver.execute_script(
+            "return document.body.parentNode.scrollWidth"
+        )
+        total_height = driver.execute_script(
+            "return document.body.parentNode.scrollHeight"
+        )
         driver.set_window_size(total_width, total_height)
         time.sleep(3)
         page_zoomed = False
@@ -1480,17 +1708,17 @@ def capture_full_page_screenshot(
             time.sleep(2)
             wait_for_page_loading(driver)
         if restore_window_size:
-            driver.set_window_size(original_size['width'], original_size['height'])
+            driver.set_window_size(original_size["width"], original_size["height"])
             time.sleep(2)
             wait_for_page_loading(driver)
 
 
 def open_url(
-        driver: WebDriver,
-        url: str = None,
-        wait_after_opening_url: float = 0,
-        try_open_in_new_tab: bool = False,
-        logger: 'Union[logging.Logger, Debuggable, None]' = None
+    driver: WebDriver,
+    url: str = None,
+    wait_after_opening_url: float = 0,
+    try_open_in_new_tab: bool = False,
+    logger: "Union[logging.Logger, Debuggable, None]" = None,
 ) -> Optional[List[str]]:
     """
     Open a URL in the browser, optionally in a new tab.
@@ -1508,37 +1736,49 @@ def open_url(
     """
     _log = logger or _logger
     new_handles = None
-    _log.debug(f"[open_url] Called with url={url}, try_open_in_new_tab={try_open_in_new_tab}")
+    _log.debug(
+        f"[open_url] Called with url={url}, try_open_in_new_tab={try_open_in_new_tab}"
+    )
     if url:
         try:
             if try_open_in_new_tab:
                 # Try multiple methods to create new tab (in order of reliability)
                 handles_before = set(driver.window_handles)
                 current_before = driver.current_window_handle
-                _log.debug(f"[open_url] BEFORE: handles={handles_before}, current={current_before}")
+                _log.debug(
+                    f"[open_url] BEFORE: handles={handles_before}, current={current_before}"
+                )
                 from time import sleep
 
                 # Method 1: Selenium 4's native API (most reliable)
                 # Uses WebDriver protocol directly, bypasses popup blockers
                 try:
-                    driver.switch_to.new_window('tab')
+                    driver.switch_to.new_window("tab")
                     sleep(0.3)  # Brief pause for tab to initialize
                     handles_after = set(driver.window_handles)
                     new_handles = list(handles_after - handles_before)
-                    _log.debug(f"[open_url] AFTER switch_to.new_window: handles={handles_after}, new_handles={new_handles}")
+                    _log.debug(
+                        f"[open_url] AFTER switch_to.new_window: handles={handles_after}, new_handles={new_handles}"
+                    )
                 except Exception as e:
-                    _log.warning(f"[open_url] Method 1 (switch_to.new_window) failed: {e}")
+                    _log.warning(
+                        f"[open_url] Method 1 (switch_to.new_window) failed: {e}"
+                    )
                     new_handles = []
 
                 # Method 2: window.open (fallback)
                 if not new_handles:
-                    _log.debug(f"[open_url] Trying Method 2: window.open('about:blank')")
+                    _log.debug(
+                        f"[open_url] Trying Method 2: window.open('about:blank')"
+                    )
                     try:
                         driver.execute_script("window.open('about:blank', '_blank');")
                         sleep(0.5)
                         handles_after = set(driver.window_handles)
                         new_handles = list(handles_after - handles_before)
-                        _log.debug(f"[open_url] AFTER window.open: handles={handles_after}, new_handles={new_handles}")
+                        _log.debug(
+                            f"[open_url] AFTER window.open: handles={handles_after}, new_handles={new_handles}"
+                        )
                     except Exception as e:
                         _log.warning(f"[open_url] Method 2 (window.open) failed: {e}")
 
@@ -1554,28 +1794,45 @@ def open_url(
                             pass  # Continue even if focus fails
 
                         import platform
-                        is_mac = platform.system().lower() == 'darwin'
+
+                        is_mac = platform.system().lower() == "darwin"
                         if not is_mac:
-                            platform_name = driver.capabilities.get('platformName', '').lower()
-                            is_mac = any(x in platform_name for x in ['mac', 'darwin', 'osx'])
+                            platform_name = driver.capabilities.get(
+                                "platformName", ""
+                            ).lower()
+                            is_mac = any(
+                                x in platform_name for x in ["mac", "darwin", "osx"]
+                            )
                         modifier_key = Keys.COMMAND if is_mac else Keys.CONTROL
                         _log.debug(f"[open_url] Using {'Cmd' if is_mac else 'Ctrl'}+T")
-                        ActionChains(driver).key_down(modifier_key).send_keys('t').key_up(modifier_key).perform()
+                        ActionChains(driver).key_down(modifier_key).send_keys(
+                            "t"
+                        ).key_up(modifier_key).perform()
                         sleep(0.5)
                         handles_after = set(driver.window_handles)
                         new_handles = list(handles_after - handles_before)
-                        _log.debug(f"[open_url] AFTER keyboard shortcut: handles={handles_after}, new_handles={new_handles}")
+                        _log.debug(
+                            f"[open_url] AFTER keyboard shortcut: handles={handles_after}, new_handles={new_handles}"
+                        )
                     except Exception as e:
-                        _log.warning(f"[open_url] Method 3 (keyboard shortcut) failed: {e}")
+                        _log.warning(
+                            f"[open_url] Method 3 (keyboard shortcut) failed: {e}"
+                        )
 
                 # Switch to new tab and navigate, or fall back to current tab
                 if new_handles:
                     driver.switch_to.window(new_handles[0])
-                    _log.debug(f"[open_url] Switched to new tab: {new_handles[0]}, navigating to {url}")
+                    _log.debug(
+                        f"[open_url] Switched to new tab: {new_handles[0]}, navigating to {url}"
+                    )
                     driver.get(url)
-                    _log.debug(f"[open_url] Navigation complete, current_now={driver.current_window_handle}")
+                    _log.debug(
+                        f"[open_url] Navigation complete, current_now={driver.current_window_handle}"
+                    )
                 else:
-                    _log.warning(f"[open_url] All methods failed! Falling back to current tab navigation.")
+                    _log.warning(
+                        f"[open_url] All methods failed! Falling back to current tab navigation."
+                    )
                     driver.get(url)
             else:
                 driver.get(url)
@@ -1583,11 +1840,14 @@ def open_url(
 
             if wait_after_opening_url:
                 from time import sleep
+
                 sleep(wait_after_opening_url)
         except TimeoutException:
-            hprint_message('timeout', url)
-            driver.execute_script('window.stop();')
-    _log.debug(f"[open_url] RETURNING: new_handles={new_handles}, final_current={driver.current_window_handle}")
+            hprint_message("timeout", url)
+            driver.execute_script("window.stop();")
+    _log.debug(
+        f"[open_url] RETURNING: new_handles={new_handles}, final_current={driver.current_window_handle}"
+    )
     return new_handles
 
 
@@ -1598,20 +1858,21 @@ class SearchProviders(StrEnum):
         GOOGLE: Google search engine.
         BING: Bing search engine.
     """
+
     GOOGLE = "Google"
     BING = "Bing"
 
 
 def search(
-        driver: WebDriver,
-        query: str,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
-        sites: Optional[Iterable[str]] = None,
-        provider: SearchProviders = SearchProviders.GOOGLE,
-        timeout: int = 20,
-        additional_wait_time: float = 2.0,
-        **other_search_args
+    driver: WebDriver,
+    query: str,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    sites: Optional[Iterable[str]] = None,
+    provider: SearchProviders = SearchProviders.GOOGLE,
+    timeout: int = 20,
+    additional_wait_time: float = 2.0,
+    **other_search_args,
 ):
     if provider == SearchProviders.GOOGLE:
         from webaxon.url_utils.search_urls.google_search_url import create_search_url
@@ -1624,89 +1885,103 @@ def search(
         start_date=start_date,
         end_date=end_date,
         sites=sites,
-        **other_search_args
+        **other_search_args,
     )
     open_url(driver, url, wait_after_opening_url=additional_wait_time)
-    wait_for_page_loading(driver, timeout=timeout, additional_wait_time=additional_wait_time)
+    wait_for_page_loading(
+        driver, timeout=timeout, additional_wait_time=additional_wait_time
+    )
 
 
 def execute_single_action(
-        driver: WebDriver,
-        element: Union[str, WebElement],
-        action_type: str,
-        action_args: Mapping = None,
-        attachments: Sequence = None,
-        timeout: int = 20,
-        additional_wait_time: float = 2.0,
-        logger: 'Union[logging.Logger, Debuggable, None]' = None
+    driver: WebDriver,
+    element: Union[str, WebElement],
+    action_type: str,
+    action_args: Mapping = None,
+    attachments: Sequence = None,
+    timeout: int = 20,
+    additional_wait_time: float = 2.0,
+    logger: "Union[logging.Logger, Debuggable, None]" = None,
 ) -> str:
     action_type = camel_to_snake_case(action_type)
     if not action_args:
         action_args = {}
 
     # Handle attachments for input-based actions only
-    if attachments and action_type in ('input_text', 'append_text'):
+    if attachments and action_type in ("input_text", "append_text"):
         # Make action_args mutable
         action_args = dict(action_args)
 
         # Get original text and check for existing attachment IDs
-        original_text = action_args.get('text', '')
+        original_text = action_args.get("text", "")
 
         # Extract attachment text using utility function
-        attachment_text = _get_attachments_text(attachments, original_text, separator='\n\n')
+        attachment_text = _get_attachments_text(
+            attachments, original_text, separator="\n\n"
+        )
 
         # Append attachment text to the 'text' parameter
         if attachment_text:
-            action_args['text'] = f"{original_text}\n\n\n{attachment_text}" if original_text else attachment_text
+            action_args["text"] = (
+                f"{original_text}\n\n\n{attachment_text}"
+                if original_text
+                else attachment_text
+            )
 
-    if action_type == 'get_text':
+    if action_type == "get_text":
         return get_element_text(element)
-    if action_type == 'get_html':
+    if action_type == "get_html":
         return get_element_html(element)
     else:
         new_tabs_opened = None
-        if action_type == 'click':
+        if action_type == "click":
             # Allow action_args to override the default new-tab behavior
             open_in_new_tab = action_args.get(
-                'try_open_in_new_tab',
-                OpenInNewTabMode.ENABLED_FOR_NON_SAME_PAGE_INTERACTION
+                "try_open_in_new_tab",
+                OpenInNewTabMode.ENABLED_FOR_NON_SAME_PAGE_INTERACTION,
             )
             new_tabs_opened = click_element(
-                driver, element,
+                driver,
+                element,
                 try_open_in_new_tab=open_in_new_tab,
                 new_tab_fallback_to_normal_click=True,
-                logger=logger
+                logger=logger,
             )
-        elif action_type == 'browse_link':
-            open_in_new_tab = action_args.get('try_open_in_new_tab', OpenInNewTabMode.ENABLED_FOR_NON_SAME_PAGE_INTERACTION)
-            new_tabs_opened = click_element(
-                driver, element,
-                try_open_in_new_tab=open_in_new_tab,
-                new_tab_fallback_to_normal_click=True,
-                logger=logger
-            )
-        elif action_type == 'deep_dive_link':
+        elif action_type == "browse_link":
             open_in_new_tab = action_args.get(
-                'try_open_in_new_tab',
-                OpenInNewTabMode.ENABLED_FOR_NON_SAME_PAGE_INTERACTION
+                "try_open_in_new_tab",
+                OpenInNewTabMode.ENABLED_FOR_NON_SAME_PAGE_INTERACTION,
             )
             new_tabs_opened = click_element(
-                driver, element,
+                driver,
+                element,
                 try_open_in_new_tab=open_in_new_tab,
                 new_tab_fallback_to_normal_click=True,
-                logger=logger
+                logger=logger,
             )
-        elif action_type == 'next_page':
+        elif action_type == "deep_dive_link":
+            open_in_new_tab = action_args.get(
+                "try_open_in_new_tab",
+                OpenInNewTabMode.ENABLED_FOR_NON_SAME_PAGE_INTERACTION,
+            )
+            new_tabs_opened = click_element(
+                driver,
+                element,
+                try_open_in_new_tab=open_in_new_tab,
+                new_tab_fallback_to_normal_click=True,
+                logger=logger,
+            )
+        elif action_type == "next_page":
             click_element(driver, element, try_open_in_new_tab=False, logger=logger)
-        elif action_type == 'input_text':
+        elif action_type == "input_text":
             input_text(driver, element, clear_content=True, **action_args)
-        elif action_type == 'append_text':
+        elif action_type == "append_text":
             input_text(driver, element, clear_content=False, **action_args)
-        elif action_type == 'set_file_path':
+        elif action_type == "set_file_path":
             # Set file path for file input elements
             # Must use send_keys (not JavaScript) due to browser security restrictions
             # File inputs cannot be clicked or cleared - just send keys directly
-            file_path = action_args.get('file_path')
+            file_path = action_args.get("file_path")
             if not file_path:
                 raise ValueError("set_file_path action requires 'file_path' argument")
             # Send keys directly to file input without clicking or clearing
@@ -1718,15 +1993,15 @@ def execute_single_action(
                 # Log error for debugging
                 _logger.error(f"Failed to set file path on file input: {e}")
                 raise
-        elif action_type == 'scroll_up_to_element':
-            scroll_element_into_view(driver, element, vertical='bottom', **action_args)
-        elif action_type == 'scroll_down_to_element':
-            scroll_element_into_view(driver, element, vertical='top', **action_args)
-        elif action_type == 'scroll':
+        elif action_type == "scroll_up_to_element":
+            scroll_element_into_view(driver, element, vertical="bottom", **action_args)
+        elif action_type == "scroll_down_to_element":
+            scroll_element_into_view(driver, element, vertical="top", **action_args)
+        elif action_type == "scroll":
             scroll_element(driver, element, **action_args)
-        elif action_type == 'visit_url':
+        elif action_type == "visit_url":
             open_url(driver, element, logger=logger, **action_args)
-            timeout =  timeout * 3
+            timeout = timeout * 3
             additional_wait_time = additional_wait_time * 3
 
         _log = logger or _logger
@@ -1736,7 +2011,9 @@ def execute_single_action(
                 f"new_tabs_opened={new_tabs_opened}"
             )
 
-        wait_for_page_loading(driver, timeout=timeout, additional_wait_time=additional_wait_time)
+        wait_for_page_loading(
+            driver, timeout=timeout, additional_wait_time=additional_wait_time
+        )
 
 
 def _get_common_action_params() -> set:
@@ -1749,6 +2026,7 @@ def _get_common_action_params() -> set:
         Set of common parameter names
     """
     import inspect
+
     sig = inspect.signature(execute_single_action)
     return set(sig.parameters.keys())
 
@@ -1758,10 +2036,10 @@ _COMMON_ACTION_PARAMS = _get_common_action_params()
 
 # Action type to function mapping
 _ACTION_FUNCTIONS = {
-    'click': click_element,
-    'input_text': input_text,
-    'scroll': scroll_element,
-    'visit_url': open_url,
+    "click": click_element,
+    "input_text": input_text,
+    "scroll": scroll_element,
+    "visit_url": open_url,
     # Add other actions as needed
 }
 
@@ -1794,7 +2072,9 @@ def _get_valid_arg_names_for_action(action_type: str) -> set:
     return valid_args
 
 
-def _extract_action_specific_args(action_type: str, all_action_args: Mapping) -> Mapping:
+def _extract_action_specific_args(
+    action_type: str, all_action_args: Mapping
+) -> Mapping:
     """
     Extract action-specific arguments from a mapping containing args for multiple actions.
 
@@ -1822,7 +2102,7 @@ def _extract_action_specific_args(action_type: str, all_action_args: Mapping) ->
     for key, value in all_action_args.items():
         if key.startswith(prefix):
             # Remove prefix to get the actual parameter name
-            param_name = key[len(prefix):]
+            param_name = key[len(prefix) :]
 
             # Validate if we have valid arg names for this action
             if valid_arg_names and param_name not in valid_arg_names:
@@ -1845,14 +2125,14 @@ def _extract_action_specific_args(action_type: str, all_action_args: Mapping) ->
 
 
 def execute_composite_action(
-        driver: WebDriver,
-        elements: List[WebElement],
-        action_config,  # WebAgentAction from webaxon.automation.schema
-        action_args: Mapping = None,
-        attachments: Sequence = None,
-        timeout: int = 20,
-        additional_wait_time: float = 2.0,
-        logger: 'Union[logging.Logger, Debuggable, None]' = None
+    driver: WebDriver,
+    elements: List[WebElement],
+    action_config,  # WebAgentAction from webaxon.automation.schema
+    action_args: Mapping = None,
+    attachments: Sequence = None,
+    timeout: int = 20,
+    additional_wait_time: float = 2.0,
+    logger: "Union[logging.Logger, Debuggable, None]" = None,
 ):
     """
     Execute a composite action by decomposing it into multiple sub-actions.
@@ -1880,10 +2160,10 @@ def execute_composite_action(
         )
 
     # Handle both old enum format and new CompositeActionConfig format
-    if hasattr(composite_action, 'mode'):
+    if hasattr(composite_action, "mode"):
         # New format: CompositeActionConfig with mode field
         mode = composite_action.mode
-    elif hasattr(composite_action, 'value'):
+    elif hasattr(composite_action, "value"):
         # Old format: WebAgentCompositeActionMode enum
         mode = composite_action.value
     else:
@@ -1924,5 +2204,5 @@ def execute_composite_action(
             attachments=attachments,  # Pass attachments to all steps (filtered at WebDriver level)
             timeout=timeout,
             additional_wait_time=additional_wait_time,
-            logger=logger
+            logger=logger,
         )

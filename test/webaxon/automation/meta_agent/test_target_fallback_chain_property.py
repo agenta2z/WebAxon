@@ -13,9 +13,8 @@ strategies ordered by the stability priority
 
 from __future__ import annotations
 
-from hypothesis import given, settings, strategies as st
-
 from agent_foundation.automation.meta_agent.models import TraceStep
+from hypothesis import given, settings, strategies as st
 from webaxon.automation.meta_agent.web_target_converter import WebTargetConverter
 
 

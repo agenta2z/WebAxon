@@ -1,44 +1,50 @@
 from enum import Enum
-from typing import Optional, Mapping, Any, Sequence, Tuple
+from typing import Any, Mapping, Optional, Sequence, Tuple
 
+from rich_python_utils.common_utils import get_relevant_named_args, promote_keys
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
+from webaxon.html_utils.common import (
+    get_tag_text_and_attributes_from_element,
+    is_html_string,
+)
+from webaxon.html_utils.element_identification import (
+    ATTR_NAME_INCREMENTAL_ID,
+    get_xpath,
+)
 
-from rich_python_utils.common_utils import promote_keys, get_relevant_named_args
-from webaxon.html_utils.element_identification import get_xpath, ATTR_NAME_INCREMENTAL_ID
-from webaxon.html_utils.common import is_html_string, get_tag_text_and_attributes_from_element
 from .types import ElementDict
 
 
 def find_element_by_xpath(
-        driver,
-        tag_name: Optional[str] = '*',
-        attributes: Mapping[str, Any] = None,
-        text: str = None,
-        immediate_text: str = None
+    driver,
+    tag_name: Optional[str] = "*",
+    attributes: Mapping[str, Any] = None,
+    text: str = None,
+    immediate_text: str = None,
 ):
     xpath = get_xpath(
         tag_name=tag_name,
         attributes=attributes,
         text=text,
-        immediate_text=immediate_text
+        immediate_text=immediate_text,
     )
     return driver.find_element(By.XPATH, xpath)
 
 
 def find_elements_by_xpath(
-        driver,
-        tag_name: Optional[str] = '*',
-        attributes: Mapping[str, Any] = None,
-        text: str = None,
-        immediate_text: str = None
+    driver,
+    tag_name: Optional[str] = "*",
+    attributes: Mapping[str, Any] = None,
+    text: str = None,
+    immediate_text: str = None,
 ):
     xpath = get_xpath(
         tag_name=tag_name,
         attributes=attributes,
         text=text,
-        immediate_text=immediate_text
+        immediate_text=immediate_text,
     )
     return driver.find_elements(By.XPATH, xpath)
 
@@ -64,7 +70,9 @@ def add_unique_index_to_elements(driver, index_name=None):
     driver.execute_script(script)
 
 
-def find_element_by_unique_index(driver, index_value: str, index_name: str = None) -> WebElement:
+def find_element_by_unique_index(
+    driver, index_value: str, index_name: str = None
+) -> WebElement:
     """
     Find an element by its unique index attribute (e.g., __id__).
 
@@ -92,7 +100,12 @@ def find_element_by_unique_index(driver, index_value: str, index_name: str = Non
     return driver.find_element(By.XPATH, f"//*[@{index_name}='{index_value}']")
 
 
-def find_element_by_html(driver, target_element_html: str, identifying_attributes=('id', 'aria-label', 'class'), always_return_single_element: bool = False):
+def find_element_by_html(
+    driver,
+    target_element_html: str,
+    identifying_attributes=("id", "aria-label", "class"),
+    always_return_single_element: bool = False,
+):
     """
     Finds an element by an HTML snippet, using a combination of tag name, text content, and attributes.
     The function first tries to find elements by tag name and text. If multiple elements are found,
@@ -109,7 +122,9 @@ def find_element_by_html(driver, target_element_html: str, identifying_attribute
     Returns:
         The first web element that uniquely matches the generated criteria or None if no such element is found.
     """
-    tag_name, text, attributes = get_tag_text_and_attributes_from_element(target_element_html)
+    tag_name, text, attributes = get_tag_text_and_attributes_from_element(
+        target_element_html
+    )
     elements = find_elements_by_xpath(driver=driver, tag_name=tag_name, text=text)
 
     if len(elements) == 1:
@@ -140,7 +155,8 @@ def find_element_by_html(driver, target_element_html: str, identifying_attribute
         _elem_attr_values = elem_attr_values
         for single_target_attr_value in target_attr_values:
             _elem_attr_values = [
-                (elem, attr_values) for elem, attr_values in _elem_attr_values
+                (elem, attr_values)
+                for elem, attr_values in _elem_attr_values
                 if single_target_attr_value in attr_values
             ]
             if len(_elem_attr_values) == 1:
@@ -172,15 +188,15 @@ def get_find_elements_target_type(target: str) -> Tuple[TargetTypes, str]:
     target_type = TargetTypes.ID
 
     for target_type in TargetTypes:
-        if target.startswith(f'{target_type.value}:'):
-            target = target[(len(target_type.value) + 1):]
+        if target.startswith(f"{target_type.value}:"):
+            target = target[(len(target_type.value) + 1) :]
             target_type_set = True
             break
 
     if not target_type_set:
         if is_html_string(target):
             target_type = TargetTypes.HTML
-        elif target[0] == '/':
+        elif target[0] == "/":
             target_type = TargetTypes.XPATH
         else:
             target_type = TargetTypes.ID
@@ -202,14 +218,16 @@ def _find_element(driver, target: str, **kwargs) -> WebElement:
             always_return_single_element=True,
             **get_relevant_named_args(
                 find_element_by_html,
-                exclusion=['target_element_html', 'always_return_single_element'],
-                **kwargs
-            )
+                exclusion=["target_element_html", "always_return_single_element"],
+                **kwargs,
+            ),
         )
 
 
-def _find_elements(driver, target: str, explicit_multiple_elements: bool = False, **kwargs) -> Sequence[WebElement]:
-    if explicit_multiple_elements and target[0] != '*':
+def _find_elements(
+    driver, target: str, explicit_multiple_elements: bool = False, **kwargs
+) -> Sequence[WebElement]:
+    if explicit_multiple_elements and target[0] != "*":
         element = _find_element(driver, target, **kwargs)
         if element is not None:
             return [element]
@@ -224,9 +242,7 @@ def _find_elements(driver, target: str, explicit_multiple_elements: bool = False
             elements = find_element_by_html(
                 driver=driver,
                 target_element_html=target,
-                **get_relevant_named_args(
-                    find_element_by_html, **kwargs
-                )
+                **get_relevant_named_args(find_element_by_html, **kwargs),
             )
 
             if isinstance(elements, WebElement):
@@ -236,10 +252,7 @@ def _find_elements(driver, target: str, explicit_multiple_elements: bool = False
 
 
 def find_element(
-        driver: WebDriver,
-        target: str,
-        elements_dict: ElementDict = None,
-        **kwargs
+    driver: WebDriver, target: str, elements_dict: ElementDict = None, **kwargs
 ) -> Optional[WebElement]:
     if target:
         if target in elements_dict:
@@ -257,11 +270,11 @@ def find_element(
 
 
 def find_elements(
-        driver: WebDriver,
-        target: str,
-        explicit_multiple_elements: bool = False,
-        elements_dict: ElementDict = None,
-        **kwargs
+    driver: WebDriver,
+    target: str,
+    explicit_multiple_elements: bool = False,
+    elements_dict: ElementDict = None,
+    **kwargs,
 ) -> Optional[Sequence[WebElement]]:
     if target:
         if target in elements_dict:
@@ -272,7 +285,7 @@ def find_elements(
                     driver=driver,
                     target=target,
                     explicit_multiple_elements=explicit_multiple_elements,
-                    **kwargs
+                    **kwargs,
                 )
                 if elements is not None:
                     elements_dict[target_key] = elements

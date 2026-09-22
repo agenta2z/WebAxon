@@ -6,22 +6,28 @@ when not configured.
 
 Requirements: 3.1, 3.4, 7.1, 7.2
 """
+
 import sys
 import tempfile
-import pytest
-from unittest.mock import MagicMock
 from pathlib import Path
+from unittest.mock import MagicMock
 
+import pytest
 import resolve_path  # Setup import paths
-
+from webaxon.devsuite.web_agent_service_nextgen.core.agent_factory import (
+    _PipelineKnowledgeProvider,
+    AgentFactory,
+)
 from webaxon.devsuite.web_agent_service_nextgen.core.config import ServiceConfig
-from webaxon.devsuite.web_agent_service_nextgen.core.agent_factory import AgentFactory, _PipelineKnowledgeProvider
 
 
 # Path to the grocery store knowledge data file
 GROCERY_DATA_FILE = str(
     Path(__file__).resolve().parent.parent.parent.parent
-    / 'webaxon' / 'webaxon' / 'grocery_store_testcase' / 'knowledge_data.json'
+    / "webaxon"
+    / "webaxon"
+    / "grocery_store_testcase"
+    / "knowledge_data.json"
 )
 
 
@@ -36,7 +42,9 @@ def mock_template_manager():
 class TestAgentFactoryKnowledge:
     """Tests for AgentFactory knowledge integration."""
 
-    def test_create_knowledge_provider_with_config(self, mock_template_manager, tmp_path):
+    def test_create_knowledge_provider_with_config(
+        self, mock_template_manager, tmp_path
+    ):
         """Test _create_knowledge_provider returns a pipeline-based provider when configured.
 
         Requirements: 3.1
@@ -47,7 +55,9 @@ class TestAgentFactoryKnowledge:
         assert isinstance(factory._provider, _PipelineKnowledgeProvider)
         factory.close()
 
-    def test_create_knowledge_provider_without_config(self, mock_template_manager, tmp_path):
+    def test_create_knowledge_provider_without_config(
+        self, mock_template_manager, tmp_path
+    ):
         """Test _create_knowledge_provider always creates a provider even without config.
 
         The provider is always created with file-based stores at
@@ -60,7 +70,9 @@ class TestAgentFactoryKnowledge:
         assert factory._provider is not None
         factory.close()
 
-    def test_user_profile_none_when_provider_active(self, mock_template_manager, tmp_path):
+    def test_user_profile_none_when_provider_active(
+        self, mock_template_manager, tmp_path
+    ):
         """Test _load_user_profile returns None when provider is active.
 
         When a knowledge provider is configured, user_profile should be None
@@ -73,7 +85,9 @@ class TestAgentFactoryKnowledge:
         assert factory._user_profile is None
         factory.close()
 
-    def test_user_profile_loaded_when_no_provider(self, mock_template_manager, tmp_path):
+    def test_user_profile_loaded_when_no_provider(
+        self, mock_template_manager, tmp_path
+    ):
         """Test _load_user_profile returns None because provider is always created.
 
         Since _create_knowledge_provider() now always creates a provider

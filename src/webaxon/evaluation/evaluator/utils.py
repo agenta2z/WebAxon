@@ -43,9 +43,7 @@ class InferencerEngine:
         return [result] if isinstance(result, str) else result
 
     @staticmethod
-    def _adapt_for_claude(
-        messages: List[Dict], kwargs: dict
-    ) -> tuple:
+    def _adapt_for_claude(messages: List[Dict], kwargs: dict) -> tuple:
         """Adapt OpenAI-format messages to Claude's Messages API format.
 
         Two transformations:

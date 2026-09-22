@@ -11,7 +11,6 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from webaxon.evaluation.config import EvaluationConfig
 from webaxon.evaluation.protocol import EvalAgentAdapter, EvalResult
 from webaxon.evaluation.runner import EvaluationRunner
@@ -66,7 +65,9 @@ class TestRunTask:
         assert result_dict["task_id"] == sample_task.task_id
         assert result_dict["confidence"] == sample_result.confidence
 
-    def test_max_steps_adapts_to_reference_length(self, sample_task, sample_result, tmp_path):
+    def test_max_steps_adapts_to_reference_length(
+        self, sample_task, sample_result, tmp_path
+    ):
         config = EvaluationConfig(output_dir=tmp_path, max_steps=10)
         adapter = _make_adapter(sample_result)
         runner = EvaluationRunner(adapter, config)
@@ -135,7 +136,9 @@ class TestRunDataset:
 
     def test_multiple_tasks(self, sample_result, tmp_path):
         tasks = [
-            EvaluationTask(task_id=f"t{i}", task=f"Task {i}", start_url="https://example.com")
+            EvaluationTask(
+                task_id=f"t{i}", task=f"Task {i}", start_url="https://example.com"
+            )
             for i in range(3)
         ]
         config = EvaluationConfig(output_dir=tmp_path)
@@ -151,7 +154,9 @@ class TestRunDataset:
 
     def test_calls_cleanup_after_each_task(self, sample_result, tmp_path):
         tasks = [
-            EvaluationTask(task_id=f"t{i}", task=f"Task {i}", start_url="https://example.com")
+            EvaluationTask(
+                task_id=f"t{i}", task=f"Task {i}", start_url="https://example.com"
+            )
             for i in range(2)
         ]
         config = EvaluationConfig(output_dir=tmp_path)
@@ -211,7 +216,9 @@ class TestErrorHandling:
 
     def test_cleanup_failure_does_not_stop_dataset(self, sample_result, tmp_path):
         tasks = [
-            EvaluationTask(task_id=f"t{i}", task=f"Task {i}", start_url="https://example.com")
+            EvaluationTask(
+                task_id=f"t{i}", task=f"Task {i}", start_url="https://example.com"
+            )
             for i in range(2)
         ]
         config = EvaluationConfig(output_dir=tmp_path)
