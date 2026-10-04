@@ -5,6 +5,7 @@ and runs queries with different space filters to verify space-aware retrieval.
 
 Results are written as JSON files to an output/ directory alongside this script.
 """
+
 import json
 import sys
 from datetime import datetime, timezone
@@ -12,19 +13,33 @@ from pathlib import Path
 
 # Resolve paths relative to the monorepo root (CoreProjects/)
 SCRIPT_DIR = Path(__file__).resolve().parent
-REPO_ROOT = SCRIPT_DIR.parents[4]  # WebAxon/test/webaxon/knowledge/retrieval -> CoreProjects
+REPO_ROOT = SCRIPT_DIR.parents[
+    4
+]  # WebAxon/test/webaxon/knowledge/retrieval -> CoreProjects
 
 sys.path.insert(0, str(REPO_ROOT / "AgentFoundation" / "src"))
 sys.path.insert(0, str(REPO_ROOT / "RichPythonUtils" / "src"))
 sys.path.insert(0, str(REPO_ROOT / "SciencePythonUtils" / "src"))
 
 from agent_foundation.knowledge import KnowledgeBase
-from agent_foundation.knowledge.stores.metadata.keyvalue_adapter import KeyValueMetadataStore
-from agent_foundation.knowledge.stores.pieces.retrieval_adapter import RetrievalKnowledgePieceStore
-from agent_foundation.knowledge.stores.graph.graph_adapter import GraphServiceEntityGraphStore
-from rich_python_utils.service_utils.keyvalue_service.file_keyvalue_service import FileKeyValueService
-from rich_python_utils.service_utils.retrieval_service.file_retrieval_service import FileRetrievalService
-from rich_python_utils.service_utils.graph_service.file_graph_service import FileGraphService
+from agent_foundation.knowledge.stores.graph.graph_adapter import (
+    GraphServiceEntityGraphStore,
+)
+from agent_foundation.knowledge.stores.metadata.keyvalue_adapter import (
+    KeyValueMetadataStore,
+)
+from agent_foundation.knowledge.stores.pieces.retrieval_adapter import (
+    RetrievalKnowledgePieceStore,
+)
+from rich_python_utils.service_utils.graph_service.file_graph_service import (
+    FileGraphService,
+)
+from rich_python_utils.service_utils.keyvalue_service.file_keyvalue_service import (
+    FileKeyValueService,
+)
+from rich_python_utils.service_utils.retrieval_service.file_retrieval_service import (
+    FileRetrievalService,
+)
 
 STORE_BASE = (
     REPO_ROOT
@@ -60,6 +75,7 @@ def create_kb() -> KnowledgeBase:
 
 def result_to_dict(result):
     """Serialize a RetrievalResult to a JSON-safe dict."""
+
     def piece_to_dict(piece, score):
         return {
             "piece_id": piece.piece_id,
@@ -67,7 +83,9 @@ def result_to_dict(result):
             "space": piece.space,
             "spaces": piece.spaces,
             "content": piece.content,
-            "knowledge_type": piece.knowledge_type.value if piece.knowledge_type else None,
+            "knowledge_type": piece.knowledge_type.value
+            if piece.knowledge_type
+            else None,
             "info_type": piece.info_type,
             "tags": list(piece.tags),
             "entity_id": piece.entity_id,
@@ -162,7 +180,9 @@ def main():
         # Print summary line
         piece_ids = [p["piece_id"] for p in data["result"]["pieces"]]
         spaces_str = str(spaces) if spaces else "None"
-        print(f"  {test_name:30s}  spaces={spaces_str:30s}  -> {data['piece_count']} pieces: {piece_ids}")
+        print(
+            f"  {test_name:30s}  spaces={spaces_str:30s}  -> {data['piece_count']} pieces: {piece_ids}"
+        )
 
     # Write combined summary
     summary = {

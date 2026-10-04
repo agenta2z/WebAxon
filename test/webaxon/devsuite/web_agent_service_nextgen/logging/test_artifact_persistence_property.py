@@ -10,16 +10,13 @@ directory path. The artifact filename SHALL follow the pattern
 three-digit turn number and SSS is the three-digit step counter.
 """
 
-import resolve_path  # noqa: F401 - must be first import
-
 import re
 import shutil
 import tempfile
 from pathlib import Path
 
-from hypothesis import given, settings, HealthCheck
-from hypothesis import strategies as st
-
+import resolve_path  # noqa: F401 - must be first import
+from hypothesis import given, HealthCheck, settings, strategies as st
 from rich_python_utils.service_utils.session_management import (
     SessionLogger as SessionLogManager,
 )
@@ -216,11 +213,13 @@ class TestArtifactPersistenceProperty:
             for turn in range(1, num_turns + 1):
                 mgr.start_turn(turn)
                 for _ in range(num_artifacts):
-                    artifact_logger({
-                        "type": "ReasonerInput",
-                        "name": "TestClass",
-                        "item": "test content",
-                    })
+                    artifact_logger(
+                        {
+                            "type": "ReasonerInput",
+                            "name": "TestClass",
+                            "item": "test content",
+                        }
+                    )
 
             # Verify each turn has the correct number of artifacts
             for turn_entry in mgr._manifest.turns:
@@ -329,11 +328,13 @@ class TestArtifactPersistenceProperty:
             artifact_logger = mgr.create_artifact_logger()
 
             # Log a non-artifact type
-            artifact_logger({
-                "type": "SomeOtherType",
-                "name": class_name,
-                "item": "should be ignored",
-            })
+            artifact_logger(
+                {
+                    "type": "SomeOtherType",
+                    "name": class_name,
+                    "item": "should be ignored",
+                }
+            )
 
             # No artifact files should be created
             artifact_files = list(mgr.artifacts_dir.iterdir())

@@ -6,7 +6,7 @@ switch_to.window(handle) pattern to work with both Selenium and
 Playwright backends.
 """
 
-from typing import TYPE_CHECKING, Any
+from typing import Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from webaxon.automation.backends.base import BackendAdapter
@@ -35,7 +35,7 @@ class SwitchToAdapter:
         active_element(): Get the currently focused element
     """
 
-    def __init__(self, backend: 'BackendAdapter'):
+    def __init__(self, backend: "BackendAdapter"):
         """
         Initialize the SwitchTo adapter.
 
@@ -69,17 +69,18 @@ class SwitchToAdapter:
         Raises:
             UnsupportedOperationError: If the backend doesn't support frame switching
         """
-        if hasattr(self._backend, 'switch_to_frame'):
+        if hasattr(self._backend, "switch_to_frame"):
             self._backend.switch_to_frame(frame_reference)
         else:
             from webaxon.automation.backends.exceptions import UnsupportedOperationError
+
             raise UnsupportedOperationError(
                 operation="switch_to.frame()",
                 backend_type=type(self._backend).__name__,
                 message=(
                     "Frame switching works differently in Playwright. "
                     "Use page.frame_locator() for frame-specific operations instead."
-                )
+                ),
             )
 
     def default_content(self) -> None:
@@ -92,7 +93,7 @@ class SwitchToAdapter:
         Raises:
             UnsupportedOperationError: If the backend doesn't support this operation
         """
-        if hasattr(self._backend, 'switch_to_default_content'):
+        if hasattr(self._backend, "switch_to_default_content"):
             self._backend.switch_to_default_content()
         # For backends that don't have explicit frame context, this is a no-op
 
@@ -106,13 +107,14 @@ class SwitchToAdapter:
         Raises:
             UnsupportedOperationError: If the backend doesn't support this operation
         """
-        if hasattr(self._backend, 'get_active_element'):
+        if hasattr(self._backend, "get_active_element"):
             return self._backend.get_active_element()
         else:
             from webaxon.automation.backends.exceptions import UnsupportedOperationError
+
             raise UnsupportedOperationError(
                 operation="switch_to.active_element()",
-                backend_type=type(self._backend).__name__
+                backend_type=type(self._backend).__name__,
             )
 
     def alert(self) -> Any:
@@ -128,15 +130,16 @@ class SwitchToAdapter:
         Raises:
             UnsupportedOperationError: If the backend doesn't support alert switching
         """
-        if hasattr(self._backend, 'switch_to_alert'):
+        if hasattr(self._backend, "switch_to_alert"):
             return self._backend.switch_to_alert()
         else:
             from webaxon.automation.backends.exceptions import UnsupportedOperationError
+
             raise UnsupportedOperationError(
                 operation="switch_to.alert",
                 backend_type=type(self._backend).__name__,
                 message=(
                     "Playwright handles dialogs differently. "
                     "Use page.on('dialog', handler) instead."
-                )
+                ),
             )

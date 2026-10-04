@@ -18,9 +18,7 @@ import sys
 from pathlib import Path
 
 import pytest
-from hypothesis import given, settings, assume
-from hypothesis import strategies as st
-
+from hypothesis import assume, given, settings, strategies as st
 from webaxon.evaluation.tasks import EvaluationTask, load_tasks
 
 # Import strategies from conftest via sys.path
@@ -145,7 +143,9 @@ class TestCombinedFiltering:
         offset=st.integers(min_value=0, max_value=25),
     )
     @settings(max_examples=100)
-    def test_combined_level_limit_offset(self, tasks, level, limit, offset, tmp_path_factory):
+    def test_combined_level_limit_offset(
+        self, tasks, level, limit, offset, tmp_path_factory
+    ):
         tmp_path = tmp_path_factory.mktemp("tasks")
         jsonl_path = tmp_path / "tasks.jsonl"
         _write_tasks_jsonl(tasks, jsonl_path)

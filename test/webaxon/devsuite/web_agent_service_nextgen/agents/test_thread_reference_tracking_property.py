@@ -3,31 +3,37 @@
 This module contains property-based tests using hypothesis to verify
 that agent thread references are properly stored in session info.
 """
-import sys
-import resolve_path  # Setup import paths
 
+import shutil
+import sys
+import tempfile
 import threading
 import time
 from pathlib import Path
-import tempfile
-import shutil
 from unittest.mock import Mock
 
+import resolve_path  # Setup import paths
+
 # Add parent directory to path
-from hypothesis import given, strategies as st, settings, assume
-from webaxon.devsuite.web_agent_service_nextgen.core.config import ServiceConfig
-from webaxon.devsuite.web_agent_service_nextgen.session import SessionManager, AgentSession
+from hypothesis import assume, given, settings, strategies as st
 from webaxon.devsuite.web_agent_service_nextgen.agents.agent_runner import AgentRunner
+from webaxon.devsuite.web_agent_service_nextgen.core.config import ServiceConfig
+from webaxon.devsuite.web_agent_service_nextgen.session import (
+    AgentSession,
+    SessionManager,
+)
 
 
 # Mock classes for testing
 class MockQueueService:
     """Mock queue service for testing."""
+
     pass
 
 
 class MockAgent:
     """Mock agent for testing."""
+
     def __init__(self, run_duration=0.1):
         self.run_duration = run_duration
         self.run_called = False
@@ -38,7 +44,7 @@ class MockAgent:
         self.run_called = True
         self.run_thread_id = threading.current_thread().ident
         time.sleep(self.run_duration)
-        return 'completed'
+        return "completed"
 
 
 # Feature: web-agent-service-modularization, Property 25: Thread Reference Tracking
@@ -97,7 +103,15 @@ def test_thread_reference_tracking(num_sessions, run_duration, use_async_mode):
         queue_service = MockQueueService()
 
         # Create session manager
-        session_manager = SessionManager(id='test', log_name='Test', logger=[print], always_add_logging_based_logger=False, config=config, queue_service=queue_service, service_log_dir=temp_dir)
+        session_manager = SessionManager(
+            id="test",
+            log_name="Test",
+            logger=[print],
+            always_add_logging_based_logger=False,
+            config=config,
+            queue_service=queue_service,
+            service_log_dir=temp_dir,
+        )
 
         # Create sessions and start agent threads
         session_ids = [f"test_session_{i}" for i in range(num_sessions)]
@@ -109,8 +123,9 @@ def test_thread_reference_tracking(num_sessions, run_duration, use_async_mode):
             session = session_manager.get_or_create(session_id)
 
             # Property 1: Initially, agent_thread should be None
-            assert session.agent_thread is None, \
+            assert session.agent_thread is None, (
                 f"Session {session_id} should have no thread reference initially"
+            )
 
             # Create mock agent
             agent = MockAgent(run_duration=run_duration)
@@ -126,62 +141,75 @@ def test_thread_reference_tracking(num_sessions, run_duration, use_async_mode):
 
             if use_async_mode:
                 # Property 2: In async mode, thread should be returned
-                assert thread is not None, \
+                assert thread is not None, (
                     f"start_agent_thread() should return a thread in async mode for session {session_id}"
+                )
 
                 # Property 3: Returned thread should be a threading.Thread instance
-                assert isinstance(thread, threading.Thread), \
+                assert isinstance(thread, threading.Thread), (
                     f"Returned thread should be a threading.Thread instance for session {session_id}, got {type(thread)}"
+                )
 
                 # Property 4: Store thread reference in session
                 session_manager.update_session(session_id, agent_thread=thread)
 
                 # Property 5: Thread reference should be stored in session
                 session = session_manager.get(session_id)
-                assert session.agent_thread is not None, \
+                assert session.agent_thread is not None, (
                     f"Session {session_id} should have thread reference stored after update"
+                )
 
                 # Property 6: Stored thread reference should match returned thread
-                assert session.agent_thread == thread, \
+                assert session.agent_thread == thread, (
                     f"Stored thread reference should match returned thread for session {session_id}"
+                )
 
                 # Property 7: Stored thread reference should be the same object
-                assert session.agent_thread is thread, \
+                assert session.agent_thread is thread, (
                     f"Stored thread reference should be the same object (identity) for session {session_id}"
+                )
 
                 # Property 8: Thread reference should have correct properties
-                assert session.agent_thread.name == thread.name, \
+                assert session.agent_thread.name == thread.name, (
                     f"Thread name should match for session {session_id}"
-                assert session.agent_thread.ident == thread.ident, \
+                )
+                assert session.agent_thread.ident == thread.ident, (
                     f"Thread ident should match for session {session_id}"
-                assert session.agent_thread.daemon == thread.daemon, \
+                )
+                assert session.agent_thread.daemon == thread.daemon, (
                     f"Thread daemon flag should match for session {session_id}"
+                )
 
                 # Property 9: Thread reference can be used to check status
                 # Give thread a moment to start
                 time.sleep(0.01)
                 is_alive = session.agent_thread.is_alive()
-                assert isinstance(is_alive, bool), \
+                assert isinstance(is_alive, bool), (
                     f"is_alive() should return a boolean for session {session_id}"
+                )
                 # Thread should be alive shortly after start
-                assert is_alive, \
+                assert is_alive, (
                     f"Thread should be alive after start for session {session_id}"
+                )
 
                 # Property 10: Thread reference persists across multiple retrievals
                 session_2 = session_manager.get(session_id)
-                assert session_2.agent_thread is thread, \
+                assert session_2.agent_thread is thread, (
                     f"Thread reference should persist across retrievals for session {session_id}"
+                )
 
             else:
                 # Synchronous mode
                 # Property 11: In sync mode, no thread should be returned
-                assert thread is None, \
+                assert thread is None, (
                     f"start_agent_thread() should return None in synchronous mode for session {session_id}"
+                )
 
                 # Property 12: Session should not have thread reference in sync mode
                 session = session_manager.get(session_id)
-                assert session.agent_thread is None, \
+                assert session.agent_thread is None, (
                     f"Session {session_id} should not have thread reference in synchronous mode"
+                )
 
         if use_async_mode:
             # Property 13: All sessions should have unique thread references
@@ -191,20 +219,23 @@ def test_thread_reference_tracking(num_sessions, run_duration, use_async_mode):
                 stored_threads.append(session.agent_thread)
 
             # All thread references should be non-None
-            assert all(t is not None for t in stored_threads), \
+            assert all(t is not None for t in stored_threads), (
                 "All sessions should have non-None thread references in async mode"
+            )
 
             # All thread references should be unique (different objects)
             thread_ids = [id(t) for t in stored_threads]
             unique_thread_ids = set(thread_ids)
-            assert len(unique_thread_ids) == num_sessions, \
+            assert len(unique_thread_ids) == num_sessions, (
                 f"Each session should have unique thread reference, expected {num_sessions}, got {len(unique_thread_ids)}"
+            )
 
             # Property 14: Thread references should match the threads list
             for i, session_id in enumerate(session_ids):
                 session = session_manager.get(session_id)
-                assert session.agent_thread is threads[i], \
+                assert session.agent_thread is threads[i], (
                     f"Session {session_id} thread reference should match threads list"
+                )
 
             # Property 15: Thread references can be used for thread operations
             for i, session_id in enumerate(session_ids):
@@ -213,29 +244,35 @@ def test_thread_reference_tracking(num_sessions, run_duration, use_async_mode):
 
                 # Can check if alive
                 is_alive = thread_ref.is_alive()
-                assert isinstance(is_alive, bool), \
+                assert isinstance(is_alive, bool), (
                     f"Thread reference should support is_alive() for session {session_id}"
+                )
 
                 # Can get thread name
                 thread_name = thread_ref.name
-                assert isinstance(thread_name, str), \
+                assert isinstance(thread_name, str), (
                     f"Thread reference should support name property for session {session_id}"
-                assert session_id in thread_name, \
+                )
+                assert session_id in thread_name, (
                     f"Thread name should contain session_id for session {session_id}"
+                )
 
                 # Can get thread ident
                 thread_ident = thread_ref.ident
-                assert isinstance(thread_ident, int), \
+                assert isinstance(thread_ident, int), (
                     f"Thread reference should support ident property for session {session_id}"
+                )
 
             # Property 16: Thread references remain valid while threads run
             # Check that all thread references are still valid
             for session_id in session_ids:
                 session = session_manager.get(session_id)
-                assert session.agent_thread is not None, \
+                assert session.agent_thread is not None, (
                     f"Thread reference should remain valid for session {session_id}"
-                assert isinstance(session.agent_thread, threading.Thread), \
+                )
+                assert isinstance(session.agent_thread, threading.Thread), (
                     f"Thread reference should remain a Thread instance for session {session_id}"
+                )
 
             # Property 17: Thread references can be used to join threads
             for i, session_id in enumerate(session_ids):
@@ -246,28 +283,33 @@ def test_thread_reference_tracking(num_sessions, run_duration, use_async_mode):
                 thread_ref.join(timeout=run_duration + 1.0)
 
                 # After join, thread should not be alive
-                assert not thread_ref.is_alive(), \
+                assert not thread_ref.is_alive(), (
                     f"Thread should not be alive after join for session {session_id}"
+                )
 
             # Property 18: Thread references persist after thread completion
             for session_id in session_ids:
                 session = session_manager.get(session_id)
-                assert session.agent_thread is not None, \
+                assert session.agent_thread is not None, (
                     f"Thread reference should persist after completion for session {session_id}"
-                assert isinstance(session.agent_thread, threading.Thread), \
+                )
+                assert isinstance(session.agent_thread, threading.Thread), (
                     f"Thread reference should still be a Thread instance after completion for session {session_id}"
+                )
 
         else:
             # Synchronous mode
             # Property 19: No sessions should have thread references in sync mode
             for session_id in session_ids:
                 session = session_manager.get(session_id)
-                assert session.agent_thread is None, \
+                assert session.agent_thread is None, (
                     f"Session {session_id} should not have thread reference in synchronous mode"
+                )
 
             # Property 20: All threads list entries should be None in sync mode
-            assert all(t is None for t in threads), \
+            assert all(t is None for t in threads), (
                 "All thread references should be None in synchronous mode"
+            )
 
         # Cleanup: wait for any remaining threads
         if use_async_mode:
@@ -283,7 +325,7 @@ def test_thread_reference_tracking(num_sessions, run_duration, use_async_mode):
             pass  # Ignore cleanup errors
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("Running property-based test for thread reference tracking...")
     print("Testing with 100 random configurations...")
     print()
@@ -312,6 +354,7 @@ if __name__ == '__main__':
     except Exception as e:
         print(f"✗ Property test failed: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

@@ -6,17 +6,16 @@ whether HTML elements should be kept, removed, or otherwise processed based on
 their tag names, attribute names, and attribute values.
 """
 
-from typing import List, Optional, Mapping, Sequence
+from typing import List, Mapping, Optional, Sequence
 
-from bs4 import Tag, BeautifulSoup
-
+from bs4 import BeautifulSoup, Tag
 from rich_python_utils.string_utils.comparison import string_check
 
 # Special rule set name that always triggers automatically
-RULESET_NAME_GLOBAL = '__global__'
+RULESET_NAME_GLOBAL = "__global__"
 
-ACTIVATION_FLAG_PRESERVE_CONTAINER = 'preserve_container'
-RULE_TYPE_ANY_ATTRIBUTE_VALUE_MATCHES_PATTERN = 'any-attribute-value-matches-pattern'
+ACTIVATION_FLAG_PRESERVE_CONTAINER = "preserve_container"
+RULE_TYPE_ANY_ATTRIBUTE_VALUE_MATCHES_PATTERN = "any-attribute-value-matches-pattern"
 
 
 def validate_rule(rule: Mapping, rule_set_name: str, rule_index: int) -> None:
@@ -151,11 +150,11 @@ def validate_rule(rule: Mapping, rule_set_name: str, rule_index: int) -> None:
 
     # Check required fields
     # When tags='*' or tags contains '*' (wildcard), rule-type, attributes, and pattern are optional
-    required_fields = ['return', 'tags']
-    tags = rule.get('tags', [])
-    is_wildcard = tags == '*' or (isinstance(tags, (list, tuple)) and '*' in tags)
+    required_fields = ["return", "tags"]
+    tags = rule.get("tags", [])
+    is_wildcard = tags == "*" or (isinstance(tags, (list, tuple)) and "*" in tags)
     if not is_wildcard:
-        required_fields.extend(['rule-type', 'attributes', 'pattern'])
+        required_fields.extend(["rule-type", "attributes", "pattern"])
 
     for field in required_fields:
         if field not in rule:
@@ -164,23 +163,23 @@ def validate_rule(rule: Mapping, rule_set_name: str, rule_index: int) -> None:
             )
 
     # Validate 'return' field
-    if not isinstance(rule['return'], str) or not rule['return']:
+    if not isinstance(rule["return"], str) or not rule["return"]:
         raise ValueError(
             f"Rule {rule_index} in rule set '{rule_set_name}': 'return' must be a non-empty string, "
             f"got {type(rule['return']).__name__}: {repr(rule['return'])}"
         )
 
     # Validate 'tags' field - allow wildcard '*' as string or in list/tuple
-    if rule['tags'] == '*':
+    if rule["tags"] == "*":
         # Wildcard string is valid
         pass
-    elif isinstance(rule['tags'], (list, tuple)):
-        if not rule['tags']:
+    elif isinstance(rule["tags"], (list, tuple)):
+        if not rule["tags"]:
             raise ValueError(
                 f"Rule {rule_index} in rule set '{rule_set_name}': 'tags' must be a non-empty list/tuple or wildcard '*', "
                 f"got empty {type(rule['tags']).__name__}"
             )
-        for i, tag in enumerate(rule['tags']):
+        for i, tag in enumerate(rule["tags"]):
             if not isinstance(tag, str) or not tag:
                 raise ValueError(
                     f"Rule {rule_index} in rule set '{rule_set_name}': 'tags[{i}]' must be a non-empty string, "
@@ -193,8 +192,8 @@ def validate_rule(rule: Mapping, rule_set_name: str, rule_index: int) -> None:
         )
 
     # Validate 'rule-type' field (if present)
-    if 'rule-type' in rule:
-        if not isinstance(rule['rule-type'], str) or not rule['rule-type']:
+    if "rule-type" in rule:
+        if not isinstance(rule["rule-type"], str) or not rule["rule-type"]:
             raise ValueError(
                 f"Rule {rule_index} in rule set '{rule_set_name}': 'rule-type' must be a non-empty string, "
                 f"got {type(rule['rule-type']).__name__}: {repr(rule['rule-type'])}"
@@ -202,21 +201,21 @@ def validate_rule(rule: Mapping, rule_set_name: str, rule_index: int) -> None:
 
         # Currently only support 'any-attribute-value-matches-pattern'
         supported_types = [RULE_TYPE_ANY_ATTRIBUTE_VALUE_MATCHES_PATTERN]
-        if rule['rule-type'] not in supported_types:
+        if rule["rule-type"] not in supported_types:
             raise ValueError(
                 f"Rule {rule_index} in rule set '{rule_set_name}': unsupported rule-type '{rule['rule-type']}', "
                 f"supported types: {supported_types}"
             )
 
     # Validate 'attributes' field (if present)
-    if 'attributes' in rule:
-        if not isinstance(rule['attributes'], (list, tuple)):
+    if "attributes" in rule:
+        if not isinstance(rule["attributes"], (list, tuple)):
             raise ValueError(
                 f"Rule {rule_index} in rule set '{rule_set_name}': 'attributes' must be a list or tuple, "
                 f"got {type(rule['attributes']).__name__}"
             )
         # Allow empty attributes for catch-all rules
-        for i, attr in enumerate(rule['attributes']):
+        for i, attr in enumerate(rule["attributes"]):
             if not isinstance(attr, str) or not attr:
                 raise ValueError(
                     f"Rule {rule_index} in rule set '{rule_set_name}': 'attributes[{i}]' must be a non-empty string, "
@@ -224,8 +223,8 @@ def validate_rule(rule: Mapping, rule_set_name: str, rule_index: int) -> None:
                 )
 
     # Validate 'pattern' field (if present)
-    if 'pattern' in rule:
-        if not isinstance(rule['pattern'], str) or not rule['pattern']:
+    if "pattern" in rule:
+        if not isinstance(rule["pattern"], str) or not rule["pattern"]:
             raise ValueError(
                 f"Rule {rule_index} in rule set '{rule_set_name}': 'pattern' must be a non-empty string, "
                 f"got {type(rule['pattern']).__name__}: {repr(rule['pattern'])}"
@@ -309,9 +308,7 @@ def validate_rule_set(rule_set_name: str, rules: Sequence) -> None:
         )
 
     if not rules:
-        raise ValueError(
-            f"Rule set '{rule_set_name}' is empty"
-        )
+        raise ValueError(f"Rule set '{rule_set_name}' is empty")
 
     # Validate each rule
     for i, rule in enumerate(rules):
@@ -319,10 +316,10 @@ def validate_rule_set(rule_set_name: str, rules: Sequence) -> None:
 
 
 def get_active_rules(
-        additional_rule_sets: Optional[Mapping[str, List[dict]]] = None,
-        additional_rule_to_trigger: Optional[str] = None,
-        additional_rule_set_activation_flags: Optional[Sequence[str]] = None,
-        global_rule_set_name: str = '__global__'
+    additional_rule_sets: Optional[Mapping[str, List[dict]]] = None,
+    additional_rule_to_trigger: Optional[str] = None,
+    additional_rule_set_activation_flags: Optional[Sequence[str]] = None,
+    global_rule_set_name: str = "__global__",
 ) -> tuple[Optional[List[dict]], Optional[str]]:
     """
     Get active rules based on rule sets, triggered rule names, and activation flags.
@@ -447,13 +444,15 @@ def get_active_rules(
 
         # Filter rules based on activation flags
         for rule in global_rules:
-            if 'activation_flags' not in rule:
+            if "activation_flags" not in rule:
                 # No activation_flags means always active
                 active_rules.append(rule)
             elif additional_rule_set_activation_flags:
                 # Check if any activation flag matches
-                rule_flags = rule.get('activation_flags', [])
-                if any(flag in additional_rule_set_activation_flags for flag in rule_flags):
+                rule_flags = rule.get("activation_flags", [])
+                if any(
+                    flag in additional_rule_set_activation_flags for flag in rule_flags
+                ):
                     active_rules.append(rule)
 
         if active_rules:
@@ -462,7 +461,9 @@ def get_active_rules(
     # Process specifically triggered rule set
     if additional_rule_to_trigger:
         if additional_rule_to_trigger not in additional_rule_sets:
-            raise ValueError(f"Rule set '{additional_rule_to_trigger}' not found in additional_rule_sets")
+            raise ValueError(
+                f"Rule set '{additional_rule_to_trigger}' not found in additional_rule_sets"
+            )
 
         # Don't add global rules twice if they were explicitly triggered
         if additional_rule_to_trigger != global_rule_set_name:
@@ -471,19 +472,30 @@ def get_active_rules(
 
             # Filter triggered rules based on activation flags
             for rule in triggered_rules:
-                if 'activation_flags' not in rule:
+                if "activation_flags" not in rule:
                     # No activation_flags means always active
                     active_rules.append(rule)
                 elif additional_rule_set_activation_flags:
                     # Check if any activation flag matches
-                    rule_flags = rule.get('activation_flags', [])
-                    if any(flag in additional_rule_set_activation_flags for flag in rule_flags):
+                    rule_flags = rule.get("activation_flags", [])
+                    if any(
+                        flag in additional_rule_set_activation_flags
+                        for flag in rule_flags
+                    ):
                         active_rules.append(rule)
 
-            if any(rule for rule in triggered_rules if 'activation_flags' not in rule or
-                                                       (additional_rule_set_activation_flags and
-                                                        any(flag in additional_rule_set_activation_flags for flag in
-                                                            rule.get('activation_flags', [])))):
+            if any(
+                rule
+                for rule in triggered_rules
+                if "activation_flags" not in rule
+                or (
+                    additional_rule_set_activation_flags
+                    and any(
+                        flag in additional_rule_set_activation_flags
+                        for flag in rule.get("activation_flags", [])
+                    )
+                )
+            ):
                 rule_set_names.append(additional_rule_to_trigger)
 
     # Return None if no rules are active
@@ -491,12 +503,14 @@ def get_active_rules(
         return None, None
 
     # Build error message name
-    rule_set_name_for_error = ' + '.join(rule_set_names) if rule_set_names else None
+    rule_set_name_for_error = " + ".join(rule_set_names) if rule_set_names else None
 
     return active_rules, rule_set_name_for_error
 
 
-def is_element_matching_rule_set(element: Tag, rules: list, rule_set_name: str) -> Optional[str]:
+def is_element_matching_rule_set(
+    element: Tag, rules: list, rule_set_name: str
+) -> Optional[str]:
     """
     Evaluate if an element matches any rule in the rule set.
 
@@ -648,23 +662,25 @@ def is_element_matching_rule_set(element: Tag, rules: list, rule_set_name: str) 
     """
     for rule in rules:
         # Check if element tag matches (supports wildcard '*' string or ['*'] list)
-        rule_tags = rule.get('tags', ())
-        is_wildcard = rule_tags == '*' or (isinstance(rule_tags, (list, tuple)) and '*' in rule_tags)
+        rule_tags = rule.get("tags", ())
+        is_wildcard = rule_tags == "*" or (
+            isinstance(rule_tags, (list, tuple)) and "*" in rule_tags
+        )
         if not is_wildcard and element.name not in rule_tags:
             continue
 
         # Handle different rule types (default to RULE_TYPE_ANY_ATTRIBUTE_VALUE_MATCHES_PATTERN)
-        rule_type = rule.get('rule-type', RULE_TYPE_ANY_ATTRIBUTE_VALUE_MATCHES_PATTERN)
+        rule_type = rule.get("rule-type", RULE_TYPE_ANY_ATTRIBUTE_VALUE_MATCHES_PATTERN)
         if rule_type == RULE_TYPE_ANY_ATTRIBUTE_VALUE_MATCHES_PATTERN:
             # If no attributes specified, this is a catch-all rule for the matched tags
-            if 'attributes' not in rule or not rule['attributes']:
-                return rule['return']
+            if "attributes" not in rule or not rule["attributes"]:
+                return rule["return"]
 
             # Check each attribute on the element
             for attr_name, attr_value in element.attrs.items():
                 # Check if attribute name matches any pattern in 'attributes'
                 name_matches = False
-                for name_pattern in rule['attributes']:
+                for name_pattern in rule["attributes"]:
                     if string_check(attr_name, name_pattern):
                         name_matches = True
                         break
@@ -675,15 +691,15 @@ def is_element_matching_rule_set(element: Tag, rules: list, rule_set_name: str) 
                 # Attribute name matches, now check if value matches pattern
                 # Handle list-valued attributes (e.g., class="foo bar")
                 if isinstance(attr_value, list):
-                    attr_value = ' '.join(attr_value)
+                    attr_value = " ".join(attr_value)
                 elif not isinstance(attr_value, str):
                     # Convert to string for comparison
                     attr_value = str(attr_value)
 
                 # Check if attribute value matches the pattern
-                if string_check(attr_value, rule['pattern']):
+                if string_check(attr_value, rule["pattern"]):
                     # Both attribute name and value match - return the action
-                    return rule['return']
+                    return rule["return"]
 
     # No rule matched
     return None

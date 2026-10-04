@@ -26,6 +26,7 @@ try:
         Page,
         sync_playwright,
     )
+
     PLAYWRIGHT_AVAILABLE = True
 except ImportError:
     PLAYWRIGHT_AVAILABLE = False
@@ -56,7 +57,7 @@ class PlaywrightElementShim:
         print(element.text)  # Works like WebElement.text
     """
 
-    def __init__(self, locator: 'Locator', page: 'Page'):
+    def __init__(self, locator: "Locator", page: "Page"):
         """
         Initialize the element shim.
 
@@ -68,12 +69,12 @@ class PlaywrightElementShim:
         self._page = page
 
     @property
-    def locator(self) -> 'Locator':
+    def locator(self) -> "Locator":
         """Get the underlying Playwright Locator."""
         return self._locator
 
     @property
-    def page(self) -> 'Page':
+    def page(self) -> "Page":
         """Get the Playwright Page object."""
         return self._page
 
@@ -110,8 +111,8 @@ class PlaywrightElementShim:
         """
         box = self._locator.bounding_box()
         if box:
-            return {'width': int(box['width']), 'height': int(box['height'])}
-        return {'width': 0, 'height': 0}
+            return {"width": int(box["width"]), "height": int(box["height"])}
+        return {"width": 0, "height": 0}
 
     @property
     def location(self) -> Dict[str, int]:
@@ -123,8 +124,8 @@ class PlaywrightElementShim:
         """
         box = self._locator.bounding_box()
         if box:
-            return {'x': int(box['x']), 'y': int(box['y'])}
-        return {'x': 0, 'y': 0}
+            return {"x": int(box["x"]), "y": int(box["y"])}
+        return {"x": 0, "y": 0}
 
     @property
     def rect(self) -> Dict[str, int]:
@@ -136,12 +137,12 @@ class PlaywrightElementShim:
         box = self._locator.bounding_box()
         if box:
             return {
-                'x': int(box['x']),
-                'y': int(box['y']),
-                'width': int(box['width']),
-                'height': int(box['height']),
+                "x": int(box["x"]),
+                "y": int(box["y"]),
+                "width": int(box["width"]),
+                "height": int(box["height"]),
             }
-        return {'x': 0, 'y': 0, 'width': 0, 'height': 0}
+        return {"x": 0, "y": 0, "width": 0, "height": 0}
 
     # ==========================================================================
     # WebElement-compatible methods
@@ -164,7 +165,7 @@ class PlaywrightElementShim:
         Note: Unlike Selenium, this appends to existing text by default.
         Use clear() first if you want to replace content.
         """
-        text = ''.join(str(v) for v in value)
+        text = "".join(str(v) for v in value)
         self._locator.type(text)
 
     def clear(self) -> None:
@@ -194,7 +195,7 @@ class PlaywrightElementShim:
         the JavaScript property (current typed value), not the HTML attribute.
         We mimic this behavior for compatibility.
         """
-        if name == 'value':
+        if name == "value":
             # For 'value', return the JavaScript property like Selenium does
             # This captures the current typed value, not the initial HTML attribute
             return self._locator.input_value()
@@ -232,7 +233,7 @@ class PlaywrightElementShim:
         """
         return self._locator.is_checked()
 
-    def find_element(self, by: str, value: str) -> 'PlaywrightElementShim':
+    def find_element(self, by: str, value: str) -> "PlaywrightElementShim":
         """
         Find a child element.
 
@@ -242,7 +243,7 @@ class PlaywrightElementShim:
         child_locator = self._locator.locator(selector).first
         return PlaywrightElementShim(child_locator, self._page)
 
-    def find_elements(self, by: str, value: str) -> List['PlaywrightElementShim']:
+    def find_elements(self, by: str, value: str) -> List["PlaywrightElementShim"]:
         """
         Find child elements.
 
@@ -316,21 +317,25 @@ class _SwitchToAdapter:
     Provides switch_to.window(), switch_to.frame(), etc.
     """
 
-    def __init__(self, driver_shim: 'PlaywrightDriverShim'):
+    def __init__(self, driver_shim: "PlaywrightDriverShim"):
         self._driver = driver_shim
 
     def window(self, handle: str) -> None:
         """Switch to a window/tab by handle."""
         self._driver._switch_to_window(handle)
 
-    def frame(self, frame_reference: Union[str, int, 'PlaywrightElementShim']) -> None:
+    def frame(self, frame_reference: Union[str, int, "PlaywrightElementShim"]) -> None:
         """Switch to a frame."""
         if isinstance(frame_reference, int):
             # Switch by index
-            frame_locator = self._driver._page.frame_locator(f"iframe >> nth={frame_reference}")
+            frame_locator = self._driver._page.frame_locator(
+                f"iframe >> nth={frame_reference}"
+            )
         elif isinstance(frame_reference, str):
             # Switch by name or ID
-            frame_locator = self._driver._page.frame_locator(f"iframe[name='{frame_reference}'], iframe[id='{frame_reference}']")
+            frame_locator = self._driver._page.frame_locator(
+                f"iframe[name='{frame_reference}'], iframe[id='{frame_reference}']"
+            )
         elif isinstance(frame_reference, PlaywrightElementShim):
             # Switch by element
             frame_locator = frame_reference.locator.content_frame()
@@ -382,7 +387,12 @@ class PlaywrightDriverShim:
             print(driver.title)
     """
 
-    def __init__(self, browser: 'Browser', page: 'Page', context: Optional['BrowserContext'] = None):
+    def __init__(
+        self,
+        browser: "Browser",
+        page: "Page",
+        context: Optional["BrowserContext"] = None,
+    ):
         """
         Initialize the driver shim.
 
@@ -398,8 +408,8 @@ class PlaywrightDriverShim:
 
         # Manage window handles using a stable mapping
         # Playwright pages don't have stable IDs, so we assign our own
-        self._page_to_handle: Dict['Page', str] = {}
-        self._handle_to_page: Dict[str, 'Page'] = {}
+        self._page_to_handle: Dict["Page", str] = {}
+        self._handle_to_page: Dict[str, "Page"] = {}
         self._handle_counter = 0
 
         # Register initial page
@@ -408,7 +418,7 @@ class PlaywrightDriverShim:
         # switch_to adapter
         self._switch_to = _SwitchToAdapter(self)
 
-    def _register_page(self, page: 'Page') -> str:
+    def _register_page(self, page: "Page") -> str:
         """Register a page and return its handle."""
         if page not in self._page_to_handle:
             handle = f"CDwindow-{self._handle_counter:08X}"
@@ -417,7 +427,7 @@ class PlaywrightDriverShim:
             self._handle_to_page[handle] = page
         return self._page_to_handle[page]
 
-    def _unregister_page(self, page: 'Page') -> None:
+    def _unregister_page(self, page: "Page") -> None:
         """Unregister a page when it's closed."""
         if page in self._page_to_handle:
             handle = self._page_to_handle.pop(page)
@@ -519,9 +529,12 @@ class PlaywrightDriverShim:
     def find_element(self, by: str, value: str) -> PlaywrightElementShim:
         """Find a single element."""
         import logging
+
         _logger = logging.getLogger(__name__)
         selector = _convert_selenium_locator(by, value)
-        _logger.debug(f"[PlaywrightDriverShim.find_element] by={by}, value={value}, selector={selector}")
+        _logger.debug(
+            f"[PlaywrightDriverShim.find_element] by={by}, value={value}, selector={selector}"
+        )
         locator = self._page.locator(selector).first
         _logger.debug(f"[PlaywrightDriverShim.find_element] Created locator: {locator}")
         return PlaywrightElementShim(locator, self._page)
@@ -532,8 +545,7 @@ class PlaywrightDriverShim:
         locators = self._page.locator(selector)
         count = locators.count()
         return [
-            PlaywrightElementShim(locators.nth(i), self._page)
-            for i in range(count)
+            PlaywrightElementShim(locators.nth(i), self._page) for i in range(count)
         ]
 
     def execute_script(self, script: str, *args) -> Any:
@@ -570,7 +582,7 @@ class PlaywrightDriverShim:
 
     def delete_cookie(self, name: str) -> None:
         """Delete a cookie by name."""
-        cookies = [c for c in self._context.cookies() if c['name'] != name]
+        cookies = [c for c in self._context.cookies() if c["name"] != name]
         self._context.clear_cookies()
         if cookies:
             self._context.add_cookies(cookies)
@@ -583,17 +595,17 @@ class PlaywrightDriverShim:
         """Get window size."""
         viewport = self._page.viewport_size
         if viewport:
-            return {'width': viewport['width'], 'height': viewport['height']}
-        return {'width': 0, 'height': 0}
+            return {"width": viewport["width"], "height": viewport["height"]}
+        return {"width": 0, "height": 0}
 
     def set_window_size(self, width: int, height: int) -> None:
         """Set window size."""
-        self._page.set_viewport_size({'width': width, 'height': height})
+        self._page.set_viewport_size({"width": width, "height": height})
 
     def maximize_window(self) -> None:
         """Maximize window - not directly supported in Playwright headless."""
         # Set to a large viewport size as approximation
-        self._page.set_viewport_size({'width': 1920, 'height': 1080})
+        self._page.set_viewport_size({"width": 1920, "height": 1080})
 
     def minimize_window(self) -> None:
         """Minimize window - not supported in Playwright."""
@@ -635,25 +647,26 @@ class PlaywrightDriverShim:
     def get_screenshot_as_base64(self) -> str:
         """Get screenshot as base64 string."""
         import base64
+
         png_bytes = self._page.screenshot()
-        return base64.b64encode(png_bytes).decode('utf-8')
+        return base64.b64encode(png_bytes).decode("utf-8")
 
     # ==========================================================================
     # Playwright-specific methods
     # ==========================================================================
 
     @property
-    def page(self) -> 'Page':
+    def page(self) -> "Page":
         """Get the underlying Playwright Page."""
         return self._page
 
     @property
-    def browser(self) -> 'Browser':
+    def browser(self) -> "Browser":
         """Get the underlying Playwright Browser."""
         return self._browser
 
     @property
-    def context(self) -> 'BrowserContext':
+    def context(self) -> "BrowserContext":
         """Get the underlying Playwright BrowserContext."""
         return self._context
 
@@ -670,27 +683,27 @@ def _convert_selenium_locator(by: str, value: str) -> str:
         Playwright-compatible selector string
     """
     # Handle selenium.webdriver.common.by.By constants
-    by_lower = by.lower().replace(' ', '_')
+    by_lower = by.lower().replace(" ", "_")
 
-    if by_lower == 'id':
+    if by_lower == "id":
         # Use attribute selector for robustness with special characters
         # e.g., id="my.element" works, but #my.element fails
-        return f"[id=\"{value}\"]"
-    elif by_lower == 'class_name' or by_lower == 'class':
+        return f'[id="{value}"]'
+    elif by_lower == "class_name" or by_lower == "class":
         # Use attribute selector for robustness with special characters
-        return f"[class~=\"{value}\"]"
-    elif by_lower == 'name':
-        return f"[name=\"{value}\"]"
-    elif by_lower == 'tag_name' or by_lower == 'tag':
+        return f'[class~="{value}"]'
+    elif by_lower == "name":
+        return f'[name="{value}"]'
+    elif by_lower == "tag_name" or by_lower == "tag":
         return value
-    elif by_lower == 'xpath':
+    elif by_lower == "xpath":
         return f"xpath={value}"
-    elif by_lower == 'css_selector' or by_lower == 'css':
+    elif by_lower == "css_selector" or by_lower == "css":
         return value
-    elif by_lower == 'link_text':
-        return f"a:has-text(\"{value}\")"
-    elif by_lower == 'partial_link_text':
-        return f"a:text-matches(\"{value}\", \"i\")"
+    elif by_lower == "link_text":
+        return f'a:has-text("{value}")'
+    elif by_lower == "partial_link_text":
+        return f'a:text-matches("{value}", "i")'
     else:
         # Default to CSS selector
         return value

@@ -3,31 +3,37 @@
 Test 1: Knowledge ingestion via CLI → LLM structuring → file-based KnowledgeBase
 Test 2: Agent request → prompt formatting with knowledge → capture at inferencer input
 """
-import sys
-import resolve_path  # Setup import paths
 
 import json
 import shutil
+import sys
 import tempfile
 import time
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
 
 import pytest
-
+import resolve_path  # Setup import paths
 from rich_python_utils.string_utils.formatting.handlebars_format import (
     format_template as handlebars_template_format,
 )
-
+from webaxon.devsuite.web_agent_service_nextgen.agents.agent_runner import AgentRunner
+from webaxon.devsuite.web_agent_service_nextgen.agents.template_manager import (
+    TemplateManagerWrapper,
+)
+from webaxon.devsuite.web_agent_service_nextgen.cli.client import CLIClient
+from webaxon.devsuite.web_agent_service_nextgen.communication.message_handlers import (
+    MessageHandlers,
+)
+from webaxon.devsuite.web_agent_service_nextgen.communication.queue_manager import (
+    QueueManager,
+)
+from webaxon.devsuite.web_agent_service_nextgen.core.agent_factory import AgentFactory
 from webaxon.devsuite.web_agent_service_nextgen.core.config import ServiceConfig
 from webaxon.devsuite.web_agent_service_nextgen.session import SessionManager
-from webaxon.devsuite.web_agent_service_nextgen.core.agent_factory import AgentFactory
-from webaxon.devsuite.web_agent_service_nextgen.communication.queue_manager import QueueManager
-from webaxon.devsuite.web_agent_service_nextgen.communication.message_handlers import MessageHandlers
-from webaxon.devsuite.web_agent_service_nextgen.agents.template_manager import TemplateManagerWrapper
-from webaxon.devsuite.web_agent_service_nextgen.agents.agent_runner import AgentRunner
-from webaxon.devsuite.web_agent_service_nextgen.session.agent_session_monitor import AgentSessionMonitor
-from webaxon.devsuite.web_agent_service_nextgen.cli.client import CLIClient
+from webaxon.devsuite.web_agent_service_nextgen.session.agent_session_monitor import (
+    AgentSessionMonitor,
+)
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -42,6 +48,7 @@ PROMPT_TEMPLATES_SRC = _WEBAGENT_SRC / "devsuite" / "prompt_templates"
 # MockIngestionInferencer — returns pre-built structured JSON for tests
 # ---------------------------------------------------------------------------
 
+
 class MockIngestionInferencer:
     """Mock inferencer for KnowledgeIngestionCLI that returns valid structured JSON.
 
@@ -55,37 +62,44 @@ class MockIngestionInferencer:
     def __call__(self, prompt, **kwargs):
         self._call_count += 1
         piece_id = f"test-piece-{self._call_count}"
-        return json.dumps({
-            "metadata": {
-                "user_test_user": {
-                    "entity_type": "person",
-                    "properties": {"name": "Test User"}
-                }
-            },
-            "pieces": [
-                {
-                    "piece_id": piece_id,
-                    "content": f"Mock ingested knowledge #{self._call_count}",
-                    "knowledge_type": "fact",
-                    "info_type": "user_profile",
-                    "tags": ["test"],
-                    "entity_id": None,
-                    "embedding_text": f"mock knowledge {self._call_count}"
-                }
-            ],
-            "graph": {
-                "nodes": [
-                    {"node_id": "user_test_user", "node_type": "person",
-                     "label": "Test User", "properties": {}}
+        return json.dumps(
+            {
+                "metadata": {
+                    "user_test_user": {
+                        "entity_type": "person",
+                        "properties": {"name": "Test User"},
+                    }
+                },
+                "pieces": [
+                    {
+                        "piece_id": piece_id,
+                        "content": f"Mock ingested knowledge #{self._call_count}",
+                        "knowledge_type": "fact",
+                        "info_type": "user_profile",
+                        "tags": ["test"],
+                        "entity_id": None,
+                        "embedding_text": f"mock knowledge {self._call_count}",
+                    }
                 ],
-                "edges": []
+                "graph": {
+                    "nodes": [
+                        {
+                            "node_id": "user_test_user",
+                            "node_type": "person",
+                            "label": "Test User",
+                            "properties": {},
+                        }
+                    ],
+                    "edges": [],
+                },
             }
-        })
+        )
 
 
 # ---------------------------------------------------------------------------
 # CaptureInferencer — captures the formatted prompt sent to the LLM
 # ---------------------------------------------------------------------------
+
 
 class _CaptureComplete(Exception):
     """Raised by CaptureInferencer to stop agent execution after capture."""
@@ -106,6 +120,7 @@ class CaptureInferencer:
 # CaptureAgentFactory — injects CaptureInferencer into every agent
 # ---------------------------------------------------------------------------
 
+
 class CaptureAgentFactory(AgentFactory):
     """AgentFactory subclass that builds a minimal planning agent with CaptureInferencer.
 
@@ -116,23 +131,29 @@ class CaptureAgentFactory(AgentFactory):
         self.capture_inferencer = CaptureInferencer()
         super().__init__(*args, **kwargs)
 
-    def create_agent(self, interactive, logger, agent_type='DefaultAgent', template_version=''):
+    def create_agent(
+        self, interactive, logger, agent_type="DefaultAgent", template_version=""
+    ):
         """Build a minimal PromptBasedActionPlanningAgent without WebDriver."""
         from agent_foundation.agents.agent_response import AgentResponseFormat
         from agent_foundation.agents.prompt_based_agents.prompt_based_planning_agent import (
             PromptBasedActionPlanningAgent,
         )
-        from rich_python_utils.string_utils.formatting.common import KeyValueStringFormat
+        from rich_python_utils.string_utils.formatting.common import (
+            KeyValueStringFormat,
+        )
 
         if template_version:
             self._template_manager.switch(template_version=template_version)
 
         planning_agent = PromptBasedActionPlanningAgent(
-            prompt_formatter=self._template_manager.switch(active_template_root_space='planning_agent'),
-            direct_response_start_delimiter='<DirectResponse>',
-            direct_response_end_delimiter='</DirectResponse>',
-            raw_response_start_delimiter='<StructuredResponse>',
-            raw_response_end_delimiter='</StructuredResponse>',
+            prompt_formatter=self._template_manager.switch(
+                active_template_root_space="planning_agent"
+            ),
+            direct_response_start_delimiter="<DirectResponse>",
+            direct_response_end_delimiter="</DirectResponse>",
+            raw_response_start_delimiter="<StructuredResponse>",
+            raw_response_end_delimiter="</StructuredResponse>",
             raw_response_format=AgentResponseFormat.XML,
             use_conversational_user_input=True,
             input_string_formatter=KeyValueStringFormat.XML,
@@ -154,6 +175,7 @@ class CaptureAgentFactory(AgentFactory):
 # ---------------------------------------------------------------------------
 # Shared test environment setup
 # ---------------------------------------------------------------------------
+
 
 def setup_cli_test_environment(
     tmpdir,
@@ -208,9 +230,12 @@ def setup_cli_test_environment(
     # Session manager
     service_log_dir = testcase_root / config.log_root_path
     session_manager = SessionManager(
-        id='test', log_name='Test', logger=[print],
+        id="test",
+        log_name="Test",
+        logger=[print],
         always_add_logging_based_logger=False,
-        config=config, queue_service=queue_service,
+        config=config,
+        queue_service=queue_service,
         service_log_dir=service_log_dir,
     )
 
@@ -254,6 +279,7 @@ def setup_cli_test_environment(
 # Helper: simulate one iteration of the service main-loop
 # ---------------------------------------------------------------------------
 
+
 def cleanup_env(env: Dict[str, Any]) -> None:
     """Close all services that hold file handles."""
     if env.get("agent_factory"):
@@ -287,6 +313,7 @@ def service_tick(env: Dict[str, Any]) -> None:
 # Test 1 — Knowledge registration via CLI
 # =========================================================================
 
+
 class TestKnowledgeIngestionViaCLI:
     """CLI sends /add → service calls LLM ingestion → structured knowledge stored."""
 
@@ -302,13 +329,15 @@ class TestKnowledgeIngestionViaCLI:
             assert connected, "CLI failed to connect to service queues"
 
             # 1) CLI puts register_knowledge with free text
-            cli._send_control({
-                "type": "register_knowledge",
-                "message": {
-                    "content": "User prefers organic eggs from local farms",
-                },
-                "timestamp": "test",
-            })
+            cli._send_control(
+                {
+                    "type": "register_knowledge",
+                    "message": {
+                        "content": "User prefers organic eggs from local farms",
+                    },
+                    "timestamp": "test",
+                }
+            )
 
             # 2) Service processes — calls MockIngestionInferencer → structured JSON
             service_tick(env)
@@ -332,9 +361,13 @@ class TestKnowledgeIngestionViaCLI:
 
             # 5) Verify metadata was also created
             metadata_dir = knowledge_store_dir / "metadata"
-            assert metadata_dir.exists(), f"Metadata directory not created: {metadata_dir}"
+            assert metadata_dir.exists(), (
+                f"Metadata directory not created: {metadata_dir}"
+            )
 
-            print(f"[PASS] Knowledge ingestion — {len(piece_files)} piece file(s), metadata on disk")
+            print(
+                f"[PASS] Knowledge ingestion — {len(piece_files)} piece file(s), metadata on disk"
+            )
             print(f"  Store path: {knowledge_store_dir}")
 
             cleanup_env(env)
@@ -355,17 +388,21 @@ class TestKnowledgeIngestionViaCLI:
             ]
 
             for text in texts:
-                cli._send_control({
-                    "type": "register_knowledge",
-                    "message": {"content": text},
-                    "timestamp": "test",
-                })
+                cli._send_control(
+                    {
+                        "type": "register_knowledge",
+                        "message": {"content": text},
+                        "timestamp": "test",
+                    }
+                )
                 service_tick(env)
                 resp = qs.get(config.client_control_queue_id, blocking=False)
                 assert resp is not None and resp["success"] is True
 
             # Each MockIngestionInferencer call produces 1 piece, so >= 3
-            pieces_dir = env["testcase_root"] / "_runtime" / "knowledge_store" / "pieces"
+            pieces_dir = (
+                env["testcase_root"] / "_runtime" / "knowledge_store" / "pieces"
+            )
             piece_files = list(pieces_dir.rglob("*.json"))
             assert len(piece_files) >= len(texts), (
                 f"Expected >= {len(texts)} piece files, got {len(piece_files)}"
@@ -379,6 +416,7 @@ class TestKnowledgeIngestionViaCLI:
 # =========================================================================
 # Test 2 — Agent request capturing inferencer input
 # =========================================================================
+
 
 class TestAgentRequestCapturesInferencerInput:
     """CLI sends a request → agent formats prompt → CaptureInferencer grabs it."""
@@ -396,13 +434,15 @@ class TestAgentRequestCapturesInferencerInput:
             # Step 1: Register some knowledge so it appears in the prompt
             qs = env["queue_service"]
             config = env["config"]
-            cli._send_control({
-                "type": "register_knowledge",
-                "message": {
-                    "content": "User is a Safeway Plus member with free delivery on orders over $50",
-                },
-                "timestamp": "test",
-            })
+            cli._send_control(
+                {
+                    "type": "register_knowledge",
+                    "message": {
+                        "content": "User is a Safeway Plus member with free delivery on orders over $50",
+                    },
+                    "timestamp": "test",
+                }
+            )
             service_tick(env)
             # Consume the ack
             qs.get(config.client_control_queue_id, blocking=False)
@@ -425,10 +465,13 @@ class TestAgentRequestCapturesInferencerInput:
             # Step 3: Put user message on the session-specific input queue
             session_input_queue_id = f"{env['config'].input_queue_id}_{session_id}"
             env["queue_service"].create_queue(session_input_queue_id)
-            env["queue_service"].put(session_input_queue_id, {
-                "user_input": "what is the organic egg price in safeway right now",
-                "session_id": session_id,
-            })
+            env["queue_service"].put(
+                session_input_queue_id,
+                {
+                    "user_input": "what is the organic egg price in safeway right now",
+                    "session_id": session_id,
+                },
+            )
 
             # Step 4: Run monitoring cycle — this triggers lazy agent creation
             # With synchronous_agent=True, the agent runs in-line and
@@ -463,6 +506,7 @@ class TestAgentRequestCapturesInferencerInput:
 # Test 3 — Graph dedup: graph_retrieval_ignore_pieces_already_retrieved
 # =========================================================================
 
+
 class GraphDedupMockIngestionInferencer:
     """Mock inferencer that returns pieces + graph edges with piece_id links.
 
@@ -478,58 +522,60 @@ class GraphDedupMockIngestionInferencer:
     """
 
     def __call__(self, prompt, **kwargs):
-        return json.dumps({
-            "metadata": {
-                "user:test-user": {
-                    "entity_type": "person",
-                    "properties": {"name": "Test User", "role": "tester"}
-                }
-            },
-            "pieces": [
-                {
-                    "piece_id": "user-profile-fact",
-                    "content": "Test User is a QA engineer who validates shopping workflows",
-                    "knowledge_type": "fact",
-                    "info_type": "user_profile",
-                    "tags": ["profile"],
-                    "entity_id": "user:test-user",
-                    "embedding_text": "test user QA engineer shopping workflows"
+        return json.dumps(
+            {
+                "metadata": {
+                    "user:test-user": {
+                        "entity_type": "person",
+                        "properties": {"name": "Test User", "role": "tester"},
+                    }
                 },
-                {
-                    "piece_id": "proc-test-shopping",
-                    "content": "Complete test shopping procedure: Step 1 browse products, Step 2 add to cart, Step 3 checkout",
-                    "knowledge_type": "procedure",
-                    "info_type": "instructions",
-                    "tags": ["shopping", "procedure"],
-                    "entity_id": None,
-                    "embedding_text": "complete test shopping procedure steps browse add cart checkout"
-                }
-            ],
-            "graph": {
-                "nodes": [
+                "pieces": [
                     {
-                        "node_id": "user:test-user",
-                        "node_type": "person",
-                        "label": "Test User",
-                        "properties": {}
+                        "piece_id": "user-profile-fact",
+                        "content": "Test User is a QA engineer who validates shopping workflows",
+                        "knowledge_type": "fact",
+                        "info_type": "user_profile",
+                        "tags": ["profile"],
+                        "entity_id": "user:test-user",
+                        "embedding_text": "test user QA engineer shopping workflows",
                     },
                     {
-                        "node_id": "procedure:test-shopping",
-                        "node_type": "procedure",
-                        "label": "Test Shopping Procedure",
-                        "properties": {}
-                    }
+                        "piece_id": "proc-test-shopping",
+                        "content": "Complete test shopping procedure: Step 1 browse products, Step 2 add to cart, Step 3 checkout",
+                        "knowledge_type": "procedure",
+                        "info_type": "instructions",
+                        "tags": ["shopping", "procedure"],
+                        "entity_id": None,
+                        "embedding_text": "complete test shopping procedure steps browse add cart checkout",
+                    },
                 ],
-                "edges": [
-                    {
-                        "source_id": "user:test-user",
-                        "target_id": "procedure:test-shopping",
-                        "edge_type": "HAS_SKILL",
-                        "properties": {"piece_id": "proc-test-shopping"}
-                    }
-                ]
+                "graph": {
+                    "nodes": [
+                        {
+                            "node_id": "user:test-user",
+                            "node_type": "person",
+                            "label": "Test User",
+                            "properties": {},
+                        },
+                        {
+                            "node_id": "procedure:test-shopping",
+                            "node_type": "procedure",
+                            "label": "Test Shopping Procedure",
+                            "properties": {},
+                        },
+                    ],
+                    "edges": [
+                        {
+                            "source_id": "user:test-user",
+                            "target_id": "procedure:test-shopping",
+                            "edge_type": "HAS_SKILL",
+                            "properties": {"piece_id": "proc-test-shopping"},
+                        }
+                    ],
+                },
             }
-        })
+        )
 
 
 # Unique content substring that only appears in the procedure piece content
@@ -577,18 +623,22 @@ class TestGraphDedupPromptCapture:
             cli.connect()
 
             # Replace the ingestion inferencer with our graph-aware mock
-            env["agent_factory"]._ingestion_inferencer = GraphDedupMockIngestionInferencer()
+            env[
+                "agent_factory"
+            ]._ingestion_inferencer = GraphDedupMockIngestionInferencer()
 
             # Step 1: Register knowledge (pieces + graph edges) via CLI
             qs = env["queue_service"]
             config = env["config"]
-            cli._send_control({
-                "type": "register_knowledge",
-                "message": {
-                    "content": "Test shopping procedure with graph links",
-                },
-                "timestamp": "test",
-            })
+            cli._send_control(
+                {
+                    "type": "register_knowledge",
+                    "message": {
+                        "content": "Test shopping procedure with graph links",
+                    },
+                    "timestamp": "test",
+                }
+            )
             service_tick(env)
             resp = qs.get(config.client_control_queue_id, blocking=False)
             assert resp is not None, "No response on client_control queue"
@@ -671,8 +721,10 @@ class TestGraphDedupPromptCapture:
             f"got '{graph_entry['piece'].piece_id}'"
         )
 
-        print(f"\n[PASS] Dedup OFF — '{_PROCEDURE_CONTENT_MARKER}' appears "
-              f"{occurrences} time(s) in instructions, graph piece attached")
+        print(
+            f"\n[PASS] Dedup OFF — '{_PROCEDURE_CONTENT_MARKER}' appears "
+            f"{occurrences} time(s) in instructions, graph piece attached"
+        )
 
     def test_dedup_on_suppresses_duplicate_piece_in_prompt(self):
         """With dedup ON, procedure piece content appears exactly 1 time.
@@ -750,9 +802,11 @@ class TestGraphDedupPromptCapture:
             f"got '{graph_entry['target_node_id']}'"
         )
 
-        print(f"\n[PASS] Dedup ON — '{_PROCEDURE_CONTENT_MARKER}' appears "
-              f"exactly 1 time in instructions, graph edge in user_profile "
-              f"with label only, piece=None in raw result")
+        print(
+            f"\n[PASS] Dedup ON — '{_PROCEDURE_CONTENT_MARKER}' appears "
+            f"exactly 1 time in instructions, graph edge in user_profile "
+            f"with label only, piece=None in raw result"
+        )
 
 
 # =========================================================================

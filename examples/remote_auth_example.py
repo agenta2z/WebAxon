@@ -128,9 +128,9 @@ async def main():
     if len(sys.argv) > 1:
         target_url = sys.argv[1]
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"  WebAxon Remote Authentication Example")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     # Step 1: Request authentication
     print(f"🎯 Target URL: {target_url}\n")
@@ -149,9 +149,9 @@ async def main():
 
     # Step 2: Display instructions to user
     print(f"\n✅ Auth session created!\n")
-    print(f"{'─'*60}")
+    print(f"{'─' * 60}")
     print(f"  🔐 AUTHENTICATION REQUIRED")
-    print(f"{'─'*60}\n")
+    print(f"{'─' * 60}\n")
 
     for step in instructions["steps"]:
         print(f"  {step}")
@@ -159,7 +159,7 @@ async def main():
     print(f"\n  📎 Relay URL:")
     print(f"  {instructions['relay_url']}\n")
     print(f"  ⏱️  Expires in: {instructions['expires_in_seconds']}s\n")
-    print(f"{'─'*60}\n")
+    print(f"{'─' * 60}\n")
 
     # Method A: Use the Chrome extension for HttpOnly cookies
     print("💡 TIP: For best results, use the Chrome extension:")
@@ -168,7 +168,9 @@ async def main():
     print("   2. Log into the target site")
     print("   3. Click the extension icon")
     print(f"   4. Paste Session ID: {session_id}")
-    print(f"   5. Paste Token: {auth_result['auth_session'].get('token', '(see relay URL)')}")
+    print(
+        f"   5. Paste Token: {auth_result['auth_session'].get('token', '(see relay URL)')}"
+    )
     print(f"   6. Click 'Export Cookies'\n")
 
     # Step 3: Wait for user to authenticate

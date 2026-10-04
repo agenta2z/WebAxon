@@ -3,31 +3,37 @@
 This module contains property-based tests using hypothesis to verify
 that agent execution runs in the main process when in synchronous mode.
 """
-import sys
-import resolve_path  # Setup import paths
 
+import shutil
+import sys
+import tempfile
 import threading
 import time
 from pathlib import Path
-import tempfile
-import shutil
 from unittest.mock import Mock
 
+import resolve_path  # Setup import paths
+
 # Add parent directory to path
-from hypothesis import given, strategies as st, settings, assume
-from webaxon.devsuite.web_agent_service_nextgen.core.config import ServiceConfig
-from webaxon.devsuite.web_agent_service_nextgen.session import SessionManager, AgentSession
+from hypothesis import assume, given, settings, strategies as st
 from webaxon.devsuite.web_agent_service_nextgen.agents.agent_runner import AgentRunner
+from webaxon.devsuite.web_agent_service_nextgen.core.config import ServiceConfig
+from webaxon.devsuite.web_agent_service_nextgen.session import (
+    AgentSession,
+    SessionManager,
+)
 
 
 # Mock classes for testing
 class MockQueueService:
     """Mock queue service for testing."""
+
     pass
 
 
 class MockAgent:
     """Mock agent for testing."""
+
     def __init__(self, run_duration=0.1):
         self.run_duration = run_duration
         self.run_called = False
@@ -40,7 +46,7 @@ class MockAgent:
         self.run_thread_id = threading.current_thread().ident
         time.sleep(self.run_duration)
         self.run_completed = True
-        return 'completed'
+        return "completed"
 
 
 # Feature: web-agent-service-modularization, Property 24: Synchronous Execution
@@ -96,7 +102,15 @@ def test_synchronous_execution(num_sessions, run_duration):
         queue_service = MockQueueService()
 
         # Create session manager
-        session_manager = SessionManager(id='test', log_name='Test', logger=[print], always_add_logging_based_logger=False, config=config, queue_service=queue_service, service_log_dir=temp_dir)
+        session_manager = SessionManager(
+            id="test",
+            log_name="Test",
+            logger=[print],
+            always_add_logging_based_logger=False,
+            config=config,
+            queue_service=queue_service,
+            service_log_dir=temp_dir,
+        )
 
         # Track main thread ID
         main_thread_id = threading.current_thread().ident
@@ -137,78 +151,92 @@ def test_synchronous_execution(num_sessions, run_duration):
             execution_order.append(i)
 
             # Property 1: start_agent_thread() should return None in synchronous mode
-            assert thread is None, \
+            assert thread is None, (
                 f"start_agent_thread() should return None in synchronous mode for session {session_id}, got {thread}"
+            )
 
             # Property 2: Agent should have been called
-            assert agent.run_called, \
+            assert agent.run_called, (
                 f"Agent should have been called for session {session_id}"
+            )
 
             # Property 3: Agent should have completed
-            assert agent.run_completed, \
+            assert agent.run_completed, (
                 f"Agent should have completed before start_agent_thread() returns for session {session_id}"
+            )
 
             # Property 4: Agent should execute in the main thread
-            assert agent.run_thread_id == main_thread_id, \
+            assert agent.run_thread_id == main_thread_id, (
                 f"Agent should run in main thread (expected={main_thread_id}, got={agent.run_thread_id}) for session {session_id}"
+            )
 
             # Property 5: Execution should be blocking (duration >= run_duration)
             execution_duration = end_time - start_time
-            assert execution_duration >= run_duration * 0.9, \
+            assert execution_duration >= run_duration * 0.9, (
                 f"Execution should block for at least {run_duration}s, but took {execution_duration}s for session {session_id}"
+            )
 
             # Property 6: Session status should be updated after completion
             session = session_manager.get(session_id)
-            assert session.info.last_agent_status == 'completed', \
+            assert session.info.last_agent_status == "completed", (
                 f"Session status should be 'completed' after synchronous execution for session {session_id}, got {session.info.last_agent_status}"
+            )
 
             # Property 7: No thread reference should be stored in session
             # (In synchronous mode, agent_thread should remain None)
-            assert session.agent_thread is None, \
+            assert session.agent_thread is None, (
                 f"Session should not have thread reference in synchronous mode for session {session_id}"
+            )
 
         # Property 8: All agents should have executed in the main thread
         for i, agent in enumerate(agents):
-            assert agent.run_thread_id == main_thread_id, \
+            assert agent.run_thread_id == main_thread_id, (
                 f"Agent {i} should have run in main thread (expected={main_thread_id}, got={agent.run_thread_id})"
+            )
 
         # Property 9: Execution should be sequential (not concurrent)
         # Each session should start after the previous one completes
         for i in range(1, num_sessions):
             # Session i should start after session i-1 ends
             # Allow small timing tolerance
-            assert start_times[i] >= end_times[i-1] - 0.01, \
-                f"Session {i} should start after session {i-1} completes (sequential execution)"
+            assert start_times[i] >= end_times[i - 1] - 0.01, (
+                f"Session {i} should start after session {i - 1} completes (sequential execution)"
+            )
 
         # Property 10: Execution order should match session order
-        assert execution_order == list(range(num_sessions)), \
+        assert execution_order == list(range(num_sessions)), (
             f"Execution order should be sequential, expected {list(range(num_sessions))}, got {execution_order}"
+        )
 
         # Property 11: Total execution time should be approximately sum of individual durations
         total_expected_duration = run_duration * num_sessions
         total_actual_duration = end_times[-1] - start_times[0]
         # Allow 20% tolerance for overhead
-        assert total_actual_duration >= total_expected_duration * 0.8, \
+        assert total_actual_duration >= total_expected_duration * 0.8, (
             f"Total execution time should be at least {total_expected_duration}s (sequential), got {total_actual_duration}s"
+        )
 
         # Property 12: No background threads should be created
         # Count threads before and after should be the same (or only differ by system threads)
         current_thread_count = threading.active_count()
         # In synchronous mode, we shouldn't have created any agent threads
         # (There might be other system threads, but no agent threads)
-        agent_threads = [t for t in threading.enumerate() if 'AgentThread' in t.name]
-        assert len(agent_threads) == 0, \
+        agent_threads = [t for t in threading.enumerate() if "AgentThread" in t.name]
+        assert len(agent_threads) == 0, (
             f"No agent threads should exist in synchronous mode, found {len(agent_threads)}"
+        )
 
         # Property 13: All sessions should have completed status
         for session_id in session_ids:
             session = session_manager.get(session_id)
-            assert session.info.last_agent_status == 'completed', \
+            assert session.info.last_agent_status == "completed", (
                 f"Session {session_id} should have 'completed' status"
+            )
 
         # Property 14: Current thread should still be the main thread
-        assert threading.current_thread().ident == main_thread_id, \
+        assert threading.current_thread().ident == main_thread_id, (
             "Current thread should still be the main thread after all executions"
+        )
 
         # Property 15: Synchronous execution should be deterministic
         # Running the same agent twice should produce the same behavior
@@ -222,7 +250,9 @@ def test_synchronous_execution(num_sessions, run_duration):
         thread1 = runner.start_agent_thread(test_session, queue_service)
         assert thread1 is None, "First run should return None"
         assert test_agent.run_called, "First run should call agent"
-        assert test_agent.run_thread_id == main_thread_id, "First run should be in main thread"
+        assert test_agent.run_thread_id == main_thread_id, (
+            "First run should be in main thread"
+        )
 
     finally:
         # Cleanup temporary directory
@@ -232,7 +262,7 @@ def test_synchronous_execution(num_sessions, run_duration):
             pass  # Ignore cleanup errors
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("Running property-based test for synchronous execution...")
     print("Testing with 100 random configurations...")
     print()
@@ -260,6 +290,7 @@ if __name__ == '__main__':
     except Exception as e:
         print(f"✗ Property test failed: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

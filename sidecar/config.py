@@ -26,7 +26,9 @@ class WebAxonSidecarConfig:
     agent_timeout: int = 300  # seconds
 
     # Workspace settings
-    workspace: str = field(default_factory=lambda: os.path.expanduser("~/.webaxon/workspace"))
+    workspace: str = field(
+        default_factory=lambda: os.path.expanduser("~/.webaxon/workspace")
+    )
 
     # Debug settings
     debug_mode: bool = False
@@ -39,12 +41,16 @@ class WebAxonSidecarConfig:
             host=os.getenv("WEBAXON_HOST", "127.0.0.1"),
             port=int(os.getenv("WEBAXON_PORT", "18800")),
             headless=os.getenv("WEBAXON_HEADLESS", "false").lower() == "true",
-            chrome_version=int(os.getenv("WEBAXON_CHROME_VERSION")) if os.getenv("WEBAXON_CHROME_VERSION") else None,
+            chrome_version=int(os.getenv("WEBAXON_CHROME_VERSION"))
+            if os.getenv("WEBAXON_CHROME_VERSION")
+            else None,
             backend=os.getenv("WEBAXON_BACKEND", "selenium"),
             agent_type=os.getenv("WEBAXON_AGENT_TYPE", "DefaultAgent"),
             max_steps=int(os.getenv("WEBAXON_MAX_STEPS", "50")),
             agent_timeout=int(os.getenv("WEBAXON_AGENT_TIMEOUT", "300")),
-            workspace=os.getenv("WEBAXON_WORKSPACE", os.path.expanduser("~/.webaxon/workspace")),
+            workspace=os.getenv(
+                "WEBAXON_WORKSPACE", os.path.expanduser("~/.webaxon/workspace")
+            ),
             debug_mode=os.getenv("WEBAXON_DEBUG", "false").lower() == "true",
             synchronous_agent=os.getenv("WEBAXON_SYNC_AGENT", "true").lower() == "true",
         )
@@ -76,7 +82,9 @@ def load_openclaw_config() -> dict:
 
                 return config
             except (json.JSONDecodeError, IOError) as e:
-                print(f"Warning: Failed to load OpenClaw config from {config_path}: {e}")
+                print(
+                    f"Warning: Failed to load OpenClaw config from {config_path}: {e}"
+                )
 
     return {}
 

@@ -7,15 +7,12 @@ status values SHALL produce the same manifest state as calling it once. The firs
 call sets the end_timestamp and status; subsequent calls are no-ops.
 """
 
-import resolve_path  # noqa: F401 - must be first import
-
 import shutil
 import tempfile
 from pathlib import Path
 
-from hypothesis import given, settings, HealthCheck
-from hypothesis import strategies as st
-
+import resolve_path  # noqa: F401 - must be first import
+from hypothesis import given, HealthCheck, settings, strategies as st
 from rich_python_utils.service_utils.session_management import (
     SessionLogger as SessionLogManager,
 )
@@ -47,7 +44,11 @@ class TestFinalizeIdempotencyProperty:
     )
     @settings(max_examples=50, suppress_health_check=[HealthCheck.too_slow])
     def test_multiple_finalize_calls_produce_same_manifest_as_single_call(
-        self, session_id, first_status, subsequent_statuses, num_turns,
+        self,
+        session_id,
+        first_status,
+        subsequent_statuses,
+        num_turns,
     ):
         """Calling finalize() multiple times SHALL produce the same manifest as once.
 
@@ -101,7 +102,11 @@ class TestFinalizeIdempotencyProperty:
     )
     @settings(max_examples=50, suppress_health_check=[HealthCheck.too_slow])
     def test_second_finalize_does_not_change_status(
-        self, session_id, first_status, second_status, num_turns,
+        self,
+        session_id,
+        first_status,
+        second_status,
+        num_turns,
     ):
         """The second finalize() call SHALL NOT change the status.
 
@@ -125,7 +130,10 @@ class TestFinalizeIdempotencyProperty:
 
             assert manifest_after_first["status"] == first_status
             assert manifest_after_second["status"] == first_status
-            assert manifest_after_first["end_timestamp"] == manifest_after_second["end_timestamp"]
+            assert (
+                manifest_after_first["end_timestamp"]
+                == manifest_after_second["end_timestamp"]
+            )
         finally:
             shutil.rmtree(tmp_dir, ignore_errors=True)
 
@@ -136,7 +144,10 @@ class TestFinalizeIdempotencyProperty:
     )
     @settings(max_examples=50, suppress_health_check=[HealthCheck.too_slow])
     def test_finalize_sets_end_timestamp_on_last_turn(
-        self, session_id, first_status, num_turns,
+        self,
+        session_id,
+        first_status,
+        num_turns,
     ):
         """Finalize SHALL set end_timestamp on the last turn if not already set.
 
@@ -171,7 +182,11 @@ class TestFinalizeIdempotencyProperty:
     )
     @settings(max_examples=50, suppress_health_check=[HealthCheck.too_slow])
     def test_second_finalize_does_not_change_last_turn_end_timestamp(
-        self, session_id, first_status, second_status, num_turns,
+        self,
+        session_id,
+        first_status,
+        second_status,
+        num_turns,
     ):
         """Second finalize() SHALL NOT change the last turn's end_timestamp.
 
@@ -203,7 +218,9 @@ class TestFinalizeIdempotencyProperty:
     )
     @settings(max_examples=30, suppress_health_check=[HealthCheck.too_slow])
     def test_finalize_with_no_turns_is_safe(
-        self, session_id, status,
+        self,
+        session_id,
+        status,
     ):
         """Finalize SHALL work correctly even with zero turns.
 

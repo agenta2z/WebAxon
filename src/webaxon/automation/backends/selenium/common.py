@@ -1,14 +1,14 @@
-from typing import List, Optional, Tuple, Mapping
-
 from time import sleep
-from attr import attrs, attrib
+from typing import List, Mapping, Optional, Tuple
+
+import fitz
+import requests
+from attr import attrib, attrs
 from bs4 import BeautifulSoup
+from selenium.common.exceptions import StaleElementReferenceException
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.wait import WebDriverWait
-from selenium.common.exceptions import StaleElementReferenceException
-import requests
-import fitz
 from urllib3.exceptions import ReadTimeoutError
 
 
@@ -16,17 +16,23 @@ from urllib3.exceptions import ReadTimeoutError
 def get_ready_state(driver: WebDriver):
     return driver.execute_script("return document.readyState")
 
+
 def get_single_cookies_dict(driver: WebDriver) -> Mapping:
     selenium_cookies = driver.get_cookies()
-    cookies = {cookie['name']: cookie['value'] for cookie in selenium_cookies}
+    cookies = {cookie["name"]: cookie["value"] for cookie in selenium_cookies}
     return cookies
 
 
 def get_user_agent(driver: WebDriver):
-    return driver.execute_script('return navigator.userAgent')
+    return driver.execute_script("return navigator.userAgent")
 
 
-def wait_for_page_loading(driver: WebDriver, timeout: int = 20, additional_wait_time: float = 2.0, ignore_timeout: bool = True):
+def wait_for_page_loading(
+    driver: WebDriver,
+    timeout: int = 20,
+    additional_wait_time: float = 2.0,
+    ignore_timeout: bool = True,
+):
     """
     Wait for the page to be fully loaded.
 
@@ -102,11 +108,7 @@ def get_element_text(element: WebElement) -> Optional[str]:
     return None
 
 
-def get_pdf_text(
-        driver: WebDriver,
-        url: str = None,
-        wait_after_opening_url: float = 0
-):
+def get_pdf_text(driver: WebDriver, url: str = None, wait_after_opening_url: float = 0):
     """
     Downloads a PDF using an existing Selenium WebDriver session and extracts its text.
 
@@ -121,6 +123,7 @@ def get_pdf_text(
         # Navigate to URL and wait for page load
         if url is not None:
             from .actions import open_url
+
             open_url(driver, url=url, wait_after_opening_url=wait_after_opening_url)
 
         # Get cookies from selenium
@@ -128,9 +131,9 @@ def get_pdf_text(
 
         # Get headers
         headers = {
-            'User-Agent': get_user_agent(driver),
-            'Accept': 'application/pdf',
-            'Referer': driver.current_url
+            "User-Agent": get_user_agent(driver),
+            "Accept": "application/pdf",
+            "Referer": driver.current_url,
         }
 
         # Download PDF content
@@ -164,58 +167,54 @@ def get_body_text(driver: WebDriver) -> str:
     return driver.execute_script("return document.body.innerText")
 
 
-
 def get_body_html_from_url(
-        driver: WebDriver,
-        url: str = None,
-        initial_wait_after_opening_url: float = 0,
-        timeout_for_page_loading: int = 20,
-        return_dynamic_contents: bool = True
+    driver: WebDriver,
+    url: str = None,
+    initial_wait_after_opening_url: float = 0,
+    timeout_for_page_loading: int = 20,
+    return_dynamic_contents: bool = True,
 ) -> str:
     from .actions import open_url
+
     if url:
         open_url(
             driver=driver,
             url=url,
-            wait_after_opening_url=initial_wait_after_opening_url
+            wait_after_opening_url=initial_wait_after_opening_url,
         )
         wait_for_page_loading(driver, timeout_for_page_loading)
-    return get_body_html(
-        driver=driver,
-        return_dynamic_contents=return_dynamic_contents
-    )
+    return get_body_html(driver=driver, return_dynamic_contents=return_dynamic_contents)
 
 
 def get_text(
-        driver,
-        url: str,
-        initial_wait: float = 0,
-        timeout_for_page_loading: int = 20,
-        id_class_keywords_match_to_remove: List[str] = None,
-        id_class_keywords_match_to_keep: List[str] = None,
-        return_dynamic_contents: bool = True
+    driver,
+    url: str,
+    initial_wait: float = 0,
+    timeout_for_page_loading: int = 20,
+    id_class_keywords_match_to_remove: List[str] = None,
+    id_class_keywords_match_to_keep: List[str] = None,
+    return_dynamic_contents: bool = True,
 ):
     html = get_body_html_from_url(
         driver=driver,
         url=url,
         initial_wait_after_opening_url=initial_wait,
         timeout_for_page_loading=timeout_for_page_loading,
-        return_dynamic_contents=return_dynamic_contents
+        return_dynamic_contents=return_dynamic_contents,
     )
-    soup = BeautifulSoup(html, 'html.parser')
+    soup = BeautifulSoup(html, "html.parser")
 
     def _filter(value):
         return (
-                value
-                and (
-                        id_class_keywords_match_to_keep
-                        and any(x in value for x in id_class_keywords_match_to_remove)
-                )
-                and not
-                (
-                        id_class_keywords_match_to_keep
-                        and any(x in value for x in id_class_keywords_match_to_keep)
-                )
+            value
+            and (
+                id_class_keywords_match_to_keep
+                and any(x in value for x in id_class_keywords_match_to_remove)
+            )
+            and not (
+                id_class_keywords_match_to_keep
+                and any(x in value for x in id_class_keywords_match_to_keep)
+            )
         )
 
     for element in soup.find_all(id=_filter):
@@ -229,6 +228,7 @@ def get_text(
 # endregion
 
 # region get sizes
+
 
 @attrs(slots=True)
 class ElementDimensionInfo:
@@ -247,6 +247,7 @@ class ElementDimensionInfo:
         overflow_x: CSS overflowX property value
         overflow_y: CSS overflowY property value
     """
+
     width: int = attrib()
     height: int = attrib()
     client_width: int = attrib()
@@ -271,7 +272,9 @@ def get_scroll_height(driver: WebDriver) -> int:
     return driver.execute_script("return document.body.parentNode.scrollHeight")
 
 
-def get_element_dimension_info(driver: WebDriver, element: WebElement) -> ElementDimensionInfo:
+def get_element_dimension_info(
+    driver: WebDriver, element: WebElement
+) -> ElementDimensionInfo:
     """
     Gets comprehensive dimension information about a WebElement using JavaScript.
 
@@ -291,7 +294,8 @@ def get_element_dimension_info(driver: WebDriver, element: WebElement) -> Elemen
         >>> if info.is_scrollable_y:
         ...     print(f"Element can scroll {info.scroll_height - info.client_height}px vertically")
     """
-    result = driver.execute_script("""
+    result = driver.execute_script(
+        """
         var element = arguments[0];
         var computedStyle = window.getComputedStyle(element);
 
@@ -327,23 +331,27 @@ def get_element_dimension_info(driver: WebDriver, element: WebElement) -> Elemen
             overflowX: overflowX,
             overflowY: overflowY
         };
-    """, element)
+    """,
+        element,
+    )
 
     return ElementDimensionInfo(
-        width=result['offsetWidth'],
-        height=result['offsetHeight'],
-        client_width=result['clientWidth'],
-        client_height=result['clientHeight'],
-        scroll_width=result['scrollWidth'],
-        scroll_height=result['scrollHeight'],
-        is_scrollable_x=result['isScrollableX'],
-        is_scrollable_y=result['isScrollableY'],
-        overflow_x=result['overflowX'],
-        overflow_y=result['overflowY']
+        width=result["offsetWidth"],
+        height=result["offsetHeight"],
+        client_width=result["clientWidth"],
+        client_height=result["clientHeight"],
+        scroll_width=result["scrollWidth"],
+        scroll_height=result["scrollHeight"],
+        is_scrollable_x=result["isScrollableX"],
+        is_scrollable_y=result["isScrollableY"],
+        overflow_x=result["overflowX"],
+        overflow_y=result["overflowY"],
     )
 
 
-def get_element_scrollability(driver: WebDriver, element: WebElement) -> Tuple[bool, bool]:
+def get_element_scrollability(
+    driver: WebDriver, element: WebElement
+) -> Tuple[bool, bool]:
     """
     Checks if a WebElement is scrollable in the horizontal and/or vertical directions.
 
@@ -365,7 +373,8 @@ def get_element_scrollability(driver: WebDriver, element: WebElement) -> Tuple[b
         >>> if scrollable_y:
         ...     print("Element can scroll vertically")
     """
-    result = driver.execute_script("""
+    result = driver.execute_script(
+        """
         var element = arguments[0];
         var computedStyle = window.getComputedStyle(element);
 
@@ -385,16 +394,18 @@ def get_element_scrollability(driver: WebDriver, element: WebElement) -> Tuple[b
             isScrollableX: isScrollableX,
             isScrollableY: isScrollableY
         };
-    """, element)
+    """,
+        element,
+    )
 
-    return result['isScrollableX'], result['isScrollableY']
+    return result["isScrollableX"], result["isScrollableY"]
 
 
 def _solve_scrollable_child_javascript(
-        driver: WebDriver,
-        element: WebElement,
-        strategy: str = 'first_largest_scrollable',
-        direction: Optional[str] = None
+    driver: WebDriver,
+    element: WebElement,
+    strategy: str = "first_largest_scrollable",
+    direction: Optional[str] = None,
 ) -> WebElement:
     """
     Finds the actual scrollable child element using JavaScript implementation.
@@ -413,14 +424,18 @@ def _solve_scrollable_child_javascript(
     check_y = True
     if direction is not None:
         direction_normalized = direction.capitalize()
-        if direction_normalized in ['Up', 'Down']:
+        if direction_normalized in ["Up", "Down"]:
             check_x = False  # Only check Y
-        elif direction_normalized in ['Left', 'Right']:
+        elif direction_normalized in ["Left", "Right"]:
             check_y = False  # Only check X
 
     # Common helper functions
-    has_scrollable_y_check = "element.scrollHeight > element.clientHeight" if check_y else "false"
-    has_scrollable_x_check = "element.scrollWidth > element.clientWidth" if check_x else "false"
+    has_scrollable_y_check = (
+        "element.scrollHeight > element.clientHeight" if check_y else "false"
+    )
+    has_scrollable_x_check = (
+        "element.scrollWidth > element.clientWidth" if check_x else "false"
+    )
 
     js_common = f"""
         function isScrollable(element) {{
@@ -443,7 +458,7 @@ def _solve_scrollable_child_javascript(
     """
 
     # Strategy-specific implementations
-    if strategy == 'first_scrollable':
+    if strategy == "first_scrollable":
         js_strategy = """
             var queue = [rootElement];
             while (queue.length > 0) {
@@ -457,7 +472,7 @@ def _solve_scrollable_child_javascript(
             }
             return null;
         """
-    elif strategy == 'first_largest_scrollable':
+    elif strategy == "first_largest_scrollable":
         js_strategy = """
             var queue = [[rootElement]]; // Queue of levels
             while (queue.length > 0) {
@@ -498,7 +513,7 @@ def _solve_scrollable_child_javascript(
             }
             return null;
         """
-    elif strategy == 'deepest_scrollable':
+    elif strategy == "deepest_scrollable":
         js_strategy = """
             var deepest = null;
             var maxDepth = -1;
@@ -518,7 +533,7 @@ def _solve_scrollable_child_javascript(
             dfs(rootElement, 0);
             return deepest;
         """
-    elif strategy == 'largest_scrollable':
+    elif strategy == "largest_scrollable":
         js_strategy = """
             var largest = null;
             var maxScrollableArea = 0;
@@ -539,7 +554,7 @@ def _solve_scrollable_child_javascript(
             traverse(rootElement);
             return largest;
         """
-    elif strategy == 'largest_scrollable_early_stop':
+    elif strategy == "largest_scrollable_early_stop":
         js_strategy = """
             var queue = [[rootElement]]; // Queue of levels
 
@@ -617,10 +632,10 @@ def _solve_scrollable_child_javascript(
 
 
 def _solve_scrollable_child_builtin(
-        driver: WebDriver,
-        element: WebElement,
-        strategy: str = 'first_largest_scrollable',
-        direction: Optional[str] = None
+    driver: WebDriver,
+    element: WebElement,
+    strategy: str = "first_largest_scrollable",
+    direction: Optional[str] = None,
 ) -> WebElement:
     """
     Finds the actual scrollable child element using Selenium's builtin methods.
@@ -639,7 +654,7 @@ def _solve_scrollable_child_builtin(
     def get_children(elem: WebElement) -> List[WebElement]:
         """Get direct children of element"""
         try:
-            return elem.find_elements(By.XPATH, './*')
+            return elem.find_elements(By.XPATH, "./*")
         except:
             return []
 
@@ -650,15 +665,15 @@ def _solve_scrollable_child_builtin(
             return info.is_scrollable_x or info.is_scrollable_y
         else:
             direction_normalized = direction.capitalize()
-            if direction_normalized in ['Up', 'Down']:
+            if direction_normalized in ["Up", "Down"]:
                 return info.is_scrollable_y
-            elif direction_normalized in ['Left', 'Right']:
+            elif direction_normalized in ["Left", "Right"]:
                 return info.is_scrollable_x
             else:
                 return info.is_scrollable_x or info.is_scrollable_y
 
     # Strategy: first_scrollable (BFS)
-    if strategy == 'first_scrollable':
+    if strategy == "first_scrollable":
         queue = [element]
         while queue:
             current = queue.pop(0)
@@ -669,7 +684,7 @@ def _solve_scrollable_child_builtin(
         return element
 
     # Strategy: first_largest_scrollable (BFS with level-wise selection)
-    elif strategy == 'first_largest_scrollable':
+    elif strategy == "first_largest_scrollable":
         queue = [[element]]  # Queue of levels
         while queue:
             current_level = queue.pop(0)
@@ -684,7 +699,9 @@ def _solve_scrollable_child_builtin(
 
             # If found scrollable elements at this level, return the largest one
             if scrollable_at_level:
-                largest = max(scrollable_at_level, key=lambda x: x[1].width * x[1].height)
+                largest = max(
+                    scrollable_at_level, key=lambda x: x[1].width * x[1].height
+                )
                 return largest[0]
 
             # Add next level to queue
@@ -694,7 +711,7 @@ def _solve_scrollable_child_builtin(
         return element
 
     # Strategy: deepest_scrollable (DFS)
-    elif strategy == 'deepest_scrollable':
+    elif strategy == "deepest_scrollable":
         deepest = None
         max_depth = -1
 
@@ -712,7 +729,7 @@ def _solve_scrollable_child_builtin(
         return deepest if deepest is not None else element
 
     # Strategy: largest_scrollable
-    elif strategy == 'largest_scrollable':
+    elif strategy == "largest_scrollable":
         largest = None
         max_scrollable_area = 0
 
@@ -720,7 +737,9 @@ def _solve_scrollable_child_builtin(
             nonlocal largest, max_scrollable_area
             info = get_element_dimension_info(driver, elem)
             if is_scrollable_in_direction(info):
-                area = max(0, info.scroll_height - info.client_height) + max(0, info.scroll_width - info.client_width)
+                area = max(0, info.scroll_height - info.client_height) + max(
+                    0, info.scroll_width - info.client_width
+                )
                 if area > max_scrollable_area:
                     largest = elem
                     max_scrollable_area = area
@@ -731,7 +750,7 @@ def _solve_scrollable_child_builtin(
         return largest if largest is not None else element
 
     # Strategy: largest_scrollable_early_stop
-    elif strategy == 'largest_scrollable_early_stop':
+    elif strategy == "largest_scrollable_early_stop":
         queue = [[element]]  # Queue of levels
 
         while queue:
@@ -748,7 +767,9 @@ def _solve_scrollable_child_builtin(
             # If found scrollable elements at this level
             if scrollable_at_level:
                 # Find the largest scrollable at this level
-                largest_elem, largest_info = max(scrollable_at_level, key=lambda x: x[1].width * x[1].height)
+                largest_elem, largest_info = max(
+                    scrollable_at_level, key=lambda x: x[1].width * x[1].height
+                )
                 largest_size = largest_info.width * largest_info.height
 
                 # Check if we should early stop
@@ -761,7 +782,10 @@ def _solve_scrollable_child_builtin(
                 if not scrollable_children:
                     return largest_elem
 
-                largest_child_size = max((info.width * info.height for _, info in scrollable_children), default=0)
+                largest_child_size = max(
+                    (info.width * info.height for _, info in scrollable_children),
+                    default=0,
+                )
                 if largest_size > largest_child_size:
                     return largest_elem
 
@@ -780,11 +804,11 @@ def _solve_scrollable_child_builtin(
 
 
 def solve_scrollable_child(
-        driver: WebDriver,
-        element: WebElement,
-        strategy: str = 'first_largest_scrollable',
-        implementation: str = 'builtin',
-        direction: Optional[str] = None
+    driver: WebDriver,
+    element: WebElement,
+    strategy: str = "first_largest_scrollable",
+    implementation: str = "builtin",
+    direction: Optional[str] = None,
 ) -> WebElement:
     """
     Finds the actual scrollable child element within an element hierarchy.
@@ -832,21 +856,25 @@ def solve_scrollable_child(
     else:
         # Specific direction provided
         direction_normalized = direction.capitalize()
-        if direction_normalized in ['Up', 'Down']:
+        if direction_normalized in ["Up", "Down"]:
             is_already_scrollable = scrollable_y
-        elif direction_normalized in ['Left', 'Right']:
+        elif direction_normalized in ["Left", "Right"]:
             is_already_scrollable = scrollable_x
 
     if is_already_scrollable:
         return element
 
     # Element is not scrollable in the specified direction, try to find scrollable child
-    if implementation == 'builtin':
+    if implementation == "builtin":
         result = _solve_scrollable_child_builtin(driver, element, strategy, direction)
-    elif implementation == 'javascript':
-        result = _solve_scrollable_child_javascript(driver, element, strategy, direction)
+    elif implementation == "javascript":
+        result = _solve_scrollable_child_javascript(
+            driver, element, strategy, direction
+        )
     else:
-        raise ValueError(f"Invalid implementation '{implementation}'. Must be 'builtin' or 'javascript'")
+        raise ValueError(
+            f"Invalid implementation '{implementation}'. Must be 'builtin' or 'javascript'"
+        )
 
     # Check if we found a scrollable child or just returned the original element
     if result == element:
@@ -854,16 +882,16 @@ def solve_scrollable_child(
         warnings.warn(
             f"Could not find scrollable child element{direction_str} using strategy '{strategy}'. "
             f"Returning original non-scrollable element.",
-            UserWarning
+            UserWarning,
         )
 
     return result
 
 
 def get_element_size(
-        element: WebElement,
-        driver: Optional[WebDriver] = None,
-        implementation: str = 'builtin'
+    element: WebElement,
+    driver: Optional[WebDriver] = None,
+    implementation: str = "builtin",
 ) -> Tuple[int, int]:
     """
     Gets the width and height of the given WebElement.
@@ -888,31 +916,38 @@ def get_element_size(
         >>> # Get element content size using JavaScript (excludes borders/scrollbars)
         >>> width, height = get_element_size(element, driver, implementation='javascript')
     """
-    if implementation == 'builtin':
+    if implementation == "builtin":
         size = element.size
-        return size['width'], size['height']
-    elif implementation == 'javascript':
+        return size["width"], size["height"]
+    elif implementation == "javascript":
         if driver is None:
-            raise ValueError("driver parameter is required when implementation='javascript'")
+            raise ValueError(
+                "driver parameter is required when implementation='javascript'"
+            )
 
-        result = driver.execute_script("""
+        result = driver.execute_script(
+            """
             var element = arguments[0];
             return {
                 width: element.clientWidth,
                 height: element.clientHeight
             };
-        """, element)
-        return result['width'], result['height']
+        """,
+            element,
+        )
+        return result["width"], result["height"]
     else:
-        raise ValueError(f"Invalid implementation '{implementation}'. Must be 'builtin' or 'javascript'")
+        raise ValueError(
+            f"Invalid implementation '{implementation}'. Must be 'builtin' or 'javascript'"
+        )
 
 
 def scroll_element_into_view(
     driver: WebDriver,
     element: WebElement,
-    vertical: str = 'center',
-    horizontal: str = 'center',
-    behavior: str = 'smooth'
+    vertical: str = "center",
+    horizontal: str = "center",
+    behavior: str = "smooth",
 ) -> None:
     """
     Scrolls the element into view with flexible alignment options.
@@ -952,39 +987,46 @@ def scroll_element_into_view(
         >>> scroll_element_into_view(driver, element, vertical='bottom', horizontal='right', behavior='auto')
     """
     # Validate parameters
-    valid_vertical = ['top', 'center', 'bottom', 'nearest']
-    valid_horizontal = ['left', 'center', 'right', 'nearest']
-    valid_behavior = ['smooth', 'auto']
+    valid_vertical = ["top", "center", "bottom", "nearest"]
+    valid_horizontal = ["left", "center", "right", "nearest"]
+    valid_behavior = ["smooth", "auto"]
 
     if vertical not in valid_vertical:
-        raise ValueError(f"Invalid vertical alignment '{vertical}'. Must be one of: {', '.join(valid_vertical)}")
+        raise ValueError(
+            f"Invalid vertical alignment '{vertical}'. Must be one of: {', '.join(valid_vertical)}"
+        )
 
     if horizontal not in valid_horizontal:
-        raise ValueError(f"Invalid horizontal alignment '{horizontal}'. Must be one of: {', '.join(valid_horizontal)}")
+        raise ValueError(
+            f"Invalid horizontal alignment '{horizontal}'. Must be one of: {', '.join(valid_horizontal)}"
+        )
 
     if behavior not in valid_behavior:
-        raise ValueError(f"Invalid behavior '{behavior}'. Must be one of: {', '.join(valid_behavior)}")
+        raise ValueError(
+            f"Invalid behavior '{behavior}'. Must be one of: {', '.join(valid_behavior)}"
+        )
 
     # Map user-friendly values to scrollIntoView API values
     vertical_map = {
-        'top': 'start',
-        'center': 'center',
-        'bottom': 'end',
-        'nearest': 'nearest'
+        "top": "start",
+        "center": "center",
+        "bottom": "end",
+        "nearest": "nearest",
     }
 
     horizontal_map = {
-        'left': 'start',
-        'center': 'center',
-        'right': 'end',
-        'nearest': 'nearest'
+        "left": "start",
+        "center": "center",
+        "right": "end",
+        "nearest": "nearest",
     }
 
     block_value = vertical_map[vertical]
     inline_value = horizontal_map[horizontal]
 
     # Execute scrollIntoView with specified options
-    driver.execute_script("""
+    driver.execute_script(
+        """
         var element = arguments[0];
         var block = arguments[1];
         var inline = arguments[2];
@@ -995,6 +1037,12 @@ def scroll_element_into_view(
             inline: inline,
             behavior: behavior
         });
-    """, element, block_value, inline_value, behavior)
+    """,
+        element,
+        block_value,
+        inline_value,
+        behavior,
+    )
+
 
 # endregion

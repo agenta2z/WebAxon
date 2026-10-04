@@ -4,10 +4,8 @@ Tests truncation boundaries, empty results lists, and content shorter than max_l
 Requirements: 4.10, 5.7, 5.8
 """
 
-import resolve_path  # Must be first import
-
 import pytest
-
+import resolve_path  # Must be first import
 from webaxon.devsuite.web_agent_service_nextgen.cli.kb_formatters import (
     format_delete_candidates,
     format_delete_results,

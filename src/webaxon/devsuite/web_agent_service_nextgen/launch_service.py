@@ -5,8 +5,9 @@ Entry point for starting the modular web agent service.
 This script initializes the service with proper configuration and starts
 the main service loop.
 """
-import sys
+
 import argparse
+import sys
 from pathlib import Path
 
 # Add source paths if needed
@@ -26,19 +27,20 @@ for path_item in [rich_python_utils_src, agent_foundation_src, webagent_src]:
     if path_item.exists() and str(path_item) not in sys.path:
         sys.path.insert(0, str(path_item))
 
+from webaxon.devsuite.web_agent_service_nextgen.core.config import ServiceConfig
+
 # Import service components
 from webaxon.devsuite.web_agent_service_nextgen.service import WebAgentService
-from webaxon.devsuite.web_agent_service_nextgen.core.config import ServiceConfig
 
 
 def parse_arguments():
     """Parse command line arguments.
-    
+
     Returns:
         argparse.Namespace: Parsed arguments
     """
     parser = argparse.ArgumentParser(
-        description='Web Agent Service - Modular queue-based agent service',
+        description="Web Agent Service - Modular queue-based agent service",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -70,44 +72,44 @@ Environment Variables:
   WEBAGENT_SERVICE_TEMPLATE_DIR              Prompt templates directory name (default: prompt_templates)
 
 For more information, see README.md
-        """
+        """,
     )
-    
+
     # Default workspace: _workspace/ next to this script
-    default_workspace = Path(__file__).resolve().parent / '_workspace'
+    default_workspace = Path(__file__).resolve().parent / "_workspace"
 
     parser.add_argument(
-        'testcase_root',
-        nargs='?',
+        "testcase_root",
+        nargs="?",
         type=Path,
         default=default_workspace,
-        help=f'Workspace root directory (default: {default_workspace})'
+        help=f"Workspace root directory (default: {default_workspace})",
     )
-    
+
     parser.add_argument(
-        '--config-file',
+        "--config-file",
         type=Path,
-        help='Path to configuration file (optional, environment variables take precedence)'
+        help="Path to configuration file (optional, environment variables take precedence)",
     )
-    
+
     parser.add_argument(
-        '--debug',
-        action='store_true',
-        help='Enable debug mode (overrides environment variable)'
+        "--debug",
+        action="store_true",
+        help="Enable debug mode (overrides environment variable)",
     )
-    
+
     parser.add_argument(
-        '--synchronous',
-        action='store_true',
-        help='Run agents synchronously for debugging (overrides environment variable)'
+        "--synchronous",
+        action="store_true",
+        help="Run agents synchronously for debugging (overrides environment variable)",
     )
-    
+
     return parser.parse_args()
 
 
 def main():
     """Run the web agent service.
-    
+
     This function:
     1. Parses command line arguments
     2. Loads configuration from environment variables
@@ -116,26 +118,26 @@ def main():
     """
     # Parse arguments
     args = parse_arguments()
-    
+
     # Validate testcase root
     if not args.testcase_root.exists():
         print(f"Error: Testcase root does not exist: {args.testcase_root}")
         sys.exit(1)
-    
+
     if not args.testcase_root.is_dir():
         print(f"Error: Testcase root is not a directory: {args.testcase_root}")
         sys.exit(1)
-    
+
     # Load configuration from environment
     config = ServiceConfig.from_env()
-    
+
     # Apply command line overrides
     if args.debug:
         config.debug_mode_service = True
-    
+
     if args.synchronous:
         config.synchronous_agent = True
-    
+
     # Print startup banner
     print("=" * 80)
     print("WEB AGENT SERVICE - Modular Queue-Based Architecture")
@@ -158,23 +160,24 @@ def main():
     print("Starting service... (Press Ctrl+C to stop)")
     print("=" * 80)
     print()
-    
+
     try:
         # Create and run service
         service = WebAgentService(args.testcase_root, config)
         service.run()
-    
+
     except KeyboardInterrupt:
         print("\nShutdown requested by user")
-    
+
     except Exception as e:
         print(f"\nFatal error: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
-    
+
     print("\nService stopped")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

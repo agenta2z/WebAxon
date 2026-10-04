@@ -3,11 +3,9 @@
 Uses hypothesis to verify parsing round-trip properties across generated inputs.
 """
 
-import resolve_path  # Setup import paths
-
 import pytest
-from hypothesis import given, settings, strategies as st, assume
-
+import resolve_path  # Setup import paths
+from hypothesis import assume, given, settings, strategies as st
 from webaxon.devsuite.web_agent_service_nextgen.cli.kb_arg_parser import (
     parse_kb_add,
     parse_kb_del,

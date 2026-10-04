@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 from webaxon.evaluation.export import export_result
 from webaxon.evaluation.protocol import EvalResult
 from webaxon.evaluation.tasks import EvaluationTask
@@ -46,11 +45,18 @@ class TestBackwardCompatibility:
         rd = export_result(task, result, tmp_path)
 
         expected_keys = {
-            "task_id", "task", "start_url",
-            "action_history", "action_history_raw",
-            "thoughts", "raw_generations",
-            "final_result_response", "confidence",
-            "duration_seconds", "num_steps", "num_screenshots",
+            "task_id",
+            "task",
+            "start_url",
+            "action_history",
+            "action_history_raw",
+            "thoughts",
+            "raw_generations",
+            "final_result_response",
+            "confidence",
+            "duration_seconds",
+            "num_steps",
+            "num_screenshots",
         }
         assert set(rd.keys()) == expected_keys
 
@@ -83,7 +89,9 @@ class TestExtendedFields:
         task = _make_task()
         result = _make_result()
         rd = export_result(
-            task, result, tmp_path,
+            task,
+            result,
+            tmp_path,
             done_criteria="all items found",
             must_have=["price", "name"],
             observer_summary="observed 3 steps",
@@ -96,7 +104,9 @@ class TestExtendedFields:
         task = _make_task()
         result = _make_result()
         rd = export_result(
-            task, result, tmp_path,
+            task,
+            result,
+            tmp_path,
             clarified_plan="plan",
             done_criteria=None,
         )
@@ -107,7 +117,9 @@ class TestExtendedFields:
         task = _make_task()
         result = _make_result()
         rd = export_result(
-            task, result, tmp_path,
+            task,
+            result,
+            tmp_path,
             clarified_plan="plan",
             done_criteria="criteria",
             response_type="text",

@@ -20,7 +20,7 @@ import sys
 from pathlib import Path
 
 # Configuration
-PIVOT_FOLDER_NAME = 'test'  # The folder name we're inside of
+PIVOT_FOLDER_NAME = "test"  # The folder name we're inside of
 
 # Get absolute path to this file
 current_file = Path(__file__).resolve()
@@ -50,14 +50,16 @@ for path_item in [rich_python_utils_src, agent_foundation_src]:
     if path_item.exists() and str(path_item) not in sys.path:
         sys.path.insert(0, str(path_item))
 
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 from webaxon.automation.monitor import MonitorCondition, MonitorConditionType
 
 
 # =============================================================================
 # Test Fixtures
 # =============================================================================
+
 
 def create_mock_driver():
     """Create a mock Selenium WebDriver for testing."""
@@ -74,6 +76,7 @@ def create_mock_element(text="element text"):
 # =============================================================================
 # Task 7.1: Test ELEMENT_PRESENT condition with element found/not found
 # =============================================================================
+
 
 class TestElementPresentCondition:
     """Tests for ELEMENT_PRESENT condition type.
@@ -130,6 +133,7 @@ class TestElementPresentCondition:
 # Task 7.2: Test ELEMENT_ABSENT condition with element present/absent
 # =============================================================================
 
+
 class TestElementAbsentCondition:
     """Tests for ELEMENT_ABSENT condition type.
 
@@ -141,9 +145,7 @@ class TestElementAbsentCondition:
         """ELEMENT_ABSENT should return (True, None) when element is None."""
         driver = create_mock_driver()
 
-        condition = MonitorCondition(
-            condition_type=MonitorConditionType.ELEMENT_ABSENT
-        )
+        condition = MonitorCondition(condition_type=MonitorConditionType.ELEMENT_ABSENT)
 
         # Element resolution failed, element is None (absent)
         met, content = condition.check(driver, None)
@@ -156,9 +158,7 @@ class TestElementAbsentCondition:
         driver = create_mock_driver()
         element = create_mock_element("Still Here")
 
-        condition = MonitorCondition(
-            condition_type=MonitorConditionType.ELEMENT_ABSENT
-        )
+        condition = MonitorCondition(condition_type=MonitorConditionType.ELEMENT_ABSENT)
 
         # Element was resolved, so it exists
         met, content = condition.check(driver, element)
@@ -171,6 +171,7 @@ class TestElementAbsentCondition:
 # Task 7.3: Test TEXT_CONTAINS condition with text present/absent
 # =============================================================================
 
+
 class TestTextContainsCondition:
     """Tests for TEXT_CONTAINS condition type."""
 
@@ -182,7 +183,7 @@ class TestTextContainsCondition:
 
         condition = MonitorCondition(
             condition_type=MonitorConditionType.TEXT_CONTAINS,
-            expected_text="Order Complete"
+            expected_text="Order Complete",
         )
 
         met, content = condition.check(driver)
@@ -198,7 +199,7 @@ class TestTextContainsCondition:
 
         condition = MonitorCondition(
             condition_type=MonitorConditionType.TEXT_CONTAINS,
-            expected_text="Order Complete"
+            expected_text="Order Complete",
         )
 
         met, content = condition.check(driver, element)
@@ -216,7 +217,7 @@ class TestTextContainsCondition:
 
         condition = MonitorCondition(
             condition_type=MonitorConditionType.TEXT_CONTAINS,
-            expected_text="Order Complete"
+            expected_text="Order Complete",
         )
 
         met, content = condition.check(driver)
@@ -231,7 +232,7 @@ class TestTextContainsCondition:
 
         condition = MonitorCondition(
             condition_type=MonitorConditionType.TEXT_CONTAINS,
-            expected_text="Order Complete"
+            expected_text="Order Complete",
         )
 
         met, content = condition.check(driver)
@@ -247,7 +248,7 @@ class TestTextContainsCondition:
 
         condition = MonitorCondition(
             condition_type=MonitorConditionType.TEXT_CONTAINS,
-            expected_text="Order Complete"  # Different case
+            expected_text="Order Complete",  # Different case
         )
 
         met, content = condition.check(driver)
@@ -259,6 +260,7 @@ class TestTextContainsCondition:
 # =============================================================================
 # Task 7.4: Test TEXT_CHANGES condition with text changed/unchanged
 # =============================================================================
+
 
 class TestTextChangesCondition:
     """Tests for TEXT_CHANGES condition type.
@@ -272,9 +274,7 @@ class TestTextChangesCondition:
         driver = create_mock_driver()
         element = create_mock_element("Initial Text")
 
-        condition = MonitorCondition(
-            condition_type=MonitorConditionType.TEXT_CHANGES
-        )
+        condition = MonitorCondition(condition_type=MonitorConditionType.TEXT_CHANGES)
 
         # Element is pre-resolved and passed to check()
         met, content = condition.check(driver, element)
@@ -288,9 +288,7 @@ class TestTextChangesCondition:
         """TEXT_CHANGES should return (True, new_text) when text changes."""
         driver = create_mock_driver()
 
-        condition = MonitorCondition(
-            condition_type=MonitorConditionType.TEXT_CHANGES
-        )
+        condition = MonitorCondition(condition_type=MonitorConditionType.TEXT_CHANGES)
 
         # First check - record baseline
         element1 = create_mock_element("Initial Text")
@@ -307,9 +305,7 @@ class TestTextChangesCondition:
         """TEXT_CHANGES should return (False, None) when text is the same."""
         driver = create_mock_driver()
 
-        condition = MonitorCondition(
-            condition_type=MonitorConditionType.TEXT_CHANGES
-        )
+        condition = MonitorCondition(condition_type=MonitorConditionType.TEXT_CHANGES)
 
         # First check - record baseline
         element1 = create_mock_element("Same Text")
@@ -326,9 +322,7 @@ class TestTextChangesCondition:
         """TEXT_CHANGES should return (False, None) when element is None."""
         driver = create_mock_driver()
 
-        condition = MonitorCondition(
-            condition_type=MonitorConditionType.TEXT_CHANGES
-        )
+        condition = MonitorCondition(condition_type=MonitorConditionType.TEXT_CHANGES)
 
         # Element resolution failed, element is None
         met, content = condition.check(driver, None)
@@ -341,6 +335,7 @@ class TestTextChangesCondition:
 # Task 7.5: Test CUSTOM condition with callable returning tuple and bool
 # =============================================================================
 
+
 class TestCustomCondition:
     """Tests for CUSTOM condition type."""
 
@@ -352,8 +347,7 @@ class TestCustomCondition:
             return (True, "Custom Content")
 
         condition = MonitorCondition(
-            condition_type=MonitorConditionType.CUSTOM,
-            custom_callable=custom_check
+            condition_type=MonitorConditionType.CUSTOM, custom_callable=custom_check
         )
 
         met, content = condition.check(driver)
@@ -369,8 +363,7 @@ class TestCustomCondition:
             return (False, "Not Ready")
 
         condition = MonitorCondition(
-            condition_type=MonitorConditionType.CUSTOM,
-            custom_callable=custom_check
+            condition_type=MonitorConditionType.CUSTOM, custom_callable=custom_check
         )
 
         met, content = condition.check(driver)
@@ -386,8 +379,7 @@ class TestCustomCondition:
             return True
 
         condition = MonitorCondition(
-            condition_type=MonitorConditionType.CUSTOM,
-            custom_callable=custom_check
+            condition_type=MonitorConditionType.CUSTOM, custom_callable=custom_check
         )
 
         met, content = condition.check(driver)
@@ -403,8 +395,7 @@ class TestCustomCondition:
             return False
 
         condition = MonitorCondition(
-            condition_type=MonitorConditionType.CUSTOM,
-            custom_callable=custom_check
+            condition_type=MonitorConditionType.CUSTOM, custom_callable=custom_check
         )
 
         met, content = condition.check(driver)
@@ -423,8 +414,7 @@ class TestCustomCondition:
             return (True, "Done")
 
         condition = MonitorCondition(
-            condition_type=MonitorConditionType.CUSTOM,
-            custom_callable=custom_check
+            condition_type=MonitorConditionType.CUSTOM, custom_callable=custom_check
         )
 
         condition.check(driver)
@@ -436,8 +426,7 @@ class TestCustomCondition:
         driver = create_mock_driver()
 
         condition = MonitorCondition(
-            condition_type=MonitorConditionType.CUSTOM,
-            custom_callable=None
+            condition_type=MonitorConditionType.CUSTOM, custom_callable=None
         )
 
         met, content = condition.check(driver)
@@ -459,7 +448,7 @@ class TestCustomCondition:
 
         condition = MonitorCondition(
             condition_type=MonitorConditionType.CUSTOM,
-            custom_callable=check_price_below_threshold
+            custom_callable=check_price_below_threshold,
         )
 
         met, content = condition.check(driver)

@@ -58,8 +58,10 @@ def download_dataset(
         Counts: ``{"raw": int, "processed": int, "skipped": int}``.
     """
     try:
-        from datasets import load_dataset as hf_load_dataset  # type: ignore[import-untyped]
         import datasets as datasets_pkg  # type: ignore[import-untyped]
+        from datasets import (  # type: ignore[import-untyped]
+            load_dataset as hf_load_dataset,
+        )
     except Exception as exc:  # pragma: no cover
         raise RuntimeError(
             "Missing 'datasets' dependency. Install with: pip install datasets"
@@ -93,8 +95,10 @@ def download_dataset(
     processed_count = 0
     skipped = 0
 
-    with raw_path.open("w", encoding="utf-8") as raw_f, \
-         processed_path.open("w", encoding="utf-8") as proc_f:
+    with (
+        raw_path.open("w", encoding="utf-8") as raw_f,
+        processed_path.open("w", encoding="utf-8") as proc_f,
+    ):
         for row in dataset:
             raw_f.write(json.dumps(row, ensure_ascii=False) + "\n")
             raw_count += 1

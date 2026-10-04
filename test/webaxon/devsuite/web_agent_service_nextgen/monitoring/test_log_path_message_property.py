@@ -8,26 +8,23 @@ The path SHALL point to an existing directory. The message SHALL include the
 session_id and the absolute filesystem path to the session's agent log directory.
 """
 
-import resolve_path  # noqa: F401 - must be first import
-
 import shutil
 import tempfile
 from pathlib import Path
 from typing import Any, Dict, List
 from unittest.mock import Mock
 
-from hypothesis import given, settings, HealthCheck
-from hypothesis import strategies as st
-
-from webaxon.devsuite.web_agent_service_nextgen.core.config import ServiceConfig
-from webaxon.devsuite.web_agent_service_nextgen.session import SessionManager
-from webaxon.devsuite.web_agent_service_nextgen.core.agent_factory import AgentFactory
-from webaxon.devsuite.web_agent_service_nextgen.agents.agent_runner import AgentRunner
-from webaxon.devsuite.web_agent_service_nextgen.session.agent_session_monitor import (
-    AgentSessionMonitor,
-)
+import resolve_path  # noqa: F401 - must be first import
+from hypothesis import given, HealthCheck, settings, strategies as st
 from rich_python_utils.service_utils.session_management import (
     SessionLogger as SessionLogManager,
+)
+from webaxon.devsuite.web_agent_service_nextgen.agents.agent_runner import AgentRunner
+from webaxon.devsuite.web_agent_service_nextgen.core.agent_factory import AgentFactory
+from webaxon.devsuite.web_agent_service_nextgen.core.config import ServiceConfig
+from webaxon.devsuite.web_agent_service_nextgen.session import SessionManager
+from webaxon.devsuite.web_agent_service_nextgen.session.agent_session_monitor import (
+    AgentSessionMonitor,
 )
 
 # --- Strategies ---
@@ -38,12 +35,14 @@ session_ids = st.text(
     max_size=15,
 )
 
-agent_types = st.sampled_from([
-    "PromptBasedActionAgent",
-    "PromptBasedPlanningAgent",
-    "TestAgent",
-    "DefaultAgent",
-])
+agent_types = st.sampled_from(
+    [
+        "PromptBasedActionAgent",
+        "PromptBasedPlanningAgent",
+        "TestAgent",
+        "DefaultAgent",
+    ]
+)
 
 
 class MockQueueService:
@@ -94,7 +93,15 @@ def _build_monitor(tmp_dir, session_id, agent_type, attach_session_logger=True):
     """
     config = ServiceConfig()
     queue_service = MockQueueService()
-    session_manager = SessionManager(id='test', log_name='Test', logger=[print], always_add_logging_based_logger=False, config=config, queue_service=queue_service, service_log_dir=tmp_dir)
+    session_manager = SessionManager(
+        id="test",
+        log_name="Test",
+        logger=[print],
+        always_add_logging_based_logger=False,
+        config=config,
+        queue_service=queue_service,
+        service_log_dir=tmp_dir,
+    )
 
     session_logger = None
     if attach_session_logger:
@@ -136,9 +143,7 @@ def _build_monitor(tmp_dir, session_id, agent_type, attach_session_logger=True):
 
 def _get_log_path_messages(queue_service, config):
     """Extract log_path_available messages from the client control queue."""
-    control_messages = queue_service.messages.get(
-        config.client_control_queue_id, []
-    )
+    control_messages = queue_service.messages.get(config.client_control_queue_id, [])
     return [m for m in control_messages if m.get("type") == "log_path_available"]
 
 

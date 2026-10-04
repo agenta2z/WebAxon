@@ -78,34 +78,39 @@ class GatewayNode:
         try:
             import websockets
         except ImportError:
-            logger.error("websockets package not installed. Run: pip install websockets")
+            logger.error(
+                "websockets package not installed. Run: pip install websockets"
+            )
             return False
 
         self._should_run = True
 
         try:
             url = self.config.gateway_url
-            
+
             logger.info(f"Connecting to OpenClaw Gateway at {url}")
-            
+
             # Connect without auth headers - auth is done via challenge-response
             self._ws = await websockets.connect(url, max_size=25 * 1024 * 1024)
 
             # Wait for connect.challenge from server
             challenge_raw = await asyncio.wait_for(self._ws.recv(), timeout=10.0)
             challenge_data = json.loads(challenge_raw)
-            
-            if challenge_data.get("type") != "event" or challenge_data.get("event") != "connect.challenge":
+
+            if (
+                challenge_data.get("type") != "event"
+                or challenge_data.get("event") != "connect.challenge"
+            ):
                 logger.error(f"Expected connect.challenge, got: {challenge_data}")
                 await self._ws.close()
                 return False
-            
+
             nonce = challenge_data.get("payload", {}).get("nonce")
             if not nonce:
                 logger.error("connect.challenge missing nonce")
                 await self._ws.close()
                 return False
-            
+
             logger.debug(f"Received challenge with nonce: {nonce}")
 
             # Send connect request with auth token and nonce
@@ -130,7 +135,9 @@ class GatewayNode:
                     "scopes": ["node"],
                     "auth": {
                         "token": self.config.gateway_token,
-                    } if self.config.gateway_token else None,
+                    }
+                    if self.config.gateway_token
+                    else None,
                 },
             }
             await self._ws.send(json.dumps(connect_msg))
@@ -141,7 +148,9 @@ class GatewayNode:
 
             if resp_data.get("type") == "res" and resp_data.get("ok"):
                 self._connected = True
-                logger.info(f"Connected to Gateway as node '{self.config.display_name}'")
+                logger.info(
+                    f"Connected to Gateway as node '{self.config.display_name}'"
+                )
 
                 # Start message handler
                 self._receive_task = asyncio.create_task(self._receive_loop())
@@ -237,7 +246,10 @@ class GatewayNode:
                 await self._send_invoke_result(
                     request_id,
                     ok=False,
-                    error={"code": "UNKNOWN_COMMAND", "message": f"Unknown command: {command}"},
+                    error={
+                        "code": "UNKNOWN_COMMAND",
+                        "message": f"Unknown command: {command}",
+                    },
                 )
         except Exception as e:
             logger.error(f"Error handling invoke {command}: {e}")
@@ -345,7 +357,9 @@ class GatewayNode:
         # Snapshot endpoint - returns page state
         elif path == "/snapshot" or path.startswith("/snapshot"):
             include_screenshot = body.get("includeScreenshot", False)
-            snapshot = await self.browser_tools.get_snapshot(include_screenshot=include_screenshot)
+            snapshot = await self.browser_tools.get_snapshot(
+                include_screenshot=include_screenshot
+            )
             return {"result": snapshot}
 
         # Act endpoint - execute an action
@@ -405,7 +419,9 @@ class GatewayNode:
         elif path == "/query" or path.startswith("/query"):
             query_text = body.get("query", "")
             start_url = body.get("startUrl") or body.get("start_url")
-            result = await self.browser_tools.run_task(task=query_text, start_url=start_url)
+            result = await self.browser_tools.run_task(
+                task=query_text, start_url=start_url
+            )
             return {
                 "result": {
                     "ok": result.success,

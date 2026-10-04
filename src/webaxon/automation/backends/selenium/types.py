@@ -1,4 +1,4 @@
-from typing import Dict, Union, Sequence, Mapping
+from typing import Dict, Mapping, Sequence, Union
 
 from selenium.webdriver.remote.webelement import WebElement
 

@@ -12,15 +12,15 @@ Uses two independent methods to discover profiles and verifies they agree:
 If both methods find the same set of profile directories, we have high
 confidence the detection logic is correct.
 """
-import resolve_path  # noqa: F401 — must be first
 
 import json
 import os
 import shutil
 import tempfile
-import pytest
 from typing import Dict, List, Optional, Set
 
+import pytest
+import resolve_path  # noqa: F401 — must be first
 from webaxon.browser_utils.chrome.chrome_profiles import (
     copy_chrome_profile,
     get_available_chrome_profiles,
@@ -34,6 +34,7 @@ from webaxon.browser_utils.chrome.chrome_profiles import (
 # ---------------------------------------------------------------------------
 # Method 2: read Chrome's Local State file directly
 # ---------------------------------------------------------------------------
+
 
 def _get_profiles_from_local_state(user_data_dir: str) -> List[Dict[str, str]]:
     """Parse Chrome's Local State JSON to extract the profile list.
@@ -54,16 +55,19 @@ def _get_profiles_from_local_state(user_data_dir: str) -> List[Dict[str, str]]:
     info_cache = data.get("profile", {}).get("info_cache", {})
     profiles = []
     for directory, meta in info_cache.items():
-        profiles.append({
-            "directory": directory,
-            "name": meta.get("name", directory),
-        })
+        profiles.append(
+            {
+                "directory": directory,
+                "name": meta.get("name", directory),
+            }
+        )
     return profiles
 
 
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def user_data_dir() -> Optional[str]:
@@ -130,8 +134,7 @@ class TestCrossValidation:
         # Filter method 2 to only dirs that actually exist on disk,
         # since Local State may reference profiles that were deleted
         method2_dirs_existing = {
-            d for d in method2_dirs
-            if os.path.isdir(os.path.join(user_data_dir, d))
+            d for d in method2_dirs if os.path.isdir(os.path.join(user_data_dir, d))
         }
 
         assert method1_dirs == method2_dirs_existing, (

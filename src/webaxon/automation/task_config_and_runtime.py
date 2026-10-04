@@ -2,8 +2,11 @@ from collections.abc import MutableMapping
 from typing import Mapping, Union
 
 from rich_python_utils.io_utils.json_io import read_json
-from webaxon.automation.configs.task_config import FIELD_NAME_TASK_CONFIG_ELEMENTS, FIELD_NAME_TASK_CONFIG_TASKS
 from webaxon.automation.backends.selenium.types import ElementDict
+from webaxon.automation.configs.task_config import (
+    FIELD_NAME_TASK_CONFIG_ELEMENTS,
+    FIELD_NAME_TASK_CONFIG_TASKS,
+)
 from webaxon.automation.web_driver import WebDriver
 
 
@@ -17,17 +20,14 @@ class TaskRuntime(MutableMapping):
         return self.tasks.get(task_name, None)
 
     def execute_task(
-            self,
-            task_name: str,
-            driver: WebDriver,
-            output_path_action_records: str = None
+        self, task_name: str, driver: WebDriver, output_path_action_records: str = None
     ):
         task_config = self.get_task_config(task_name)
         if task_config:
             driver.execute_actions(
                 elements_dict=self.elements,
                 output_path_action_records=output_path_action_records,
-                **task_config
+                **task_config,
             )
 
     # region exposing `elements` for `Mapping`

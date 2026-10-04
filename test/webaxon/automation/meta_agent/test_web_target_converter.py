@@ -12,7 +12,6 @@ Tests cover:
 """
 
 import pytest
-
 from agent_foundation.automation.meta_agent.models import TraceStep
 from agent_foundation.automation.meta_agent.target_converter import (
     TargetSpec,
@@ -244,7 +243,7 @@ class TestStrategyOrdering:
             idx_a = priority.index(strategy_names[i])
             idx_b = priority.index(strategy_names[i + 1])
             assert idx_a < idx_b, (
-                f"{strategy_names[i]} should come before {strategy_names[i+1]}"
+                f"{strategy_names[i]} should come before {strategy_names[i + 1]}"
             )
 
 

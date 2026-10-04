@@ -22,10 +22,13 @@ for pkg in ["SciencePythonUtils", "ScienceModelingTools"]:
     if os.path.exists(pkg_src) and pkg_src not in sys.path:
         sys.path.insert(0, pkg_src)
 
-from agent_foundation.common.inferencers.api_inferencers.ag.ag_claude_api_inferencer import AgClaudeApiInferencer as ClaudeApiInferencer
+from agent_foundation.common.inferencers.api_inferencers.ag.ag_claude_api_inferencer import (
+    AgClaudeApiInferencer as ClaudeApiInferencer,
+)
+from rich_python_utils.string_utils.formatting.handlebars_format import (
+    format_template as handlebars_format,
+)
 from rich_python_utils.string_utils.formatting.template_manager import TemplateManager
-from rich_python_utils.string_utils.formatting.handlebars_format import format_template as handlebars_format
-
 from webaxon.automation.agents import FindElementInferencer
 
 # =============================================================================
@@ -65,7 +68,9 @@ reasoner = ClaudeApiInferencer(
     max_retry_wait=5.0,
 )
 
-templates_path = os.path.join(project_root, "src", "webaxon", "automation", "agents", "prompt_templates")
+templates_path = os.path.join(
+    project_root, "src", "webaxon", "automation", "agents", "prompt_templates"
+)
 template_manager = TemplateManager(
     templates=templates_path,
     template_formatter=handlebars_format,
@@ -80,11 +85,12 @@ find_element_inferencer = FindElementInferencer(
 # QUERY QUERIES
 # =============================================================================
 
+
 def run_query(description: str):
     """Run a query and show the result."""
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"QUERY: {description[:100]}...")
-    print('='*70)
+    print("=" * 70)
 
     try:
         result = find_element_inferencer(
@@ -99,15 +105,15 @@ def run_query(description: str):
 
 
 # Query 1: Simple query - find a specific template
-print("\n" + "#"*70)
+print("\n" + "#" * 70)
 print("# QUERY 1: Simple template query")
-print("#"*70)
+print("#" * 70)
 run_query("Find the template named 'S/RS_UAT_Q4FY25_Backend Coding - Code Design P40'")
 
 # Query 2: The actual query from create_goodtime_template_selection_graph.py
-print("\n" + "#"*70)
+print("\n" + "#" * 70)
 print("# QUERY 2: Full matching query (from workflow)")
-print("#"*70)
+print("#" * 70)
 run_query("""Find the template that best matches the candidate notes in the ACTIVITY section.
 The notes contain TWO key pieces of information to match:
 1. Interview type (look for 'Select the Engineering interview types' - e.g., 'Backend Coding - Code Design')
@@ -121,15 +127,15 @@ For example, if notes say 'Backend Coding - Code Design' and 'P40', select the t
 'S/RS_UAT_Q4FY25_Backend Coding - Code Design P40'.""")
 
 # Query 3: Simpler version of the query
-print("\n" + "#"*70)
+print("\n" + "#" * 70)
 print("# QUERY 3: Simplified query")
-print("#"*70)
+print("#" * 70)
 run_query("""Find the <span> element containing the template that matches:
 - Interview type: 'Backend Coding - Code Design' (from ACTIVITY section)
 - Level: 'P40' (from ACTIVITY section)
 The matching template should be 'S/RS_UAT_Q4FY25_Backend Coding - Code Design P40'.""")
 
-print("\n" + "="*70)
+print("\n" + "=" * 70)
 print("DEBUG COMPLETE")
-print("="*70)
+print("=" * 70)
 print("\nExpected result: 1799 (the __id__ of the P40 template span)")

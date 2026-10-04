@@ -1,14 +1,14 @@
-from typing import Iterable, Optional, Union
-from urllib.parse import urlencode, quote_plus
 from datetime import datetime
+from typing import Iterable, Optional, Union
+from urllib.parse import quote_plus, urlencode
 
 
 def create_search_url(
-        query: str,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
-        sites: Optional[Union[str, Iterable[str]]] = None,
-        **other_search_args
+    query: str,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    sites: Optional[Union[str, Iterable[str]]] = None,
+    **other_search_args,
 ) -> str:
     """
     Constructs a Google search URL with optional date range, multiple site constraints,
@@ -93,7 +93,7 @@ def create_search_url(
     # Add site restrictions if specified
     if sites:
         if isinstance(sites, str):
-            sites = sites.split(',')
+            sites = sites.split(",")
         # Filter out empty sites and strip whitespace
         valid_sites = [site.strip() for site in sites if site.strip()]
         if valid_sites:
@@ -102,9 +102,7 @@ def create_search_url(
             search_query += f" {site_query}"
 
     # Construct URL parameters
-    params = {
-        "q": search_query
-    }
+    params = {"q": search_query}
 
     # Add date range if specified using the proper tbs format (M/D/YYYY)
     if start or end:

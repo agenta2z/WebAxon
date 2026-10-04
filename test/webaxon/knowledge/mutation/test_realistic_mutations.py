@@ -15,7 +15,21 @@ import time
 from datetime import datetime, timezone
 
 import pytest
-
+from agent_foundation.knowledge.retrieval.knowledge_base import KnowledgeBase
+from agent_foundation.knowledge.retrieval.models.entity_metadata import EntityMetadata
+from agent_foundation.knowledge.retrieval.models.knowledge_piece import (
+    KnowledgePiece,
+    KnowledgeType,
+)
+from agent_foundation.knowledge.retrieval.stores.graph.graph_adapter import (
+    GraphServiceEntityGraphStore,
+)
+from agent_foundation.knowledge.retrieval.stores.metadata.keyvalue_adapter import (
+    KeyValueMetadataStore,
+)
+from agent_foundation.knowledge.retrieval.stores.pieces.retrieval_adapter import (
+    RetrievalKnowledgePieceStore,
+)
 from rich_python_utils.service_utils.data_operation_record import (
     DataOperationRecord,
     generate_operation_id,
@@ -32,22 +46,6 @@ from rich_python_utils.service_utils.keyvalue_service.memory_keyvalue_service im
 )
 from rich_python_utils.service_utils.retrieval_service.memory_retrieval_service import (
     MemoryRetrievalService,
-)
-
-from agent_foundation.knowledge.retrieval.knowledge_base import KnowledgeBase
-from agent_foundation.knowledge.retrieval.models.entity_metadata import EntityMetadata
-from agent_foundation.knowledge.retrieval.models.knowledge_piece import (
-    KnowledgePiece,
-    KnowledgeType,
-)
-from agent_foundation.knowledge.retrieval.stores.graph.graph_adapter import (
-    GraphServiceEntityGraphStore,
-)
-from agent_foundation.knowledge.retrieval.stores.metadata.keyvalue_adapter import (
-    KeyValueMetadataStore,
-)
-from agent_foundation.knowledge.retrieval.stores.pieces.retrieval_adapter import (
-    RetrievalKnowledgePieceStore,
 )
 
 
@@ -126,8 +124,14 @@ def _make_pieces():
             knowledge_type=KnowledgeType.Procedure,
             info_type="instructions",
             tags=[
-                "grocery", "shopping", "workflow", "login",
-                "cart", "checkout", "coupons", "pricing",
+                "grocery",
+                "shopping",
+                "workflow",
+                "login",
+                "cart",
+                "checkout",
+                "coupons",
+                "pricing",
             ],
             entity_id=None,  # Global piece (default namespace)
             embedding_text=(
@@ -428,13 +432,15 @@ class TestInitialState:
     def test_graph_node_and_edge_counts(self, loaded_kb):
         _, _, _, graph_store = loaded_kb
         # User node has 7 outgoing edges (3 MEMBER_OF + 3 SHOPS_AT + 1 HAS_SKILL)
-        user_edges = graph_store.get_relations(
-            "user:alex-morgan", direction="outgoing"
-        )
+        user_edges = graph_store.get_relations("user:alex-morgan", direction="outgoing")
         assert len(user_edges) == 7
 
         # Each store has 1 USES_PROCEDURE edge
-        for store_id in ["service:freshmart", "service:greengrocer", "service:organicplace"]:
+        for store_id in [
+            "service:freshmart",
+            "service:greengrocer",
+            "service:organicplace",
+        ]:
             edges = graph_store.get_relations(store_id, direction="outgoing")
             assert len(edges) == 1
             assert edges[0].edge_type == "USES_PROCEDURE"
@@ -612,10 +618,7 @@ class TestPieceMutationsWithSearch:
             entity_id="user:alex-morgan",
             top_k=3,
         )
-        assert any(
-            p.piece_id == "alex-morgan-valuemart-membership"
-            for p, _ in results
-        )
+        assert any(p.piece_id == "alex-morgan-valuemart-membership" for p, _ in results)
 
     def test_update_spaces_tracks_change(self, loaded_kb):
         """Update a piece's spaces and verify field tracking."""
@@ -663,8 +666,14 @@ class TestMetadataMutations:
         # History should have add + update
         assert len(stored.history) == 2
         assert stored.history[1].operation == "update"
-        assert stored.history[1].properties_before["location"] == "456 Oak Ave, Portland, OR, 97201"
-        assert stored.history[1].properties_after["location"] == "789 Pine St, Seattle, WA, 98101"
+        assert (
+            stored.history[1].properties_before["location"]
+            == "456 Oak Ave, Portland, OR, 97201"
+        )
+        assert (
+            stored.history[1].properties_after["location"]
+            == "789 Pine St, Seattle, WA, 98101"
+        )
         assert "phone" not in stored.history[1].properties_before
         assert stored.history[1].properties_after["phone"] == "555-0123"
 
@@ -790,9 +799,7 @@ class TestGraphMutations:
         _, _, _, graph_store = loaded_kb
 
         op_id = generate_operation_id("test", "remove-greengrocer")
-        result = graph_store.remove_node(
-            "service:greengrocer", operation_id=op_id
-        )
+        result = graph_store.remove_node("service:greengrocer", operation_id=op_id)
         assert result is True
 
         # Node is soft-deleted
@@ -819,9 +826,7 @@ class TestGraphMutations:
         )
         for edge in incoming_all:
             if not edge.is_active:
-                delete_rec = [
-                    r for r in edge.history if r.operation == "delete"
-                ]
+                delete_rec = [r for r in edge.history if r.operation == "delete"]
                 assert len(delete_rec) >= 1
                 assert delete_rec[0].operation_id == op_id
 
@@ -845,9 +850,9 @@ class TestGraphMutations:
 
         # User node is soft-deleted
         assert graph_store.get_node("user:alex-morgan") is None
-        assert graph_store.get_node(
-            "user:alex-morgan", include_inactive=True
-        ) is not None
+        assert (
+            graph_store.get_node("user:alex-morgan", include_inactive=True) is not None
+        )
 
         # All 7 edges are inactive but still exist
         all_edges = graph_store.get_relations(
@@ -987,8 +992,7 @@ class TestMultiStepRollback:
 
         # Verify only 1 active user piece
         active = [
-            p for p in piece_store.list_all(entity_id="user:alex-morgan")
-            if p.is_active
+            p for p in piece_store.list_all(entity_id="user:alex-morgan") if p.is_active
         ]
         assert len(active) == 1
 
@@ -1022,13 +1026,15 @@ class TestMultiStepRollback:
         kb.update_piece(g)
 
         # Add new piece in user namespace
-        kb.add_piece(KnowledgePiece(
-            content="New piece that should be removed by rollback",
-            piece_id="temp-piece",
-            entity_id="user:alex-morgan",
-            domain="grocery",
-            spaces=["personal"],
-        ))
+        kb.add_piece(
+            KnowledgePiece(
+                content="New piece that should be removed by rollback",
+                piece_id="temp-piece",
+                entity_id="user:alex-morgan",
+                domain="grocery",
+                spaces=["personal"],
+            )
+        )
 
         # Rollback everything
         result = kb.rollback_to(t_before)
@@ -1070,8 +1076,14 @@ class TestOperationRollback:
         kb.update_piece(p2, operation_id=op_id)
 
         # Verify both updated
-        assert piece_store.get_by_id("alex-morgan-freshmart-membership").content == "Batch-updated FreshMart"
-        assert piece_store.get_by_id("alex-morgan-greengrocer-membership").content == "Batch-updated GreenGrocer"
+        assert (
+            piece_store.get_by_id("alex-morgan-freshmart-membership").content
+            == "Batch-updated FreshMart"
+        )
+        assert (
+            piece_store.get_by_id("alex-morgan-greengrocer-membership").content
+            == "Batch-updated GreenGrocer"
+        )
 
         # Rollback by operation_id
         result = kb.rollback_operation(op_id)
@@ -1153,11 +1165,12 @@ class TestCrossLayerIntegrity:
         edges = graph_store.get_relations(
             "user:alex-morgan", relation_type="MEMBER_OF", direction="outgoing"
         )
-        freshmart_edge = [
-            e for e in edges if e.target_id == "service:freshmart"
-        ]
+        freshmart_edge = [e for e in edges if e.target_id == "service:freshmart"]
         assert len(freshmart_edge) == 1
-        assert freshmart_edge[0].properties["piece_id"] == "alex-morgan-freshmart-membership"
+        assert (
+            freshmart_edge[0].properties["piece_id"]
+            == "alex-morgan-freshmart-membership"
+        )
 
     def test_metadata_update_doesnt_affect_graph_node(self, loaded_kb):
         """Updating metadata properties doesn't change graph node."""
@@ -1190,7 +1203,11 @@ class TestCrossLayerIntegrity:
         kb.update_piece(p)
 
         # All USES_PROCEDURE edges still resolve to the piece
-        for store_id in ["service:freshmart", "service:greengrocer", "service:organicplace"]:
+        for store_id in [
+            "service:freshmart",
+            "service:greengrocer",
+            "service:organicplace",
+        ]:
             edges = graph_store.get_relations(store_id, direction="outgoing")
             for edge in edges:
                 if edge.edge_type == "USES_PROCEDURE":
@@ -1206,9 +1223,9 @@ class TestCrossLayerIntegrity:
         user_meta = metadata_store.get_metadata("user:alex-morgan")
         original_location = user_meta.properties["location"]
         original_node_label = graph_store.get_node("user:alex-morgan").label
-        edge_count = len(graph_store.get_relations(
-            "user:alex-morgan", direction="outgoing"
-        ))
+        edge_count = len(
+            graph_store.get_relations("user:alex-morgan", direction="outgoing")
+        )
 
         t_before = datetime.now(timezone.utc).isoformat()
         time.sleep(0.02)
@@ -1227,9 +1244,10 @@ class TestCrossLayerIntegrity:
 
         # Graph unchanged
         assert graph_store.get_node("user:alex-morgan").label == original_node_label
-        assert len(graph_store.get_relations(
-            "user:alex-morgan", direction="outgoing"
-        )) == edge_count
+        assert (
+            len(graph_store.get_relations("user:alex-morgan", direction="outgoing"))
+            == edge_count
+        )
 
 
 # ── 8. Edge Cases and Robustness ──────────────────────────────────────────
@@ -1388,8 +1406,7 @@ class TestFullLifecycleIntegration:
             top_k=3,
         )
         assert any(
-            p.piece_id == "alex-morgan-budgetbasket-membership"
-            for p, _ in results
+            p.piece_id == "alex-morgan-budgetbasket-membership" for p, _ in results
         )
 
         # UPDATE 1 — content change
@@ -1630,9 +1647,10 @@ class TestMetadataRollback:
         # New metadata should be hard-removed
         assert metadata_store.get_metadata("service:budgetmart") is None
         # Also check with include_inactive — it should be truly gone
-        assert metadata_store.get_metadata(
-            "service:budgetmart", include_inactive=True
-        ) is None
+        assert (
+            metadata_store.get_metadata("service:budgetmart", include_inactive=True)
+            is None
+        )
 
     def test_rollback_metadata_multiple_updates(self, loaded_kb):
         """Multiple metadata updates, rollback to before first update."""
@@ -1797,9 +1815,7 @@ class TestGraphRollback:
 
         # Node should be hard-removed
         assert graph_store.get_node("service:budgetmart") is None
-        assert graph_store.get_node(
-            "service:budgetmart", include_inactive=True
-        ) is None
+        assert graph_store.get_node("service:budgetmart", include_inactive=True) is None
 
     def test_rollback_edge_soft_delete(self, loaded_kb):
         """Soft-delete an edge, rollback restores it."""
@@ -1959,18 +1975,25 @@ class TestCrossLayerRollback:
         graph_store.add_relation(e)
 
         # Verify mutations
-        assert piece_store.get_by_id(
-            "alex-morgan-freshmart-membership"
-        ).content == "MUTATED piece content"
-        assert metadata_store.get_metadata(
-            "user:alex-morgan"
-        ).properties["name"] == "MUTATED Name"
-        assert graph_store.get_node(
-            "service:freshmart"
-        ).properties["website"] == "MUTATED"
-        assert len(graph_store.get_relations(
-            "user:alex-morgan", relation_type="FAVORITE", direction="outgoing"
-        )) == 1
+        assert (
+            piece_store.get_by_id("alex-morgan-freshmart-membership").content
+            == "MUTATED piece content"
+        )
+        assert (
+            metadata_store.get_metadata("user:alex-morgan").properties["name"]
+            == "MUTATED Name"
+        )
+        assert (
+            graph_store.get_node("service:freshmart").properties["website"] == "MUTATED"
+        )
+        assert (
+            len(
+                graph_store.get_relations(
+                    "user:alex-morgan", relation_type="FAVORITE", direction="outgoing"
+                )
+            )
+            == 1
+        )
 
         # Rollback everything
         result = kb.rollback_to(t_before)
@@ -2032,15 +2055,18 @@ class TestCrossLayerRollback:
         graph_store.add_node(n, operation_id=op_id)
 
         # Verify mutations took effect
-        assert piece_store.get_by_id(
-            "alex-morgan-greengrocer-membership"
-        ).content == "Batch-updated GreenGrocer membership"
-        assert metadata_store.get_metadata(
-            "service:greengrocer"
-        ).properties["website"] == "www.greengrocer-batch.com"
-        assert graph_store.get_node(
-            "service:greengrocer"
-        ).properties["website"] == "www.greengrocer-batch.com"
+        assert (
+            piece_store.get_by_id("alex-morgan-greengrocer-membership").content
+            == "Batch-updated GreenGrocer membership"
+        )
+        assert (
+            metadata_store.get_metadata("service:greengrocer").properties["website"]
+            == "www.greengrocer-batch.com"
+        )
+        assert (
+            graph_store.get_node("service:greengrocer").properties["website"]
+            == "www.greengrocer-batch.com"
+        )
 
         # Rollback by shared operation_id
         result = kb.rollback_operation(op_id)
@@ -2049,12 +2075,15 @@ class TestCrossLayerRollback:
         assert result["graph_nodes"] >= 1
 
         # All three layers restored
-        assert piece_store.get_by_id(
-            "alex-morgan-greengrocer-membership"
-        ).content == original_content
-        assert metadata_store.get_metadata(
-            "service:greengrocer"
-        ).properties["website"] == "www.greengrocer.com"
-        assert graph_store.get_node(
-            "service:greengrocer"
-        ).properties["website"] == "www.greengrocer.com"
+        assert (
+            piece_store.get_by_id("alex-morgan-greengrocer-membership").content
+            == original_content
+        )
+        assert (
+            metadata_store.get_metadata("service:greengrocer").properties["website"]
+            == "www.greengrocer.com"
+        )
+        assert (
+            graph_store.get_node("service:greengrocer").properties["website"]
+            == "www.greengrocer.com"
+        )

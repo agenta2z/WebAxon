@@ -22,7 +22,7 @@ Validates: Requirements 14.1, 14.2, 14.3
 import sys
 from pathlib import Path
 
-PIVOT_FOLDER_NAME = 'test'
+PIVOT_FOLDER_NAME = "test"
 current_file = Path(__file__).resolve()
 current_path = current_file.parent
 while current_path.name != PIVOT_FOLDER_NAME and current_path.parent != current_path:
@@ -37,32 +37,35 @@ if src_dir.exists() and str(src_dir) not in sys.path:
     sys.path.insert(0, str(src_dir))
 
 projects_root = webagent_root.parent
-for path_item in [projects_root / "SciencePythonUtils" / "src", projects_root / "ScienceModelingTools" / "src"]:
+for path_item in [
+    projects_root / "SciencePythonUtils" / "src",
+    projects_root / "ScienceModelingTools" / "src",
+]:
     if path_item.exists() and str(path_item) not in sys.path:
         sys.path.insert(0, str(path_item))
 
 import pytest
-from hypothesis import given, strategies as st, settings, assume
-
+from hypothesis import assume, given, settings, strategies as st
 from webaxon.automation.backends.shared.text_sanitization import (
-    NonBMPHandling,
-    NewlineHandling,
-    WhitespaceHandling,
-    is_bmp_character,
+    _EMOJI_TRANSLITERATIONS,
     contains_non_bmp,
     get_non_bmp_characters,
+    handle_non_bmp,
+    is_bmp_character,
+    NewlineHandling,
+    NonBMPHandling,
     remove_non_bmp,
     replace_non_bmp,
-    transliterate_non_bmp,
-    handle_non_bmp,
     sanitize_input_text_for_webdriver,
-    _EMOJI_TRANSLITERATIONS,
+    transliterate_non_bmp,
+    WhitespaceHandling,
 )
 
 
 # =============================================================================
 # Property 8: Text Sanitization Round-Trip
 # =============================================================================
+
 
 class TestTextSanitizationRoundTrip:
     """
@@ -91,7 +94,9 @@ class TestTextSanitizationRoundTrip:
     @settings(max_examples=100)
     def test_sanitize_input_text_for_webdriver_produces_only_bmp_chars(self, text):
         """sanitize_input_text_for_webdriver should produce only BMP characters."""
-        result = sanitize_input_text_for_webdriver(text, non_bmp_handling=NonBMPHandling.REMOVE)
+        result = sanitize_input_text_for_webdriver(
+            text, non_bmp_handling=NonBMPHandling.REMOVE
+        )
         for char in result:
             assert ord(char) <= 0xFFFF, f"Non-BMP char found: U+{ord(char):04X}"
 
@@ -99,8 +104,12 @@ class TestTextSanitizationRoundTrip:
     @settings(max_examples=100)
     def test_sanitize_input_text_for_webdriver_is_idempotent(self, text):
         """Applying sanitize_input_text_for_webdriver twice should give same result as once."""
-        once = sanitize_input_text_for_webdriver(text, non_bmp_handling=NonBMPHandling.REMOVE)
-        twice = sanitize_input_text_for_webdriver(once, non_bmp_handling=NonBMPHandling.REMOVE)
+        once = sanitize_input_text_for_webdriver(
+            text, non_bmp_handling=NonBMPHandling.REMOVE
+        )
+        twice = sanitize_input_text_for_webdriver(
+            once, non_bmp_handling=NonBMPHandling.REMOVE
+        )
         assert once == twice
 
     def test_specific_emoji_removed(self):
@@ -125,11 +134,11 @@ class TestTextSanitizationRoundTrip:
 
     def test_is_bmp_character_correct(self):
         """is_bmp_character should correctly identify BMP chars."""
-        assert is_bmp_character('A')
-        assert is_bmp_character('中')  # Chinese character in BMP
-        assert is_bmp_character('\u0000')
-        assert is_bmp_character('\uFFFF')
-        assert not is_bmp_character('😀')  # Emoji is non-BMP
+        assert is_bmp_character("A")
+        assert is_bmp_character("中")  # Chinese character in BMP
+        assert is_bmp_character("\u0000")
+        assert is_bmp_character("\uffff")
+        assert not is_bmp_character("😀")  # Emoji is non-BMP
 
     @given(text=st.text(min_size=1, max_size=100))
     @settings(max_examples=50)
@@ -156,15 +165,15 @@ class TestReplaceNonBMP:
     def test_replace_uses_replacement_char(self):
         """replace_non_bmp should use the replacement character."""
         text = "Hello 😀"
-        result = replace_non_bmp(text, replacement='X')
-        assert 'X' in result
-        assert '😀' not in result
+        result = replace_non_bmp(text, replacement="X")
+        assert "X" in result
+        assert "😀" not in result
 
     def test_replace_default_is_replacement_character(self):
         """Default replacement should be U+FFFD."""
         text = "Hello 😀"
         result = replace_non_bmp(text)
-        assert '\uFFFD' in result
+        assert "\ufffd" in result
 
 
 class TestHandleNonBMP:
@@ -180,14 +189,14 @@ class TestHandleNonBMP:
         """REMOVE strategy should remove non-BMP characters."""
         text = "Hello 😀"
         result = handle_non_bmp(text, handling=NonBMPHandling.REMOVE)
-        assert '😀' not in result
+        assert "😀" not in result
 
     def test_replace_strategy_replaces_non_bmp(self):
         """REPLACE strategy should replace non-BMP characters."""
         text = "Hello 😀"
         result = handle_non_bmp(text, handling=NonBMPHandling.REPLACE)
-        assert '😀' not in result
-        assert '\uFFFD' in result
+        assert "😀" not in result
+        assert "\ufffd" in result
 
     def test_raise_strategy_raises_for_non_bmp(self):
         """RAISE strategy should raise ValueError for non-BMP characters."""
@@ -206,6 +215,7 @@ class TestHandleNonBMP:
 # =============================================================================
 # Property 9: Text Sanitization Transliteration
 # =============================================================================
+
 
 class TestTextSanitizationTransliteration:
     """
@@ -235,10 +245,10 @@ class TestTextSanitizationTransliteration:
         """Known emoji should be transliterated to text representation."""
         # Test a few known emoji from the transliteration dictionary
         test_cases = [
-            ('\U0001F600', ':grinning:'),  # 😀
-            ('\U0001F44D', ':thumbsup:'),  # 👍
-            ('\U0001F525', ':fire:'),       # 🔥
-            ('\U0001F389', ':tada:'),       # 🎉
+            ("\U0001f600", ":grinning:"),  # 😀
+            ("\U0001f44d", ":thumbsup:"),  # 👍
+            ("\U0001f525", ":fire:"),  # 🔥
+            ("\U0001f389", ":tada:"),  # 🎉
         ]
         for emoji, expected in test_cases:
             if emoji in _EMOJI_TRANSLITERATIONS:
@@ -254,25 +264,29 @@ class TestTextSanitizationTransliteration:
     def test_transliterate_with_fallback(self):
         """Unknown non-BMP chars should use fallback."""
         # Use a non-BMP char that's not in the emoji dictionary
-        text = "Hello \U0001F9E0"  # Brain emoji (may not be in dict)
-        result = transliterate_non_bmp(text, fallback='[?]')
-        assert '\U0001F9E0' not in result
+        text = "Hello \U0001f9e0"  # Brain emoji (may not be in dict)
+        result = transliterate_non_bmp(text, fallback="[?]")
+        assert "\U0001f9e0" not in result
         for char in result:
             assert ord(char) <= 0xFFFF
 
     def test_sanitize_with_transliterate_option(self):
         """sanitize_input_text_for_webdriver with TRANSLITERATE should transliterate emoji."""
-        text = "Hello \U0001F600"  # 😀
-        result = sanitize_input_text_for_webdriver(text, non_bmp_handling=NonBMPHandling.TRANSLITERATE)
-        assert '\U0001F600' not in result
-        if '\U0001F600' in _EMOJI_TRANSLITERATIONS:
-            assert ':grinning:' in result
+        text = "Hello \U0001f600"  # 😀
+        result = sanitize_input_text_for_webdriver(
+            text, non_bmp_handling=NonBMPHandling.TRANSLITERATE
+        )
+        assert "\U0001f600" not in result
+        if "\U0001f600" in _EMOJI_TRANSLITERATIONS:
+            assert ":grinning:" in result
         for char in result:
             assert ord(char) <= 0xFFFF
 
-    @given(emoji=st.sampled_from([
-        e for e in _EMOJI_TRANSLITERATIONS.keys() if ord(e) > 0xFFFF
-    ]))
+    @given(
+        emoji=st.sampled_from(
+            [e for e in _EMOJI_TRANSLITERATIONS.keys() if ord(e) > 0xFFFF]
+        )
+    )
     @settings(max_examples=50)
     def test_all_known_non_bmp_emoji_transliterate_correctly(self, emoji):
         """All known non-BMP emoji in the dictionary should transliterate correctly."""
@@ -288,14 +302,14 @@ class TestTextSanitizationTransliteration:
         result = transliterate_non_bmp(text)
 
         # Should not contain original emoji
-        assert '😀' not in result
-        assert '🎉' not in result
-        assert '👍' not in result
+        assert "😀" not in result
+        assert "🎉" not in result
+        assert "👍" not in result
 
         # Should contain original text
-        assert 'Hello' in result
-        assert 'World' in result
-        assert 'Test' in result
+        assert "Hello" in result
+        assert "World" in result
+        assert "Test" in result
 
         # Result should be all BMP
         for char in result:
@@ -311,9 +325,9 @@ class TestNewlineHandling:
 
         text = "Hello\nWorld\r\nTest"
         result = handle_newlines(text, handling=NewlineHandling.SPACE)
-        assert '\n' not in result
-        assert '\r' not in result
-        assert ' ' in result
+        assert "\n" not in result
+        assert "\r" not in result
+        assert " " in result
 
     def test_newline_remove_removes_newlines(self):
         """REMOVE handling should remove newlines entirely."""
@@ -321,7 +335,7 @@ class TestNewlineHandling:
 
         text = "Hello\nWorld"
         result = handle_newlines(text, handling=NewlineHandling.REMOVE)
-        assert '\n' not in result
+        assert "\n" not in result
         assert result == "HelloWorld"
 
     def test_newline_normalize_converts_to_unix(self):
@@ -330,7 +344,7 @@ class TestNewlineHandling:
 
         text = "Hello\r\nWorld\rTest"
         result = handle_newlines(text, handling=NewlineHandling.NORMALIZE)
-        assert '\r' not in result
+        assert "\r" not in result
         assert result == "Hello\nWorld\nTest"
 
     def test_newline_keep_preserves_newlines(self):
@@ -347,7 +361,9 @@ class TestWhitespaceHandling:
 
     def test_whitespace_normalize_collapses_spaces(self):
         """NORMALIZE handling should collapse multiple spaces."""
-        from webaxon.automation.backends.shared.text_sanitization import handle_whitespace
+        from webaxon.automation.backends.shared.text_sanitization import (
+            handle_whitespace,
+        )
 
         text = "Hello    World"
         result = handle_whitespace(text, handling=WhitespaceHandling.NORMALIZE)
@@ -356,7 +372,9 @@ class TestWhitespaceHandling:
 
     def test_whitespace_strip_removes_leading_trailing(self):
         """STRIP handling should remove leading/trailing whitespace."""
-        from webaxon.automation.backends.shared.text_sanitization import handle_whitespace
+        from webaxon.automation.backends.shared.text_sanitization import (
+            handle_whitespace,
+        )
 
         text = "   Hello World   "
         result = handle_whitespace(text, handling=WhitespaceHandling.STRIP)
@@ -364,7 +382,9 @@ class TestWhitespaceHandling:
 
     def test_whitespace_full_normalizes_and_strips(self):
         """FULL handling should both normalize and strip."""
-        from webaxon.automation.backends.shared.text_sanitization import handle_whitespace
+        from webaxon.automation.backends.shared.text_sanitization import (
+            handle_whitespace,
+        )
 
         text = "   Hello    World   "
         result = handle_whitespace(text, handling=WhitespaceHandling.FULL)
@@ -372,7 +392,9 @@ class TestWhitespaceHandling:
 
     def test_whitespace_keep_preserves_whitespace(self):
         """KEEP handling should preserve whitespace."""
-        from webaxon.automation.backends.shared.text_sanitization import handle_whitespace
+        from webaxon.automation.backends.shared.text_sanitization import (
+            handle_whitespace,
+        )
 
         text = "   Hello    World   "
         result = handle_whitespace(text, handling=WhitespaceHandling.KEEP)
@@ -392,17 +414,16 @@ class TestComprehensiveSanitization:
 
     def test_sanitize_removes_control_chars(self):
         """Control characters should be removed by default."""
-        text = "Hello\x00World\x1F"
+        text = "Hello\x00World\x1f"
         result = sanitize_input_text_for_webdriver(text)
-        assert '\x00' not in result
-        assert '\x1F' not in result
+        assert "\x00" not in result
+        assert "\x1f" not in result
 
     def test_sanitize_with_custom_sanitizer(self):
         """Custom sanitizer should be applied."""
         text = "Hello World"
         result = sanitize_input_text_for_webdriver(
-            text,
-            custom_sanitizer=lambda x: x.upper()
+            text, custom_sanitizer=lambda x: x.upper()
         )
         assert result == "HELLO WORLD"
 

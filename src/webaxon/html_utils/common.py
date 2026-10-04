@@ -2,20 +2,20 @@ import functools
 import re
 from copy import deepcopy
 from enum import StrEnum
-from typing import Tuple, Optional, Mapping, Union, Iterable, List
+from types import MappingProxyType
+from typing import Iterable, List, Mapping, Optional, Tuple, Union
 from urllib.parse import urlparse
 
 import bs4
 from bs4 import BeautifulSoup, NavigableString, Tag
-
 from rich_python_utils.common_utils import dedup_chain
-from rich_python_utils.string_utils import string_check, dedup_string_list
+from rich_python_utils.string_utils import dedup_string_list, string_check
 from rich_python_utils.string_utils.regex import contains_whole_word
-from types import MappingProxyType
 
 
 class ElementInteractionTypes(StrEnum):
     """String-based enum for classifying a link's relationship to the current domain."""
+
     NO_INTERACTION = "no_interaction"
     SAME_PAGE_ANCHOR_LINK = "same_page_anchor_link"
     SAME_DOMAIN_LINK = "same_domain_link"
@@ -24,17 +24,21 @@ class ElementInteractionTypes(StrEnum):
     UNKNOWN_INTERACTABLE = "unknown_interactable"
 
 
-HTML_STYLE_STRING_REGEX = re.compile(r'^<([a-zA-Z][a-zA-Z0-9]*)[^>]*>.*?</\1>$', re.DOTALL)
-HTML_COMMON_NON_INTERACTABLE_TAGS = ('div', 'span', 'p')
-HTML_COMMON_LIST_LIKE_ATTRIBUTES = ('class', 'rel')
-DEFAULT_HTML_INTERACTIVE_ATTRIBUTES_AND_VALUES = MappingProxyType({
-    'role': {
-        'button': ElementInteractionTypes.SAME_PAGE_INTERACTABLE,
-        'link': ElementInteractionTypes.UNKNOWN_INTERACTABLE
-    },
-    'jsname': None,
-    'data-jsname': None
-})
+HTML_STYLE_STRING_REGEX = re.compile(
+    r"^<([a-zA-Z][a-zA-Z0-9]*)[^>]*>.*?</\1>$", re.DOTALL
+)
+HTML_COMMON_NON_INTERACTABLE_TAGS = ("div", "span", "p")
+HTML_COMMON_LIST_LIKE_ATTRIBUTES = ("class", "rel")
+DEFAULT_HTML_INTERACTIVE_ATTRIBUTES_AND_VALUES = MappingProxyType(
+    {
+        "role": {
+            "button": ElementInteractionTypes.SAME_PAGE_INTERACTABLE,
+            "link": ElementInteractionTypes.UNKNOWN_INTERACTABLE,
+        },
+        "jsname": None,
+        "data-jsname": None,
+    }
+)
 
 
 def is_html_string(s: str) -> bool:
@@ -86,11 +90,13 @@ def parse_html_string(html_string: str):
         >>> print(element.name)
         div
     """
-    soup = BeautifulSoup(html_string, 'html.parser')
+    soup = BeautifulSoup(html_string, "html.parser")
     return soup.find()
 
 
-def copy_html_element_name_and_attrs(element, copy_children: bool = True, recursively_copy_children: bool = True):
+def copy_html_element_name_and_attrs(
+    element, copy_children: bool = True, recursively_copy_children: bool = True
+):
     """
     Creates a copy of an HTML element, copying its name and attributes. Optionally, recursively copies its children.
 
@@ -134,10 +140,7 @@ def copy_html_element_name_and_attrs(element, copy_children: bool = True, recurs
         <div id="container"></div>
     """
     if element is not None:
-        new_element = type(element)(
-            name=element.name,
-            attrs=element.attrs
-        )
+        new_element = type(element)(name=element.name, attrs=element.attrs)
         if copy_children:
             if recursively_copy_children:
                 for child in list(element.children):
@@ -202,7 +205,7 @@ def parse_onclick_for_url(onclick_value: str) -> str:
         r"location\.href\s*=\s*'([^']+)'",  # location.href='URL'
         r"location\.href\s*=\s*\"([^\"]+)\"",  # location.href="URL"
         r"window\.location\s*=\s*'([^']+)'",  # window.location='URL'
-        r"window\.location\s*=\s*\"([^\"]+)\""  # window.location="URL"
+        r"window\.location\s*=\s*\"([^\"]+)\"",  # window.location="URL"
     ]
     for pattern in patterns:
         match = re.search(pattern, onclick_value)
@@ -222,7 +225,7 @@ def classify_url_domain(url: str, current_domain: str) -> ElementInteractionType
         return ElementInteractionTypes.NO_INTERACTION
 
     # If it's purely an anchor link: e.g. "#section"
-    if url.startswith('#'):
+    if url.startswith("#"):
         return ElementInteractionTypes.SAME_PAGE_ANCHOR_LINK
 
     parsed = urlparse(url)
@@ -238,14 +241,13 @@ def classify_url_domain(url: str, current_domain: str) -> ElementInteractionType
 
 
 def get_element_interaction_type(
-        element,
-        current_domain: str,
-        interactive_attrs_and_values: Mapping[
-            str,
-            Union[Iterable, Mapping[str, ElementInteractionTypes], None]
-        ] = DEFAULT_HTML_INTERACTIVE_ATTRIBUTES_AND_VALUES,
-        element_get_attr_method_name='get',
-        element_has_attr_method_name='has_attr'
+    element,
+    current_domain: str,
+    interactive_attrs_and_values: Mapping[
+        str, Union[Iterable, Mapping[str, ElementInteractionTypes], None]
+    ] = DEFAULT_HTML_INTERACTIVE_ATTRIBUTES_AND_VALUES,
+    element_get_attr_method_name="get",
+    element_has_attr_method_name="has_attr",
 ) -> ElementInteractionTypes:
     """
     Classifies how an element interacts with the current page/domain. Possible outcomes:
@@ -375,8 +377,8 @@ def get_element_interaction_type(
                 # attr_key presence alone (e.g., jsname, data-jsname).
                 # For <button> elements without onclick, jsname is an internal JS
                 # event binding (not a navigation indicator) — treat as same-page.
-                tag = getattr(element, 'name', None) or getattr(element, 'tag_name', '')
-                if tag.lower() == 'button' and not onclick_value:
+                tag = getattr(element, "name", None) or getattr(element, "tag_name", "")
+                if tag.lower() == "button" and not onclick_value:
                     return ElementInteractionTypes.SAME_PAGE_INTERACTABLE
                 return ElementInteractionTypes.UNKNOWN_INTERACTABLE
             elif isinstance(value_map, ElementInteractionTypes):
@@ -407,9 +409,9 @@ def get_element_interaction_type(
 
 @support_input_html
 def get_text_and_attributes_from_element(
-        element,
-        immediate_text_only: bool = False,
-        strip_texts_before_concatenation: bool = False
+    element,
+    immediate_text_only: bool = False,
+    strip_texts_before_concatenation: bool = False,
 ) -> Tuple[Optional[str], Mapping[str, str]]:
     """
     Extracts the combined text content and attributes from an HTML element.
@@ -452,7 +454,7 @@ def get_text_and_attributes_from_element(
         else:
             text = element.get_text(strip=strip_texts_before_concatenation)
         if text is not None and not text.strip():
-            text = ''
+            text = ""
         attributes = element.attrs
     else:
         text, attributes = None, {}
@@ -462,9 +464,9 @@ def get_text_and_attributes_from_element(
 
 @support_input_html
 def get_tag_text_and_attributes_from_element(
-        element,
-        immediate_text_only: bool = False,
-        strip_texts_before_concatenation: bool = False
+    element,
+    immediate_text_only: bool = False,
+    strip_texts_before_concatenation: bool = False,
 ) -> Tuple[Optional[str], Optional[str], Mapping[str, str]]:
     """
     Extracts the tag name, combined text content, and attributes from an HTML element.
@@ -500,8 +502,8 @@ def get_tag_text_and_attributes_from_element(
             *get_text_and_attributes_from_element(
                 element,
                 immediate_text_only=immediate_text_only,
-                strip_texts_before_concatenation=strip_texts_before_concatenation
-            )
+                strip_texts_before_concatenation=strip_texts_before_concatenation,
+            ),
         )
     else:
         return None, None, {}
@@ -511,7 +513,7 @@ def get_tag_text_and_attributes_from_element(
 def is_element_hidden(
     element,
     only_consider_explicit_hidden: bool = False,
-    enabled_tags: Optional[Iterable[str]] = None
+    enabled_tags: Optional[Iterable[str]] = None,
 ) -> bool:
     """
     Determines whether an HTML element is hidden using comprehensive checks.
@@ -592,25 +594,28 @@ def is_element_hidden(
         return False
 
     # Check for 'hidden' attribute
-    if element.has_attr('hidden'):
+    if element.has_attr("hidden"):
         return True
 
     # Check for aria-hidden="true"
-    if element.get('aria-hidden') == 'true':
+    if element.get("aria-hidden") == "true":
         return True
 
     # Check for 'style' attribute containing 'display: none' or 'visibility: hidden'
-    style = element.get('style', '')
+    style = element.get("style", "")
     if style:
         # Normalize the style string
-        style_normalized = style.lower().replace(' ', '')
-        if 'display:none' in style_normalized or 'visibility:hidden' in style_normalized:
+        style_normalized = style.lower().replace(" ", "")
+        if (
+            "display:none" in style_normalized
+            or "visibility:hidden" in style_normalized
+        ):
             return True
 
     # Comprehensive mode: Check for 'class' attribute containing 'hidden'
     if not only_consider_explicit_hidden:
-        class_list = element.get('class', [])
-        if 'hidden' in class_list:
+        class_list = element.get("class", [])
+        if "hidden" in class_list:
             return True
 
     return False
@@ -620,9 +625,9 @@ def is_element_hidden(
 def is_element_hidden_(
     element,
     additional_rules: Optional[List[dict]] = None,
-    rule_set_name_for_error: str = 'hidden_element_rules',
+    rule_set_name_for_error: str = "hidden_element_rules",
     only_consider_explicit_hidden: bool = False,
-    enabled_tags: Optional[Iterable[str]] = None
+    enabled_tags: Optional[Iterable[str]] = None,
 ) -> bool:
     """
     Determines whether an HTML element should be considered hidden and removed,
@@ -700,14 +705,18 @@ def is_element_hidden_(
 
     # First priority: Evaluate additional rules if provided
     if additional_rules:
-        from webaxon.html_utils.element_rule_matching import is_element_matching_rule_set
+        from webaxon.html_utils.element_rule_matching import (
+            is_element_matching_rule_set,
+        )
 
-        action = is_element_matching_rule_set(element, additional_rules, rule_set_name_for_error)
+        action = is_element_matching_rule_set(
+            element, additional_rules, rule_set_name_for_error
+        )
 
-        if action == 'keep':
+        if action == "keep":
             # Rule explicitly says to keep this element
             return False
-        elif action == 'remove':
+        elif action == "remove":
             # Rule explicitly says to remove this element
             return True
         # If action is None, fall through to default logic
@@ -717,14 +726,22 @@ def is_element_hidden_(
 
 
 # Define interactive element types that can have disabled attribute
-INTERACTIVE_ELEMENT_TYPES = ('input', 'button', 'select', 'textarea', 'option', 'optgroup', 'fieldset')
+INTERACTIVE_ELEMENT_TYPES = (
+    "input",
+    "button",
+    "select",
+    "textarea",
+    "option",
+    "optgroup",
+    "fieldset",
+)
 
 
 @support_input_html
 def is_element_disabled(
     element,
     only_consider_non_interactable_as_disabled: bool = False,
-    enabled_tags: Optional[Iterable[str]] = None
+    enabled_tags: Optional[Iterable[str]] = None,
 ) -> bool:
     """
     Determines whether an HTML element is disabled using comprehensive checks.
@@ -786,33 +803,33 @@ def is_element_disabled(
 
     if only_consider_non_interactable_as_disabled:
         # Strict mode: only interactive elements with disabled attribute
-        if element.name in INTERACTIVE_ELEMENT_TYPES and element.has_attr('disabled'):
+        if element.name in INTERACTIVE_ELEMENT_TYPES and element.has_attr("disabled"):
             # Special case: disabled="false" (case-insensitive) is treated as NOT disabled (for JS frameworks)
-            disabled_value = element.get('disabled', '')
-            if disabled_value.lower() == 'false':
+            disabled_value = element.get("disabled", "")
+            if disabled_value.lower() == "false":
                 return False
             return True
         return False
 
     # Comprehensive mode: check all disabled indicators
     # Check for disabled attribute
-    if element.has_attr('disabled'):
+    if element.has_attr("disabled"):
         # Special case: disabled="false" (case-insensitive) is treated as NOT disabled (for JS frameworks)
-        disabled_value = element.get('disabled', '')
-        if disabled_value.lower() == 'false':
+        disabled_value = element.get("disabled", "")
+        if disabled_value.lower() == "false":
             return False
         return True
 
     # Check for aria-disabled="true"
-    if element.get('aria-disabled') == 'true':
+    if element.get("aria-disabled") == "true":
         return True
 
     # Check for readonly attribute (inputs/textareas)
-    if element.has_attr('readonly'):
+    if element.has_attr("readonly"):
         return True
 
     # Check for aria-readonly="true"
-    if element.get('aria-readonly') == 'true':
+    if element.get("aria-readonly") == "true":
         return True
 
     return False
@@ -822,9 +839,9 @@ def is_element_disabled(
 def is_element_disabled_(
     element,
     additional_rules: Optional[List[dict]] = None,
-    rule_set_name_for_error: str = 'disabled_element_rules',
+    rule_set_name_for_error: str = "disabled_element_rules",
     only_consider_non_interactable_as_disabled: bool = False,
-    enabled_tags: Optional[Iterable[str]] = None
+    enabled_tags: Optional[Iterable[str]] = None,
 ) -> bool:
     """
     Determines whether an HTML element should be considered disabled and removed,
@@ -902,20 +919,26 @@ def is_element_disabled_(
 
     # First priority: Evaluate additional rules if provided
     if additional_rules:
-        from webaxon.html_utils.element_rule_matching import is_element_matching_rule_set
+        from webaxon.html_utils.element_rule_matching import (
+            is_element_matching_rule_set,
+        )
 
-        action = is_element_matching_rule_set(element, additional_rules, rule_set_name_for_error)
+        action = is_element_matching_rule_set(
+            element, additional_rules, rule_set_name_for_error
+        )
 
-        if action == 'keep':
+        if action == "keep":
             # Rule explicitly says to keep this element
             return False
-        elif action == 'remove':
+        elif action == "remove":
             # Rule explicitly says to remove this element
             return True
         # If action is None, fall through to default logic
 
     # Default logic: Use comprehensive disabled check
-    return is_element_disabled(element, only_consider_non_interactable_as_disabled, enabled_tags)
+    return is_element_disabled(
+        element, only_consider_non_interactable_as_disabled, enabled_tags
+    )
 
 
 @support_input_html
@@ -945,9 +968,9 @@ def has_immediate_text(element) -> bool:
         >>> has_immediate_text(soup.find('div'))
         True
     """
-    return (
-            bool(element.next)
-            and any(isinstance(child, NavigableString) and child.strip() for child in element.children)
+    return bool(element.next) and any(
+        isinstance(child, NavigableString) and child.strip()
+        for child in element.children
     )
 
 
@@ -994,12 +1017,16 @@ def get_immediate_text(element, strip: bool = False) -> str:
     # element.next: returns the very next item in the parse tree, which is often not all immediate text nodes.
 
     if strip:
-        immediate_text = ''.join(
-            child.strip() for child in element.children if isinstance(child, (str, NavigableString))
+        immediate_text = "".join(
+            child.strip()
+            for child in element.children
+            if isinstance(child, (str, NavigableString))
         )
     else:
-        immediate_text = ''.join(
-            child for child in element.children if isinstance(child, (str, NavigableString))
+        immediate_text = "".join(
+            child
+            for child in element.children
+            if isinstance(child, (str, NavigableString))
         )
     return immediate_text
 
@@ -1057,7 +1084,9 @@ def remove_immediate_text(element, always_return_element_object: bool = False):
 
 
 @support_input_html
-def get_attribute_names_by_pattern(element, attribute_pattern: Union[str, Iterable[str]]) -> List[str]:
+def get_attribute_names_by_pattern(
+    element, attribute_pattern: Union[str, Iterable[str]]
+) -> List[str]:
     """
     Get attribute names of an element that match the specified pattern(s).
 
@@ -1088,27 +1117,26 @@ def get_attribute_names_by_pattern(element, attribute_pattern: Union[str, Iterab
         >>> get_attribute_names_by_pattern(html_content, ['!^data-'])
         ['id', 'class']
     """
-    if attribute_pattern == '*':
+    if attribute_pattern == "*":
         return list(element.attrs.keys())
     elif not attribute_pattern:
         return []
     elif isinstance(attribute_pattern, str):
-        return [
-            attr for attr in element.attrs
-            if string_check(attr, attribute_pattern)
-        ]
+        return [attr for attr in element.attrs if string_check(attr, attribute_pattern)]
     else:
         return [
-            attr for attr in element.attrs
+            attr
+            for attr in element.attrs
             if any(
-                string_check(attr, _attr_pattern)
-                for _attr_pattern in attribute_pattern
+                string_check(attr, _attr_pattern) for _attr_pattern in attribute_pattern
             )
         ]
 
 
 @support_input_html
-def get_attribute_names_excluding_pattern(element, attribute_pattern: Union[str, Iterable[str]]) -> List[str]:
+def get_attribute_names_excluding_pattern(
+    element, attribute_pattern: Union[str, Iterable[str]]
+) -> List[str]:
     """
     Get attribute names of an element excluding those that match the specified pattern(s).
 
@@ -1139,27 +1167,29 @@ def get_attribute_names_excluding_pattern(element, attribute_pattern: Union[str,
         >>> get_attribute_names_excluding_pattern(html_content, ['!^data-'])
         ['data-value']
     """
-    if attribute_pattern == '*':
+    if attribute_pattern == "*":
         return []
     elif not attribute_pattern:
         return list(element.attrs.keys())
     elif isinstance(attribute_pattern, str):
         return [
-            attr for attr in element.attrs
-            if not string_check(attr, attribute_pattern)
+            attr for attr in element.attrs if not string_check(attr, attribute_pattern)
         ]
     else:
         return [
-            attr for attr in element.attrs
+            attr
+            for attr in element.attrs
             if not any(
-                string_check(attr, attr_pattern)
-                for attr_pattern in attribute_pattern
+                string_check(attr, attr_pattern) for attr_pattern in attribute_pattern
             )
         ]
 
 
-def keep_specified_attributes(element, attributes_to_keep: Union[str, Iterable[str]],
-                              always_return_element_object: bool = False):
+def keep_specified_attributes(
+    element,
+    attributes_to_keep: Union[str, Iterable[str]],
+    always_return_element_object: bool = False,
+):
     """
     Keep specified attributes of an element and remove the rest.
 
@@ -1200,7 +1230,9 @@ def keep_specified_attributes(element, attributes_to_keep: Union[str, Iterable[s
     if element_input_is_string:
         element = parse_html_string(element)
 
-    attrs_to_remove = get_attribute_names_excluding_pattern(element, attribute_pattern=attributes_to_keep)
+    attrs_to_remove = get_attribute_names_excluding_pattern(
+        element, attribute_pattern=attributes_to_keep
+    )
     if attrs_to_remove:
         for attr in attrs_to_remove:
             del element[attr]
@@ -1237,7 +1269,11 @@ def extract_attributes(element, attributes: list) -> dict:
         {'id': '123', 'class': ['container']}
     """
     if element:
-        return {attr: element.get(attr) for attr in attributes if element.get(attr) is not None}
+        return {
+            attr: element.get(attr)
+            for attr in attributes
+            if element.get(attr) is not None
+        }
     else:
         return {}
 
@@ -1267,10 +1303,10 @@ def attribute_value_to_list(value: Union[str, List]) -> List:
 
 
 def merge_attribute_values(
-        value1: Union[str, List],
-        value2: Union[str, List],
-        deduplicate_text_values: bool = False,
-        deduplicate_list_values: bool = True
+    value1: Union[str, List],
+    value2: Union[str, List],
+    deduplicate_text_values: bool = False,
+    deduplicate_list_values: bool = True,
 ) -> Union[str, List]:
     """
     Merge two attribute values (string or list of strings) with optional substring-based
@@ -1364,20 +1400,20 @@ def merge_attribute_values(
                     return value2
                 elif contains_whole_word(value1, value2):
                     return value1
-            return value1 + ' ' + value2
+            return value1 + " " + value2
         else:  # value2 is list
-            if (
-                    (deduplicate_list_values and value1 in value2)
-                    or (deduplicate_text_values and any(contains_whole_word(_value, value1) for _value in value2))
+            if (deduplicate_list_values and value1 in value2) or (
+                deduplicate_text_values
+                and any(contains_whole_word(_value, value1) for _value in value2)
             ):
                 return value2
             else:
                 return [value1] + value2
     else:  # value1 is list
         if not is_value2_list:  # value2 is str
-            if (
-                    (deduplicate_list_values and value2 in value1)
-                    or (deduplicate_text_values and any(contains_whole_word(_value, value2) for _value in value1))
+            if (deduplicate_list_values and value2 in value1) or (
+                deduplicate_text_values
+                and any(contains_whole_word(_value, value2) for _value in value1)
             ):
                 return value1
             else:
@@ -1385,9 +1421,21 @@ def merge_attribute_values(
         else:  # value1 and value2 are both list
             if deduplicate_text_values:
                 value1_text_dedup = list(
-                    filter(lambda x: not any(contains_whole_word(_value, x) for _value in value2), value1))
+                    filter(
+                        lambda x: not any(
+                            contains_whole_word(_value, x) for _value in value2
+                        ),
+                        value1,
+                    )
+                )
                 value2_text_dedup = (
-                    filter(lambda x: not any(contains_whole_word(_value, x) for _value in value1_text_dedup), value2)
+                    filter(
+                        lambda x: not any(
+                            contains_whole_word(_value, x)
+                            for _value in value1_text_dedup
+                        ),
+                        value2,
+                    )
                     if value1_text_dedup
                     else value2
                 )
@@ -1400,11 +1448,12 @@ def merge_attribute_values(
 
 @support_input_html2
 def merge_attributes(
-        element1, element2,
-        list_like_attrs: Iterable[str] = None,
-        excluded_attrs: Iterable[str] = None,
-        deduplicate_text_values: bool = False,
-        deduplicate_list_values: bool = True
+    element1,
+    element2,
+    list_like_attrs: Iterable[str] = None,
+    excluded_attrs: Iterable[str] = None,
+    deduplicate_text_values: bool = False,
+    deduplicate_list_values: bool = True,
 ):
     """
     Merge attributes from ``element1`` into ``element2``, optionally treating some attributes as
@@ -1516,6 +1565,6 @@ def merge_attributes(
                 element1_value,
                 element2_value,
                 deduplicate_list_values=deduplicate_list_values,
-                deduplicate_text_values=deduplicate_text_values
+                deduplicate_text_values=deduplicate_text_values,
             )
     return element2

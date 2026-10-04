@@ -22,13 +22,11 @@ if _src_dir.exists() and str(_src_dir) not in sys.path:
     sys.path.insert(0, str(_src_dir))
 
 import pytest
-from hypothesis import given, settings, assume
-from hypothesis import strategies as st
-
+from hypothesis import assume, given, settings, strategies as st
 from webaxon.evaluation.adapters.trajectory_capture import (
-    format_action_readable,
     _collect_screenshots,
     _extract_step_number,
+    format_action_readable,
 )
 
 
@@ -161,9 +159,7 @@ class TestCollectScreenshotsSortedProperty:
 
         # Verify sorted order
         extracted = [_extract_step_number(p.name) for p in result]
-        assert extracted == sorted(extracted), (
-            f"Screenshots not sorted: {extracted}"
-        )
+        assert extracted == sorted(extracted), f"Screenshots not sorted: {extracted}"
 
     @given(step_numbers=step_numbers_strategy())
     @settings(max_examples=100)

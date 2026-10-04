@@ -10,23 +10,19 @@ Usage:
 
 import time
 
-from webaxon.automation.web_driver import WebDriver, WebAutomationDrivers
 from create_slack_goodtime_demo_graph import create_slack_good_time_demo_graph
+from webaxon.automation.web_driver import WebAutomationDrivers, WebDriver
 
 
 def run_google_search_action_graph():
     """Run ActionGraph to visit Google, input text, and click search."""
     # Use headless=False to visually observe the execution
-    driver = WebDriver(
-        driver_type=WebAutomationDrivers.Chrome,
-        headless=False
-    )
+    driver = WebDriver(driver_type=WebAutomationDrivers.Chrome, headless=False)
 
     try:
         print("Creating ActionGraph...")
         graph = create_slack_good_time_demo_graph(
-            action_executor=driver,
-            search_query="hello world"
+            action_executor=driver, search_query="hello world"
         )
 
         print("Executing ActionGraph (visit_url -> input_text -> click)...")

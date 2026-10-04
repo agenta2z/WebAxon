@@ -775,7 +775,9 @@ class PlaywrightBackend(BackendAdapter):
         wait_before_checking_new_tab: float = 0.5,
         additional_max_wait_for_tab_timeout: float = 5.0,
         only_enable_additional_wait_for_non_anchor_links: bool = True,
-        implementation: Union[ClickImplementation, Tuple[ClickImplementation, ...]] = DEFAULT_CLICK_IMPLEMENTATION_ORDER,
+        implementation: Union[
+            ClickImplementation, Tuple[ClickImplementation, ...]
+        ] = DEFAULT_CLICK_IMPLEMENTATION_ORDER,
         new_tab_strategy_order: Tuple[
             NewTabClickStrategy, ...
         ] = DEFAULT_NEW_TAB_STRATEGY_ORDER,

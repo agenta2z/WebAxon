@@ -50,7 +50,9 @@ CHROME_VERSION_MAIN = 144  # Major version from 144.0.7559.109
 
 # Runtime configuration
 STEP_WAIT = True  # True = wait for Enter after each step, False = run continuously
-CANDIDATE_NAME = None  # None = select first queued, or specify name e.g. "Katie Meringolo"
+CANDIDATE_NAME = (
+    None  # None = select first queued, or specify name e.g. "Katie Meringolo"
+)
 
 
 # =============================================================================
@@ -58,6 +60,13 @@ CANDIDATE_NAME = None  # None = select first queued, or specify name e.g. "Katie
 # =============================================================================
 try:
     from functools import partial
+
+    from agent_foundation.common.inferencers.api_inferencers.ag.ag_claude_api_inferencer import (
+        AgClaudeApiInferencer as ClaudeApiInferencer,
+    )
+    from create_goodtime_template_selection_graph_with_monitor import (
+        create_goodtime_template_selection_graph_with_monitor,
+    )
     from rich_python_utils.common_objects.debuggable import Debugger
     from rich_python_utils.datetime_utils.common import current_date_time_string
     from rich_python_utils.io_utils.json_io import write_json
@@ -67,18 +76,12 @@ try:
     from rich_python_utils.string_utils.formatting.template_manager import (
         TemplateManager,
     )
-    from agent_foundation.common.inferencers.api_inferencers.ag.ag_claude_api_inferencer import (
-        AgClaudeApiInferencer as ClaudeApiInferencer,
-    )
     from webaxon.automation.agents import (
         FindElementInferenceConfig,
         FindElementInferencer,
     )
     from webaxon.automation.backends import BrowserConfig, UndetectedChromeConfig
     from webaxon.automation.web_driver import WebDriver
-    from create_goodtime_template_selection_graph_with_monitor import (
-        create_goodtime_template_selection_graph_with_monitor,
-    )
 except ImportError as e:
     print(f"FATAL: Failed to import required packages: {e}")
     print(f"Traceback:\n{traceback.format_exc()}")
@@ -96,7 +99,7 @@ except ImportError as e:
 _log_file_path = os.path.join(
     _script_dir,
     LOGS_FOLDER_NAME,
-    f"goodtime_automation_{current_date_time_string(LOG_FILE_TIMESTAMP_FORMAT)}.jsonl"
+    f"goodtime_automation_{current_date_time_string(LOG_FILE_TIMESTAMP_FORMAT)}.jsonl",
 )
 
 logger = Debugger(
@@ -104,7 +107,7 @@ logger = Debugger(
     always_add_logging_based_logger=True,  # Also console output
     log_name="GoodTimeAutomation",
     debug_mode=True,
-    log_time=True
+    log_time=True,
 )
 
 
@@ -140,7 +143,9 @@ def acquire_lock():
         logger.log_info(f"Acquired exclusive lock with PID: {os.getpid()}")
         return True
     except IOError:
-        logger.log_warning("Another instance is already running (lock held by another process)")
+        logger.log_warning(
+            "Another instance is already running (lock held by another process)"
+        )
         logger.log_info("Exiting to prevent duplicate instances")
         sys.exit(0)
 
@@ -335,6 +340,7 @@ def main():
 
         # 3. Create TemplateManager for prompt templates
         import webaxon.automation.agents.prompt_templates as templates_module
+
         templates_path = os.path.dirname(templates_module.__file__)
         logger.log_info(f"Loading prompt templates from: {templates_path}")
 

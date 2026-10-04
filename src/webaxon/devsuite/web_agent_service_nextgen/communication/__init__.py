@@ -8,47 +8,47 @@ Components:
         Queue service lifecycle management.
         Handles initialization, queue creation, and cleanup of the
         StorageBasedQueueService used for inter-process communication.
-        
+
         Key features:
             - Timestamped queue paths for isolation
             - Automatic creation of all required queues
             - Clean shutdown and resource management
             - Error handling for queue operations
-        
+
         Required queues:
             - input_queue: User input messages to agents
             - response_queue: Agent responses to users
             - client_control_queue: Control messages from clients
             - server_control_queue: Control messages from service
-        
+
         Example:
             >>> manager = QueueManager(testcase_root, config)
             >>> queue_service = manager.initialize()
             >>> manager.create_queues()
             >>> # ... use queue_service ...
             >>> manager.close()
-    
+
     MessageHandlers:
         Control message processing and dispatch.
         Handles different types of control messages sent to the service,
         coordinating with SessionManager and AgentFactory as needed.
-        
+
         Supported message types:
             - sync_active_sessions: Get list of active session IDs
             - sync_session_agent: Get agent status for a session
             - sync_session_template_version: Get template version for a session
             - agent_control: Execute control action (stop/pause/continue/step)
-        
+
         Message format:
             All messages are dictionaries with a 'type' field and optional
             additional fields depending on the message type.
-            
+
             Example:
                 {
                     'type': 'sync_active_sessions',
                     'timestamp': '2024-01-15T10:30:00'
                 }
-        
+
         Example:
             >>> handlers = MessageHandlers(
             ...     session_manager,
@@ -67,12 +67,12 @@ Design Principles:
 
 Message Protocol:
     The service uses a queue-based message protocol for communication:
-    
+
     1. Control messages arrive on client_control_queue
     2. MessageHandlers dispatches to appropriate handler
     3. Handler processes message and coordinates with other components
     4. Response sent to server_control_queue
-    
+
     This protocol enables:
     - Asynchronous communication
     - Decoupling of service and UI
@@ -84,10 +84,10 @@ For detailed documentation, see the individual module files:
     - message_handlers.py: Message processing and dispatch
 """
 
-from .queue_manager import QueueManager
 from .message_handlers import MessageHandlers
+from .queue_manager import QueueManager
 
 __all__ = [
-    'QueueManager',
-    'MessageHandlers',
+    "QueueManager",
+    "MessageHandlers",
 ]

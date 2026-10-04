@@ -3,17 +3,15 @@
 Uses hypothesis to verify formatting properties across generated inputs.
 """
 
-import resolve_path  # Setup import paths
-
 import pytest
-from hypothesis import given, settings, strategies as st, assume, HealthCheck
-
+import resolve_path  # Setup import paths
+from hypothesis import assume, given, HealthCheck, settings, strategies as st
 from webaxon.devsuite.web_agent_service_nextgen.cli.kb_formatters import (
-    format_search_results,
-    format_list_results,
-    format_ingestion_result,
-    format_update_results,
     format_delete_candidates,
+    format_ingestion_result,
+    format_list_results,
+    format_search_results,
+    format_update_results,
     truncate_content,
 )
 
@@ -35,11 +33,15 @@ _piece_id = st.text(
 _domain = st.text(
     min_size=1,
     max_size=30,
-    alphabet=st.characters(whitelist_categories=("Ll", "Lu", "Nd"), whitelist_characters="-_"),
+    alphabet=st.characters(
+        whitelist_categories=("Ll", "Lu", "Nd"), whitelist_characters="-_"
+    ),
 )
 
 # Knowledge type strings
-_knowledge_type = st.sampled_from(["fact", "skill", "preference", "procedure", "concept"])
+_knowledge_type = st.sampled_from(
+    ["fact", "skill", "preference", "procedure", "concept"]
+)
 
 # Content strings (non-empty, printable, no filter needed — from_regex guarantees non-empty)
 _content = st.from_regex(r"[A-Za-z0-9 .,!?;:']{1,300}", fullmatch=True)
@@ -58,34 +60,42 @@ _version = st.integers(min_value=0, max_value=1000)
 # Strategy builders for result dicts
 # ---------------------------------------------------------------------------
 
-_piece_result = st.fixed_dictionaries({
-    "piece_id": _piece_id,
-    "domain": _domain,
-    "knowledge_type": _knowledge_type,
-    "content": _content,
-    "score": _score,
-})
+_piece_result = st.fixed_dictionaries(
+    {
+        "piece_id": _piece_id,
+        "domain": _domain,
+        "knowledge_type": _knowledge_type,
+        "content": _content,
+        "score": _score,
+    }
+)
 
-_list_result = st.fixed_dictionaries({
-    "piece_id": _piece_id,
-    "domain": _domain,
-    "knowledge_type": _knowledge_type,
-    "content": _content,
-    "is_active": st.booleans(),
-})
+_list_result = st.fixed_dictionaries(
+    {
+        "piece_id": _piece_id,
+        "domain": _domain,
+        "knowledge_type": _knowledge_type,
+        "content": _content,
+        "is_active": st.booleans(),
+    }
+)
 
-_update_result = st.fixed_dictionaries({
-    "piece_id": _piece_id,
-    "old_version": _version,
-    "new_version": _version,
-    "action": st.sampled_from(["replace", "merge", "append", "no_change"]),
-})
+_update_result = st.fixed_dictionaries(
+    {
+        "piece_id": _piece_id,
+        "old_version": _version,
+        "new_version": _version,
+        "action": st.sampled_from(["replace", "merge", "append", "no_change"]),
+    }
+)
 
-_delete_candidate = st.fixed_dictionaries({
-    "piece_id": _piece_id,
-    "content_preview": _content,
-    "score": _score,
-})
+_delete_candidate = st.fixed_dictionaries(
+    {
+        "piece_id": _piece_id,
+        "content_preview": _content,
+        "score": _score,
+    }
+)
 
 
 # ---------------------------------------------------------------------------
@@ -236,15 +246,11 @@ class TestDeleteCandidateFormatting:
         output = format_delete_candidates(candidates)
         for i, c in enumerate(candidates, 1):
             # Check numbering
-            assert f"{i}." in output, (
-                f"Expected numbered entry '{i}.' in output"
-            )
+            assert f"{i}." in output, f"Expected numbered entry '{i}.' in output"
             # Check piece_id prefix
             pid_prefix = c["piece_id"][:8]
             assert pid_prefix in output, (
                 f"Expected piece_id prefix '{pid_prefix}' in output"
             )
             # Check content preview is present
-            assert c["content_preview"] in output, (
-                f"Expected content_preview in output"
-            )
+            assert c["content_preview"] in output, f"Expected content_preview in output"
