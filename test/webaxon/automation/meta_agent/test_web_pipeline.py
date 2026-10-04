@@ -6,7 +6,6 @@ from unittest.mock import MagicMock
 
 from agent_foundation.automation.meta_agent.models import PipelineConfig
 from agent_foundation.automation.meta_agent.pipeline import MetaAgentPipeline
-
 from webaxon.automation.meta_agent.web_normalizer_config import WEB_ACTION_TYPE_MAP
 from webaxon.automation.meta_agent.web_pipeline import create_web_meta_agent_pipeline
 from webaxon.automation.meta_agent.web_target_converter import WebTargetConverter

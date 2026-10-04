@@ -101,7 +101,10 @@ def main(argv=None):
         "--score_threshold", type=int, default=3, help="Score threshold (default: 3)"
     )
     parser.add_argument(
-        "--num_worker", type=int, default=1, help="Number of worker threads (default: 1)"
+        "--num_worker",
+        type=int,
+        default=1,
+        help="Number of worker threads (default: 1)",
     )
 
     # Dataset options
@@ -121,9 +124,15 @@ def main(argv=None):
         type=Path,
         help="WebAxon workspace (testcase_root). Defaults to devsuite/_workspace.",
     )
-    parser.add_argument("--max_steps", type=int, default=50, help="Max agent steps per task")
-    parser.add_argument("--timeout", type=int, default=300, help="Agent timeout in seconds")
-    parser.add_argument("--headless", action="store_true", help="Run browser in headless mode")
+    parser.add_argument(
+        "--max_steps", type=int, default=50, help="Max agent steps per task"
+    )
+    parser.add_argument(
+        "--timeout", type=int, default=300, help="Agent timeout in seconds"
+    )
+    parser.add_argument(
+        "--headless", action="store_true", help="Run browser in headless mode"
+    )
     parser.add_argument("--chrome_version", type=int, help="Chrome version override")
     parser.add_argument("--agent_type", default="DefaultAgent", help="Agent type")
     parser.add_argument(
@@ -166,11 +175,21 @@ def main(argv=None):
         from webaxon.evaluation.scoring import run_eval
 
         if args.inferencer == "claude":
-            from agent_foundation.common.inferencers.api_inferencers.claude_api_inferencer import ClaudeApiInferencer
-            engine_factory = lambda: InferencerEngine(ClaudeApiInferencer(model_id=args.model))
+            from agent_foundation.common.inferencers.api_inferencers.claude_api_inferencer import (
+                ClaudeApiInferencer,
+            )
+
+            engine_factory = lambda: InferencerEngine(
+                ClaudeApiInferencer(model_id=args.model)
+            )
         else:
-            from agent_foundation.common.inferencers.api_inferencers.openai_api_inferencer import OpenaiApiInferencer
-            engine_factory = lambda: InferencerEngine(OpenaiApiInferencer(model_id=args.model))
+            from agent_foundation.common.inferencers.api_inferencers.openai_api_inferencer import (
+                OpenaiApiInferencer,
+            )
+
+            engine_factory = lambda: InferencerEngine(
+                OpenaiApiInferencer(model_id=args.model)
+            )
 
         run_eval(
             runs_dir=args.runs_dir,

@@ -20,9 +20,7 @@ from typing import Any, Dict, List
 from unittest.mock import MagicMock, patch
 
 import pytest
-from hypothesis import given, settings, assume
-from hypothesis import strategies as st
-
+from hypothesis import assume, given, settings, strategies as st
 from webaxon.evaluation.datasets import (
     _normalize_start_url,
     _resolve_hf_token,
@@ -32,6 +30,7 @@ from webaxon.evaluation.tasks import load_tasks
 
 
 # ── Mock setup for 'datasets' library ────────────────────────────────────────
+
 
 def _make_mock_dataset(rows: List[Dict[str, Any]]) -> MagicMock:
     """Create a mock HuggingFace Dataset object from a list of row dicts."""
@@ -64,7 +63,9 @@ def _install_datasets_mock(rows: List[Dict[str, Any]]):
 # ── Strategies ────────────────────────────────────────────────────────────────
 
 # URLs with explicit scheme
-_scheme_url = st.from_regex(r"https?://[a-z]{1,10}\.[a-z]{2,4}(/[a-z0-9]*)?", fullmatch=True)
+_scheme_url = st.from_regex(
+    r"https?://[a-z]{1,10}\.[a-z]{2,4}(/[a-z0-9]*)?", fullmatch=True
+)
 
 # URLs without scheme (bare domains)
 _bare_url = st.from_regex(r"[a-z]{1,10}\.[a-z]{2,4}(/[a-z0-9]*)?", fullmatch=True)
@@ -74,20 +75,25 @@ _any_url = st.one_of(_scheme_url, _bare_url)
 
 # Non-empty printable text for task fields
 _task_text = st.text(
-    alphabet=st.characters(whitelist_categories=("L", "N", "P", "Z"), blacklist_characters="\x00"),
+    alphabet=st.characters(
+        whitelist_categories=("L", "N", "P", "Z"), blacklist_characters="\x00"
+    ),
     min_size=1,
     max_size=60,
 ).filter(lambda s: s.strip())
+
 
 # Strategy for a single HuggingFace dataset row
 @st.composite
 def hf_row_strategy(draw):
     """Generate a synthetic HuggingFace dataset row."""
-    task_id = draw(st.text(
-        alphabet=st.characters(whitelist_categories=("L", "N")),
-        min_size=1,
-        max_size=20,
-    ))
+    task_id = draw(
+        st.text(
+            alphabet=st.characters(whitelist_categories=("L", "N")),
+            min_size=1,
+            max_size=20,
+        )
+    )
     website = draw(_any_url)
     confirmed_task = draw(_task_text)
     reference_length = draw(st.integers(min_value=0, max_value=100))
@@ -230,7 +236,9 @@ class TestDownloadProducesCompatibleJsonl:
                     continue
                 obj = json.loads(line)
                 start_url = obj["start_url"]
-                assert start_url.startswith("http://") or start_url.startswith("https://")
+                assert start_url.startswith("http://") or start_url.startswith(
+                    "https://"
+                )
 
 
 # ── Token resolution ──────────────────────────────────────────────────────────
@@ -240,7 +248,9 @@ class TestTokenResolution:
     """Token resolution: param → HF_TOKEN → HUGGINGFACE_TOKEN."""
 
     def test_explicit_token_takes_priority(self):
-        with patch.dict(os.environ, {"HF_TOKEN": "env_token", "HUGGINGFACE_TOKEN": "hf_token"}):
+        with patch.dict(
+            os.environ, {"HF_TOKEN": "env_token", "HUGGINGFACE_TOKEN": "hf_token"}
+        ):
             assert _resolve_hf_token("explicit") == "explicit"
 
     def test_hf_token_env_fallback(self):
@@ -254,12 +264,17 @@ class TestTokenResolution:
 
     def test_huggingface_token_env_fallback(self):
         env_clean = {k: v for k, v in os.environ.items() if k != "HF_TOKEN"}
-        with patch.dict(os.environ, {**env_clean, "HUGGINGFACE_TOKEN": "hf2"}, clear=True):
+        with patch.dict(
+            os.environ, {**env_clean, "HUGGINGFACE_TOKEN": "hf2"}, clear=True
+        ):
             assert _resolve_hf_token(None) == "hf2"
 
     def test_no_token_returns_none(self):
-        env_clean = {k: v for k, v in os.environ.items()
-                     if k not in ("HF_TOKEN", "HUGGINGFACE_TOKEN")}
+        env_clean = {
+            k: v
+            for k, v in os.environ.items()
+            if k not in ("HF_TOKEN", "HUGGINGFACE_TOKEN")
+        }
         with patch.dict(os.environ, env_clean, clear=True):
             assert _resolve_hf_token(None) is None
 
@@ -315,8 +330,11 @@ class TestFileExistsError:
         assert result["raw"] == len(rows)
 
     def test_no_token_raises_runtime_error(self, tmp_path: Path):
-        env_clean = {k: v for k, v in os.environ.items()
-                     if k not in ("HF_TOKEN", "HUGGINGFACE_TOKEN")}
+        env_clean = {
+            k: v
+            for k, v in os.environ.items()
+            if k not in ("HF_TOKEN", "HUGGINGFACE_TOKEN")
+        }
         fake_mod = _install_datasets_mock([])
         saved = sys.modules.get("datasets")
         sys.modules["datasets"] = fake_mod

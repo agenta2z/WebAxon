@@ -44,7 +44,7 @@ class BackendAdapter(ABC):
         config: Optional["BrowserConfig"] = None,
         driver_version: Optional[str] = None,
         binary_location: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ) -> None:
         """
         Initialize the browser with the specified configuration.
@@ -466,7 +466,7 @@ class BackendAdapter(ABC):
         text: str,
         clear_content: bool = False,
         implementation: str = "auto",
-        **kwargs
+        **kwargs,
     ) -> None:
         """
         Input text into an element.
@@ -488,7 +488,7 @@ class BackendAdapter(ABC):
         distance: str = "Large",
         implementation: str = "javascript",
         try_solve_scrollable_child: bool = False,
-        **kwargs
+        **kwargs,
     ) -> None:
         """
         Scroll an element or viewport.
@@ -577,7 +577,7 @@ class BackendAdapter(ABC):
         repeat_when: Any = None,
         elements_dict: Any = None,
         output_path_action_records: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ) -> None:
         """
         Execute a sequence of actions with conditions.

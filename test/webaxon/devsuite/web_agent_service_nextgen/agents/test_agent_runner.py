@@ -2,18 +2,21 @@
 
 This module tests the agent thread management functionality.
 """
-import sys
-import resolve_path  # Setup import paths
 
-from pathlib import Path
+import sys
 import threading
 import time
-from unittest.mock import Mock, MagicMock, patch
+from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
+
+import resolve_path  # Setup import paths
+from webaxon.devsuite.web_agent_service_nextgen.agents.agent_runner import AgentRunner
 
 # Add parent directory to path for imports
 from webaxon.devsuite.web_agent_service_nextgen.core.config import ServiceConfig
-from webaxon.devsuite.web_agent_service_nextgen.session.agent_session import AgentSession
-from webaxon.devsuite.web_agent_service_nextgen.agents.agent_runner import AgentRunner
+from webaxon.devsuite.web_agent_service_nextgen.session.agent_session import (
+    AgentSession,
+)
 
 
 def test_agent_runner_initialization():
@@ -32,14 +35,15 @@ def test_start_agent_thread_async_mode():
 
     # Create mock session
     session = Mock()
-    session.session_id = 'test_session'
-    session.info.session_type = 'DefaultAgent'
+    session.session_id = "test_session"
+    session.info.session_type = "DefaultAgent"
     session.info.last_agent_status = None
 
     # Create mock agent that runs for a short time
     def slow_agent():
         time.sleep(0.2)
-        return 'completed'
+        return "completed"
+
     session.agent = Mock(side_effect=slow_agent)
     session.interactive = Mock()
 
@@ -57,13 +61,13 @@ def test_start_agent_thread_async_mode():
     time.sleep(0.05)
     assert thread.is_alive()
     assert thread.daemon is True
-    assert 'AgentThread-test_session' in thread.name
+    assert "AgentThread-test_session" in thread.name
 
     # Wait for thread to complete
     thread.join(timeout=2.0)
 
     # Verify status was updated
-    assert session.info.last_agent_status == 'completed'
+    assert session.info.last_agent_status == "completed"
 
     print("✓ Agent thread creation in async mode works")
 
@@ -75,12 +79,12 @@ def test_start_agent_thread_synchronous_mode():
 
     # Create mock session
     session = Mock()
-    session.session_id = 'test_session'
-    session.info.session_type = 'DefaultAgent'
+    session.session_id = "test_session"
+    session.info.session_type = "DefaultAgent"
     session.info.last_agent_status = None
 
     # Create mock agent that completes quickly
-    session.agent = Mock(return_value='completed')
+    session.agent = Mock(return_value="completed")
     session.interactive = Mock()
 
     # Create mock queue service
@@ -96,7 +100,7 @@ def test_start_agent_thread_synchronous_mode():
     session.agent.assert_called_once()
 
     # Verify status was updated
-    assert session.info.last_agent_status == 'completed'
+    assert session.info.last_agent_status == "completed"
 
     print("✓ Agent synchronous execution works")
 
@@ -108,12 +112,12 @@ def test_run_agent_in_thread_success():
 
     # Create mock session
     session = Mock()
-    session.session_id = 'test_session'
-    session.info.session_type = 'DefaultAgent'
+    session.session_id = "test_session"
+    session.info.session_type = "DefaultAgent"
     session.info.last_agent_status = None
 
     # Create mock agent
-    session.agent = Mock(return_value='success')
+    session.agent = Mock(return_value="success")
 
     # Create mock queue service
     queue_service = Mock()
@@ -125,7 +129,7 @@ def test_run_agent_in_thread_success():
     session.agent.assert_called_once()
 
     # Verify status was updated to completed
-    assert session.info.last_agent_status == 'completed'
+    assert session.info.last_agent_status == "completed"
 
     print("✓ Agent execution in thread with success works")
 
@@ -137,13 +141,13 @@ def test_run_agent_in_thread_error():
 
     # Create mock session
     session = Mock()
-    session.session_id = 'test_session'
-    session.info.session_type = 'DefaultAgent'
+    session.session_id = "test_session"
+    session.info.session_type = "DefaultAgent"
     session.info.last_agent_status = None
     session.interactive = Mock()
 
     # Create mock agent that raises an error
-    session.agent = Mock(side_effect=RuntimeError('Test error'))
+    session.agent = Mock(side_effect=RuntimeError("Test error"))
 
     # Create mock queue service
     queue_service = Mock()
@@ -155,7 +159,7 @@ def test_run_agent_in_thread_error():
     session.agent.assert_called_once()
 
     # Verify status was updated to error
-    assert session.info.last_agent_status == 'error'
+    assert session.info.last_agent_status == "error"
 
     # Verify error was logged
     session.log_error.assert_called()
@@ -164,8 +168,8 @@ def test_run_agent_in_thread_error():
     session.interactive.send_response.assert_called_once()
     call_args = session.interactive.send_response.call_args
     response = call_args[0][0]
-    assert 'error' in response
-    assert 'Test error' in response['error']
+    assert "error" in response
+    assert "Test error" in response["error"]
 
     print("✓ Agent execution error handling works")
 
@@ -177,12 +181,12 @@ def test_run_agent_synchronously_success():
 
     # Create mock session
     session = Mock()
-    session.session_id = 'test_session'
-    session.info.session_type = 'DefaultAgent'
+    session.session_id = "test_session"
+    session.info.session_type = "DefaultAgent"
     session.info.last_agent_status = None
 
     # Create mock agent
-    session.agent = Mock(return_value='success')
+    session.agent = Mock(return_value="success")
 
     # Create mock queue service
     queue_service = Mock()
@@ -194,7 +198,7 @@ def test_run_agent_synchronously_success():
     session.agent.assert_called_once()
 
     # Verify status was updated to completed
-    assert session.info.last_agent_status == 'completed'
+    assert session.info.last_agent_status == "completed"
 
     print("✓ Synchronous agent execution with success works")
 
@@ -206,13 +210,13 @@ def test_run_agent_synchronously_error():
 
     # Create mock session
     session = Mock()
-    session.session_id = 'test_session'
-    session.info.session_type = 'DefaultAgent'
+    session.session_id = "test_session"
+    session.info.session_type = "DefaultAgent"
     session.info.last_agent_status = None
     session.interactive = Mock()
 
     # Create mock agent that raises an error
-    session.agent = Mock(side_effect=ValueError('Sync test error'))
+    session.agent = Mock(side_effect=ValueError("Sync test error"))
 
     # Create mock queue service
     queue_service = Mock()
@@ -224,7 +228,7 @@ def test_run_agent_synchronously_error():
     session.agent.assert_called_once()
 
     # Verify status was updated to error
-    assert session.info.last_agent_status == 'error'
+    assert session.info.last_agent_status == "error"
 
     # Verify error was logged
     session.log_error.assert_called()
@@ -233,8 +237,8 @@ def test_run_agent_synchronously_error():
     session.interactive.send_response.assert_called_once()
     call_args = session.interactive.send_response.call_args
     response = call_args[0][0]
-    assert 'error' in response
-    assert 'Sync test error' in response['error']
+    assert "error" in response
+    assert "Sync test error" in response["error"]
 
     print("✓ Synchronous agent execution error handling works")
 
@@ -246,13 +250,14 @@ def test_thread_reference_tracking():
 
     # Create mock session
     session = Mock()
-    session.session_id = 'test_session'
-    session.info.session_type = 'DefaultAgent'
+    session.session_id = "test_session"
+    session.info.session_type = "DefaultAgent"
 
     # Create mock agent that runs for a short time
     def slow_agent():
         time.sleep(0.1)
-        return 'completed'
+        return "completed"
+
     session.agent = Mock(side_effect=slow_agent)
     session.interactive = Mock()
 
@@ -285,12 +290,12 @@ def test_status_update_on_completion():
 
     # Create mock session
     session = Mock()
-    session.session_id = 'test_session'
-    session.info.session_type = 'DefaultAgent'
-    session.info.last_agent_status = 'running'
+    session.session_id = "test_session"
+    session.info.session_type = "DefaultAgent"
+    session.info.last_agent_status = "running"
 
     # Create mock agent
-    session.agent = Mock(return_value='done')
+    session.agent = Mock(return_value="done")
 
     # Create mock queue service
     queue_service = Mock()
@@ -299,7 +304,7 @@ def test_status_update_on_completion():
     runner.run_agent_in_thread(session, queue_service)
 
     # Verify status was updated
-    assert session.info.last_agent_status == 'completed'
+    assert session.info.last_agent_status == "completed"
 
     print("✓ Status update on completion works")
 
@@ -311,13 +316,13 @@ def test_status_update_on_failure():
 
     # Create mock session
     session = Mock()
-    session.session_id = 'test_session'
-    session.info.session_type = 'DefaultAgent'
-    session.info.last_agent_status = 'running'
+    session.session_id = "test_session"
+    session.info.session_type = "DefaultAgent"
+    session.info.last_agent_status = "running"
     session.interactive = Mock()
 
     # Create mock agent that fails
-    session.agent = Mock(side_effect=Exception('Failure'))
+    session.agent = Mock(side_effect=Exception("Failure"))
 
     # Create mock queue service
     queue_service = Mock()
@@ -326,12 +331,12 @@ def test_status_update_on_failure():
     runner.run_agent_in_thread(session, queue_service)
 
     # Verify status was updated to error
-    assert session.info.last_agent_status == 'error'
+    assert session.info.last_agent_status == "error"
 
     print("✓ Status update on failure works")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("\n=== Testing AgentRunner ===\n")
 
     test_agent_runner_initialization()

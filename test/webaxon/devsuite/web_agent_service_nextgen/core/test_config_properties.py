@@ -3,13 +3,14 @@
 This module contains property-based tests using hypothesis to verify
 configuration field completeness and correctness.
 """
-import sys
-import resolve_path  # Setup import paths
 
+import sys
 from pathlib import Path
 
+import resolve_path  # Setup import paths
+
 # Add parent directory to path
-from hypothesis import given, strategies as st, settings
+from hypothesis import given, settings, strategies as st
 from webaxon.devsuite.web_agent_service_nextgen.core import ServiceConfig
 
 
@@ -25,8 +26,12 @@ from webaxon.devsuite.web_agent_service_nextgen.core import ServiceConfig
     default_agent_type=st.text(min_size=1, max_size=50).filter(lambda x: x.strip()),
     input_queue_id=st.text(min_size=1, max_size=50).filter(lambda x: x.strip()),
     response_queue_id=st.text(min_size=1, max_size=50).filter(lambda x: x.strip()),
-    client_control_queue_id=st.text(min_size=1, max_size=50).filter(lambda x: x.strip()),
-    server_control_queue_id=st.text(min_size=1, max_size=50).filter(lambda x: x.strip()),
+    client_control_queue_id=st.text(min_size=1, max_size=50).filter(
+        lambda x: x.strip()
+    ),
+    server_control_queue_id=st.text(min_size=1, max_size=50).filter(
+        lambda x: x.strip()
+    ),
     log_root_path=st.text(min_size=1, max_size=100).filter(lambda x: x.strip()),
 )
 def test_config_field_completeness(
@@ -43,7 +48,7 @@ def test_config_field_completeness(
     log_root_path,
 ):
     """Property: For any ServiceConfig instance, it should have all required fields.
-    
+
     This test verifies that ServiceConfig has all required fields as specified in
     Requirements 2.2, 2.3, 2.4, 2.5:
     - Timeout values (session_idle_timeout, cleanup_check_interval)
@@ -66,50 +71,58 @@ def test_config_field_completeness(
         server_control_queue_id=server_control_queue_id,
         log_root_path=log_root_path,
     )
-    
+
     # Verify all required fields are present and have the correct values
     # Requirement 2.2: Timeout values
-    assert hasattr(config, 'session_idle_timeout'), "Missing session_idle_timeout field"
+    assert hasattr(config, "session_idle_timeout"), "Missing session_idle_timeout field"
     assert config.session_idle_timeout == session_idle_timeout
-    assert hasattr(config, 'cleanup_check_interval'), "Missing cleanup_check_interval field"
+    assert hasattr(config, "cleanup_check_interval"), (
+        "Missing cleanup_check_interval field"
+    )
     assert config.cleanup_check_interval == cleanup_check_interval
-    
+
     # Requirement 2.3: Debug settings
-    assert hasattr(config, 'debug_mode_service'), "Missing debug_mode_service field"
+    assert hasattr(config, "debug_mode_service"), "Missing debug_mode_service field"
     assert config.debug_mode_service == debug_mode_service
-    assert hasattr(config, 'synchronous_agent'), "Missing synchronous_agent field"
+    assert hasattr(config, "synchronous_agent"), "Missing synchronous_agent field"
     assert config.synchronous_agent == synchronous_agent
-    
+
     # Requirement 2.4: Queue identifiers
-    assert hasattr(config, 'input_queue_id'), "Missing input_queue_id field"
+    assert hasattr(config, "input_queue_id"), "Missing input_queue_id field"
     assert config.input_queue_id == input_queue_id
-    assert hasattr(config, 'response_queue_id'), "Missing response_queue_id field"
+    assert hasattr(config, "response_queue_id"), "Missing response_queue_id field"
     assert config.response_queue_id == response_queue_id
-    assert hasattr(config, 'client_control_queue_id'), "Missing client_control_queue_id field"
+    assert hasattr(config, "client_control_queue_id"), (
+        "Missing client_control_queue_id field"
+    )
     assert config.client_control_queue_id == client_control_queue_id
-    assert hasattr(config, 'server_control_queue_id'), "Missing server_control_queue_id field"
+    assert hasattr(config, "server_control_queue_id"), (
+        "Missing server_control_queue_id field"
+    )
     assert config.server_control_queue_id == server_control_queue_id
-    
+
     # Requirement 2.5: Agent settings
-    assert hasattr(config, 'new_agent_on_first_submission'), "Missing new_agent_on_first_submission field"
+    assert hasattr(config, "new_agent_on_first_submission"), (
+        "Missing new_agent_on_first_submission field"
+    )
     assert config.new_agent_on_first_submission == new_agent_on_first_submission
-    assert hasattr(config, 'default_agent_type'), "Missing default_agent_type field"
+    assert hasattr(config, "default_agent_type"), "Missing default_agent_type field"
     assert config.default_agent_type == default_agent_type
-    
+
     # Additional fields
-    assert hasattr(config, 'log_root_path'), "Missing log_root_path field"
+    assert hasattr(config, "log_root_path"), "Missing log_root_path field"
     assert config.log_root_path == log_root_path
-    assert hasattr(config, 'queue_root_path'), "Missing queue_root_path field"
-    
+    assert hasattr(config, "queue_root_path"), "Missing queue_root_path field"
+
     # Verify validation passes for valid configurations
     config.validate()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("Running property-based tests for ServiceConfig...")
     print("Testing configuration field completeness with 100 random examples...")
     print()
-    
+
     try:
         test_config_field_completeness()
         print("✓ Property test passed: Configuration field completeness verified")
@@ -117,6 +130,6 @@ if __name__ == '__main__':
     except Exception as e:
         print(f"✗ Property test failed: {e}")
         sys.exit(1)
-    
+
     print()
     print("All property-based tests passed! ✓")

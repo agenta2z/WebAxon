@@ -4,30 +4,41 @@ Connects to a running service via file-based queues and provides a REPL for:
 - Registering free-text knowledge pieces
 - Sending agent requests and receiving responses
 """
+
 import time
 from pathlib import Path
 from typing import Any, Optional
 
-from rich_python_utils.datetime_utils.common import timestamp
-from rich_python_utils.service_utils.queue_service.storage_based_queue_service import StorageBasedQueueService
-
 from agent_foundation.ui.input_modes import InputMode, InputModeConfig
-
+from rich_python_utils.datetime_utils.common import timestamp
+from rich_python_utils.service_utils.queue_service.storage_based_queue_service import (
+    StorageBasedQueueService,
+)
 from webaxon.devsuite.common import get_queue_service
-from webaxon.devsuite.web_agent_service_nextgen.cli.kb_arg_parser import (
-    parse_kb_add, parse_kb_update, parse_kb_del, parse_kb_get, parse_kb_list, parse_kb_restore,
-    parse_kb_review_spaces,
-)
-from webaxon.devsuite.web_agent_service_nextgen.cli.kb_formatters import (
-    format_ingestion_result, format_update_results, format_delete_candidates,
-    format_delete_results, format_search_results, format_list_results, format_restore_result,
-    format_review_spaces_results,
-)
 from webaxon.devsuite.constants import (
+    CLIENT_CONTROL_QUEUE_ID,
     INPUT_QUEUE_ID,
     RESPONSE_QUEUE_ID,
-    CLIENT_CONTROL_QUEUE_ID,
     SERVER_CONTROL_QUEUE_ID,
+)
+from webaxon.devsuite.web_agent_service_nextgen.cli.kb_arg_parser import (
+    parse_kb_add,
+    parse_kb_del,
+    parse_kb_get,
+    parse_kb_list,
+    parse_kb_restore,
+    parse_kb_review_spaces,
+    parse_kb_update,
+)
+from webaxon.devsuite.web_agent_service_nextgen.cli.kb_formatters import (
+    format_delete_candidates,
+    format_delete_results,
+    format_ingestion_result,
+    format_list_results,
+    format_restore_result,
+    format_review_spaces_results,
+    format_search_results,
+    format_update_results,
 )
 
 
@@ -41,7 +52,9 @@ class CLIClient:
         queue_root_path: Optional[Path] = None,
     ):
         self._testcase_root = testcase_root
-        self._session_id = session_id or f"cli_{timestamp().replace(' ', '_').replace(':', '')}"
+        self._session_id = (
+            session_id or f"cli_{timestamp().replace(' ', '_').replace(':', '')}"
+        )
         self._queue_root_path = queue_root_path
         self._queue_service: Optional[StorageBasedQueueService] = None
         self._running = False
@@ -68,7 +81,9 @@ class CLIClient:
             # Try nextgen queue path first (_runtime/queues/), then legacy (_runtime/queue_storage/)
             nextgen_queues_base = self._testcase_root / "_runtime" / "queues"
             if nextgen_queues_base.exists():
-                timestamp_dirs = [d for d in nextgen_queues_base.iterdir() if d.is_dir()]
+                timestamp_dirs = [
+                    d for d in nextgen_queues_base.iterdir() if d.is_dir()
+                ]
                 if timestamp_dirs:
                     latest = max(timestamp_dirs, key=lambda d: d.name)
                     self._queue_service = StorageBasedQueueService(
@@ -96,8 +111,16 @@ class CLIClient:
         print(f"Connected to service at {self._queue_service.root_path}")
         print(f"Session: {self._session_id}")
 
-        from webaxon.devsuite.config import OPTION_DEFAULT_PROMPT_VERSION, OPTION_BASE_REASONER
-        prompt_ver = OPTION_DEFAULT_PROMPT_VERSION if OPTION_DEFAULT_PROMPT_VERSION else '(default)'
+        from webaxon.devsuite.config import (
+            OPTION_BASE_REASONER,
+            OPTION_DEFAULT_PROMPT_VERSION,
+        )
+
+        prompt_ver = (
+            OPTION_DEFAULT_PROMPT_VERSION
+            if OPTION_DEFAULT_PROMPT_VERSION
+            else "(default)"
+        )
         print(f"Prompt version: {prompt_ver}  |  Reasoner: {OPTION_BASE_REASONER}")
         return True
 
@@ -188,7 +211,9 @@ class CLIClient:
             "register_knowledge_response", timeout=60.0
         )
         if resp is None:
-            print("[TIMEOUT] No acknowledgment from service (LLM ingestion may still be running).")
+            print(
+                "[TIMEOUT] No acknowledgment from service (LLM ingestion may still be running)."
+            )
         elif resp.get("success"):
             counts = resp.get("counts", {})
             print(f"[OK] Knowledge ingested — {counts}")
@@ -216,7 +241,9 @@ class CLIClient:
 
         resp = self._wait_for_control_response("kb_add_response", timeout=120.0)
         if resp is None:
-            print("[TIMEOUT] No response for kb-add (LLM ingestion may still be running).")
+            print(
+                "[TIMEOUT] No response for kb-add (LLM ingestion may still be running)."
+            )
         elif resp.get("success"):
             print(f"[OK] {format_ingestion_result(resp['counts'])}")
         else:
@@ -239,7 +266,9 @@ class CLIClient:
 
         resp = self._wait_for_control_response("kb_update_response", timeout=120.0)
         if resp is None:
-            print("[TIMEOUT] No response for kb-update (LLM processing may still be running).")
+            print(
+                "[TIMEOUT] No response for kb-update (LLM processing may still be running)."
+            )
         elif resp.get("success"):
             results = resp.get("results", [])
             if results:
@@ -300,7 +329,9 @@ class CLIClient:
 
         print(format_delete_candidates(candidates))
         try:
-            choice = input("Enter piece numbers to delete (comma-separated), 'all', or 'cancel': ").strip()
+            choice = input(
+                "Enter piece numbers to delete (comma-separated), 'all', or 'cancel': "
+            ).strip()
         except EOFError:
             choice = "cancel"
 
@@ -439,7 +470,9 @@ class CLIClient:
         }
         self._send_control(msg)
 
-        resp = self._wait_for_control_response("kb_review_spaces_response", timeout=10.0)
+        resp = self._wait_for_control_response(
+            "kb_review_spaces_response", timeout=10.0
+        )
         if resp is None:
             print("[TIMEOUT] No response for kb-review-spaces.")
         elif resp.get("success"):
@@ -461,23 +494,27 @@ class CLIClient:
         Must be called before send_agent_request() so the agent is
         created with the correct prompt templates.
         """
-        self._send_control({
-            "type": "sync_session_template_version",
-            "message": {
-                "session_id": self._session_id,
-                "template_version": template_version,
-            },
-            "timestamp": timestamp(),
-        })
+        self._send_control(
+            {
+                "type": "sync_session_template_version",
+                "message": {
+                    "session_id": self._session_id,
+                    "template_version": template_version,
+                },
+                "timestamp": timestamp(),
+            }
+        )
         resp = self._wait_for_control_response(
             "sync_session_template_version_response", timeout=10.0
         )
-        if resp and resp.get('error'):
+        if resp and resp.get("error"):
             print(f"[ERROR] Template version change failed: {resp['error']}")
         elif resp:
             print(f"[OK] Template version set to: {resp.get('template_version')}")
         else:
-            print("[WARN] No acknowledgment for template version change. Is the service running?")
+            print(
+                "[WARN] No acknowledgment for template version change. Is the service running?"
+            )
 
     # ------------------------------------------------------------------
     # Agent request
@@ -486,24 +523,29 @@ class CLIClient:
     def send_agent_request(self, text: str) -> None:
         """Send user text to the agent and print responses until done."""
         # Sync session so the service knows about us
-        self._send_control({
-            "type": "sync_session_agent",
-            "message": {
-                "session_id": self._session_id,
-                "agent_type": "DefaultAgent",
-            },
-            "timestamp": timestamp(),
-        })
+        self._send_control(
+            {
+                "type": "sync_session_agent",
+                "message": {
+                    "session_id": self._session_id,
+                    "agent_type": "DefaultAgent",
+                },
+                "timestamp": timestamp(),
+            }
+        )
         # small delay to let the service process the sync
         time.sleep(0.3)
 
         # Put the user message on the session-specific input queue
         session_input_queue_id = f"{INPUT_QUEUE_ID}_{self._session_id}"
-        self._queue_service.put(session_input_queue_id, {
-            "user_input": text,
-            "session_id": self._session_id,
-            "timestamp": timestamp(),
-        })
+        self._queue_service.put(
+            session_input_queue_id,
+            {
+                "user_input": text,
+                "session_id": self._session_id,
+                "timestamp": timestamp(),
+            },
+        )
         print("[Sending to agent...]")
         self._poll_responses()
 
@@ -558,7 +600,9 @@ class CLIClient:
 
         # Read input_mode from response dict (set by agent via interactive protocol)
         raw_mode = resp.get("input_mode")
-        mode_config = InputModeConfig.from_dict(raw_mode) if raw_mode else InputModeConfig()
+        mode_config = (
+            InputModeConfig.from_dict(raw_mode) if raw_mode else InputModeConfig()
+        )
 
         # Collect input, intercepting CLI commands
         while True:
@@ -574,11 +618,14 @@ class CLIClient:
                 continue
             break
 
-        self._queue_service.put(session_input_queue_id, {
-            "user_input": user_answer,
-            "session_id": self._session_id,
-            "timestamp": timestamp(),
-        })
+        self._queue_service.put(
+            session_input_queue_id,
+            {
+                "user_input": user_answer,
+                "session_id": self._session_id,
+                "timestamp": timestamp(),
+            },
+        )
         print("[Response sent to agent...]")
 
     def _try_handle_command(self, line: str) -> bool:
@@ -646,7 +693,11 @@ class CLIClient:
                 answer = input(prompt).strip()
             except EOFError:
                 answer = ""
-            match = (answer == expected) if config.case_sensitive else (answer.lower() == expected.lower())
+            match = (
+                (answer == expected)
+                if config.case_sensitive
+                else (answer.lower() == expected.lower())
+            )
             if match:
                 return expected
             print(f"  Please type '{expected}' to continue.")
@@ -684,7 +735,10 @@ class CLIClient:
             if config.allow_custom and answer:
                 return {"custom_text": answer}
             n = len(config.options)
-            print(f"  Enter 1-{n}" + (f" or {n + 1} for custom" if config.allow_custom else ""))
+            print(
+                f"  Enter 1-{n}"
+                + (f" or {n + 1} for custom" if config.allow_custom else "")
+            )
 
     @staticmethod
     def _collect_multiple_choices(config: InputModeConfig) -> dict:
@@ -693,14 +747,16 @@ class CLIClient:
             print(f"  {i}) {opt.label}")
         if config.allow_custom:
             print(f"  {len(config.options) + 1}) Other (type your own)")
-        prompt = config.prompt or "[Enter choice numbers separated by commas, e.g. 1,3]: "
+        prompt = (
+            config.prompt or "[Enter choice numbers separated by commas, e.g. 1,3]: "
+        )
         while True:
             try:
                 answer = input(prompt).strip()
             except EOFError:
                 answer = "1"
             try:
-                indices = [int(x.strip()) - 1 for x in answer.split(',')]
+                indices = [int(x.strip()) - 1 for x in answer.split(",")]
                 selections = []
                 custom_needed = False
                 for idx in indices:
@@ -712,7 +768,9 @@ class CLIClient:
                                 val = input(selected_opt.follow_up_prompt).strip()
                             except EOFError:
                                 val = ""
-                            selections.append({"choice_index": idx, "follow_up_value": val})
+                            selections.append(
+                                {"choice_index": idx, "follow_up_value": val}
+                            )
                         else:
                             selections.append({"choice_index": idx})
                     elif config.allow_custom and idx == len(config.options):
@@ -728,8 +786,10 @@ class CLIClient:
             except ValueError:
                 pass
             n = len(config.options)
-            print(f"  Enter numbers 1-{n} separated by commas" +
-                  (f", or {n + 1} for custom" if config.allow_custom else ""))
+            print(
+                f"  Enter numbers 1-{n} separated by commas"
+                + (f", or {n + 1} for custom" if config.allow_custom else "")
+            )
 
     @staticmethod
     def _print_agent_response(resp: dict) -> None:
@@ -754,7 +814,10 @@ class CLIClient:
     # ------------------------------------------------------------------
 
     def run_meta_agent(
-        self, query: str, run_count: int = 5, debug: bool = False,
+        self,
+        query: str,
+        run_count: int = 5,
+        debug: bool = False,
     ) -> None:
         """Trigger the meta agent pipeline on the service and poll for results.
 
@@ -764,20 +827,20 @@ class CLIClient:
         When *debug* is True, the service runs the pipeline synchronously
         (blocking its control loop) so a debugger can step through each run.
         """
-        self._send_control({
-            "type": "run_meta_agent",
-            "message": {
-                "query": query,
-                "run_count": run_count,
-                "debug": debug,
-            },
-            "timestamp": timestamp(),
-        })
+        self._send_control(
+            {
+                "type": "run_meta_agent",
+                "message": {
+                    "query": query,
+                    "run_count": run_count,
+                    "debug": debug,
+                },
+                "timestamp": timestamp(),
+            }
+        )
 
         # Wait for the "started" acknowledgment
-        ack = self._wait_for_control_response(
-            "run_meta_agent_started", timeout=10.0
-        )
+        ack = self._wait_for_control_response("run_meta_agent_started", timeout=10.0)
         if ack is None:
             print("[TIMEOUT] No acknowledgment from service. Is the service running?")
             return
@@ -871,8 +934,12 @@ class CLIClient:
             self._run_debug_abort(args)
 
         else:
-            print("Usage: /meta-debug <collect|evaluate|synthesize|validate|status|abort> ...")
-            print("  Hint: Use '/meta-debug collect <query>' to start a new debug session.")
+            print(
+                "Usage: /meta-debug <collect|evaluate|synthesize|validate|status|abort> ..."
+            )
+            print(
+                "  Hint: Use '/meta-debug collect <query>' to start a new debug session."
+            )
 
     @staticmethod
     def _parse_collect_args(args: str) -> tuple:
@@ -888,26 +955,36 @@ class CLIClient:
                 run_count = int(parts[-1])
                 parts = parts[:-2]
             except ValueError:
-                print(f"[Meta Debug] Warning: invalid --runs value '{parts[-1]}', using default {run_count}")
+                print(
+                    f"[Meta Debug] Warning: invalid --runs value '{parts[-1]}', using default {run_count}"
+                )
         return " ".join(parts), run_count
 
     def _run_debug_collect(self, query: str, run_count: int) -> None:
         """Send collect command and poll for stage completion."""
-        self._send_control({
-            "type": "meta_debug_command",
-            "message": {"command": "collect", "query": query, "run_count": run_count},
-            "timestamp": timestamp(),
-        })
+        self._send_control(
+            {
+                "type": "meta_debug_command",
+                "message": {
+                    "command": "collect",
+                    "query": query,
+                    "run_count": run_count,
+                },
+                "timestamp": timestamp(),
+            }
+        )
         print("[Meta Debug] Starting collect...")
         self._poll_debug_stage_responses(session_id=None)
 
     def _run_debug_advance(self, subcommand: str, session_id: str) -> None:
         """Send advance command and poll for stage completion."""
-        self._send_control({
-            "type": "meta_debug_command",
-            "message": {"command": subcommand, "session_id": session_id},
-            "timestamp": timestamp(),
-        })
+        self._send_control(
+            {
+                "type": "meta_debug_command",
+                "message": {"command": subcommand, "session_id": session_id},
+                "timestamp": timestamp(),
+            }
+        )
         print(f"[Meta Debug] Running {subcommand.upper()} for session {session_id}...")
         self._poll_debug_stage_responses(session_id)
 
@@ -916,11 +993,13 @@ class CLIClient:
         msg = {"command": "status"}
         if session_id:
             msg["session_id"] = session_id
-        self._send_control({
-            "type": "meta_debug_command",
-            "message": msg,
-            "timestamp": timestamp(),
-        })
+        self._send_control(
+            {
+                "type": "meta_debug_command",
+                "message": msg,
+                "timestamp": timestamp(),
+            }
+        )
         # Wait for status response
         deadline = time.time() + 10
         while time.time() < deadline:
@@ -940,7 +1019,9 @@ class CLIClient:
                         for s in sessions:
                             state = s.get("completed_state", "starting")
                             next_cmd = s.get("next_command", "?")
-                            print(f"  {s['session_id']}  state={state}  next={next_cmd}  query={s.get('query', '')}")
+                            print(
+                                f"  {s['session_id']}  state={state}  next={next_cmd}  query={s.get('query', '')}"
+                            )
                 else:
                     sid = resp.get("session_id", "?")
                     state = resp.get("completed_state", "starting")
@@ -965,11 +1046,13 @@ class CLIClient:
 
     def _run_debug_abort(self, session_id: str) -> None:
         """Send abort command."""
-        self._send_control({
-            "type": "meta_debug_command",
-            "message": {"command": "abort", "session_id": session_id},
-            "timestamp": timestamp(),
-        })
+        self._send_control(
+            {
+                "type": "meta_debug_command",
+                "message": {"command": "abort", "session_id": session_id},
+                "timestamp": timestamp(),
+            }
+        )
         print(f"[Meta Debug] Session {session_id} abort requested.")
 
     def _poll_debug_stage_responses(self, session_id: Optional[str]) -> None:
@@ -1041,7 +1124,9 @@ class CLIClient:
         if state == "COLLECT":
             print(f"  Traces collected: {summary.get('trace_count', '?')}")
         elif state == "EVALUATE":
-            print(f"  Passed: {summary.get('passed_count', '?')}/{summary.get('total_count', '?')}")
+            print(
+                f"  Passed: {summary.get('passed_count', '?')}/{summary.get('total_count', '?')}"
+            )
         elif state == "SYNTHESIZE":
             print(f"  Graph: {'yes' if summary.get('has_graph') else 'no'}")
             report = summary.get("synthesis_report", {})
@@ -1100,17 +1185,25 @@ class CLIClient:
             return
 
         if profile_directory:
-            ok = self.send_browser_profile(profile_directory, user_data_dir, copy_profile)
+            ok = self.send_browser_profile(
+                profile_directory, user_data_dir, copy_profile
+            )
             if not ok:
-                print("Warning: service did not acknowledge browser profile. Continuing anyway.")
+                print(
+                    "Warning: service did not acknowledge browser profile. Continuing anyway."
+                )
 
         self._running = True
         print()
         print("Commands:")
         print("  /add <text>        Ingest free-text knowledge via LLM structuring")
         print("  /template <ver>    Set prompt template version (e.g. end_customers)")
-        print("  /meta <query>      Run meta agent pipeline (trace collection + synthesis)")
-        print("  /meta-debug <cmd>  Stage-by-stage debug (collect|evaluate|synthesize|validate|status|abort)")
+        print(
+            "  /meta <query>      Run meta agent pipeline (trace collection + synthesis)"
+        )
+        print(
+            "  /meta-debug <cmd>  Stage-by-stage debug (collect|evaluate|synthesize|validate|status|abort)"
+        )
         print("  /kb-add <text>       Ingest knowledge via LLM structuring")
         print("  /kb-update <text>    Update knowledge via semantic search + LLM")
         print("  /kb-del <query>      Delete knowledge (semantic search + confirm)")
@@ -1156,16 +1249,22 @@ class CLIClient:
                         try:
                             self._handle_meta_debug_command(rest)
                         except KeyboardInterrupt:
-                            print("\n[Interrupted] Stopped waiting for meta debug stage.")
+                            print(
+                                "\n[Interrupted] Stopped waiting for meta debug stage."
+                            )
                     else:
-                        print("Usage: /meta-debug <collect|evaluate|synthesize|validate|status|abort> ...")
+                        print(
+                            "Usage: /meta-debug <collect|evaluate|synthesize|validate|status|abort> ..."
+                        )
                 elif line.lower().startswith("/meta "):
                     query = line[6:].strip()
                     if query:
                         try:
                             self.run_meta_agent(query)
                         except KeyboardInterrupt:
-                            print("\n[Interrupted] Stopped waiting for meta agent pipeline.")
+                            print(
+                                "\n[Interrupted] Stopped waiting for meta agent pipeline."
+                            )
                     else:
                         print("Usage: /meta <task description>")
                 elif line.lower().startswith("/kb-add "):
@@ -1195,10 +1294,20 @@ class CLIClient:
 
     def _cmd_status(self) -> None:
         """Print status information."""
-        from webaxon.devsuite.config import OPTION_DEFAULT_PROMPT_VERSION, OPTION_BASE_REASONER
-        prompt_ver = OPTION_DEFAULT_PROMPT_VERSION if OPTION_DEFAULT_PROMPT_VERSION else '(default)'
+        from webaxon.devsuite.config import (
+            OPTION_BASE_REASONER,
+            OPTION_DEFAULT_PROMPT_VERSION,
+        )
+
+        prompt_ver = (
+            OPTION_DEFAULT_PROMPT_VERSION
+            if OPTION_DEFAULT_PROMPT_VERSION
+            else "(default)"
+        )
         print(f"  Session ID      : {self._session_id}")
-        print(f"  Queue root      : {self._queue_service.root_path if self._queue_service else 'N/A'}")
+        print(
+            f"  Queue root      : {self._queue_service.root_path if self._queue_service else 'N/A'}"
+        )
         print(f"  Testcase        : {self._testcase_root}")
         print(f"  Prompt version  : {prompt_ver}")
         print(f"  Reasoner        : {OPTION_BASE_REASONER}")

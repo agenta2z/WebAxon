@@ -84,8 +84,7 @@ def create_goodtime_template_selection_graph(
     """
 
     graph = ActionGraph(
-        action_executor=action_executor,
-        action_metadata=ActionMetadataRegistry()
+        action_executor=action_executor, action_metadata=ActionMetadataRegistry()
     )
 
     # =========================================================================
@@ -115,25 +114,19 @@ def create_goodtime_template_selection_graph(
         # If Queued candidate not found, click Pick Up pill to queue it, then retry
         with graph.action(
             "click",
-            target=TargetSpec(
-                strategy="xpath",
-                value=queued_candidate_xpath
-            ),
+            target=TargetSpec(strategy="xpath", value=queued_candidate_xpath),
             args={"try_open_in_new_tab": False},
             wait=wait,
         ).target_not_found(
             retry_after_handling=True,  # Retry clicking Queued candidate after queueing
             max_retries=3,
-            retry_delay=1.0
+            retry_delay=1.0,
         ):
             # Fallback: Click Pick Up pill to queue the candidate
             # After this, the retry will attempt to click the Queued candidate again
             graph.action(
                 "click",
-                target=TargetSpec(
-                    strategy="xpath",
-                    value=pickup_pill_xpath
-                ),
+                target=TargetSpec(strategy="xpath", value=pickup_pill_xpath),
                 args={"try_open_in_new_tab": False},
                 wait=wait,
             )
@@ -155,25 +148,19 @@ def create_goodtime_template_selection_graph(
         # If no Queued candidates, click Pick Up pill to queue one, then retry
         with graph.action(
             "click",
-            target=TargetSpec(
-                strategy="xpath",
-                value=first_queued_xpath
-            ),
+            target=TargetSpec(strategy="xpath", value=first_queued_xpath),
             args={"try_open_in_new_tab": False},
             wait=wait,
         ).target_not_found(
             retry_after_handling=True,  # Retry clicking first Queued candidate after queueing
             max_retries=3,
-            retry_delay=1.0
+            retry_delay=1.0,
         ):
             # Fallback: Click first Pick Up pill to queue a candidate
             # After this, the retry will attempt to click the first Queued candidate again
             graph.action(
                 "click",
-                target=TargetSpec(
-                    strategy="xpath",
-                    value=first_pickup_pill_xpath
-                ),
+                target=TargetSpec(strategy="xpath", value=first_pickup_pill_xpath),
                 args={"try_open_in_new_tab": False},
                 wait=wait,
             )
@@ -187,8 +174,7 @@ def create_goodtime_template_selection_graph(
     graph.action(
         "click",
         target=TargetSpec(
-            strategy="xpath",
-            value="//button[.//span[text()='Select Template']]"
+            strategy="xpath", value="//button[.//span[text()='Select Template']]"
         ),
         wait=wait,
     )
@@ -228,7 +214,7 @@ The notes contain TWO key pieces of information to match:
 2. Job level (look for 'Level of Job' - e.g., 'P40')
 
 Templates are listed in the 'TEMPLATES' section as <span> elements with names like
-'S/RS_UAT_Q4FY25_Backend Coding - Code Design P40'."""
+'S/RS_UAT_Q4FY25_Backend Coding - Code Design P40'.""",
         ),
         wait=wait,
     )
@@ -243,7 +229,7 @@ Templates are listed in the 'TEMPLATES' section as <span> elements with names li
         "click",
         target=TargetSpec(
             strategy="xpath",
-            value="//button[contains(@class, 'gui-btn-primary') and .//span[text()='Continue' or text()='Done']]"
+            value="//button[contains(@class, 'gui-btn-primary') and .//span[text()='Continue' or text()='Done']]",
         ),
         wait=wait,
     )
@@ -257,8 +243,7 @@ Templates are listed in the 'TEMPLATES' section as <span> elements with names li
     graph.action(
         "click",
         target=TargetSpec(
-            strategy="xpath",
-            value="//div[@data-test='email-template-name']"
+            strategy="xpath", value="//div[@data-test='email-template-name']"
         ),
         wait=wait,
     )
@@ -269,7 +254,7 @@ Templates are listed in the 'TEMPLATES' section as <span> elements with names li
         "click",
         target=TargetSpec(
             strategy="xpath",
-            value="//div[@role='option' and contains(., 'Request Availability')]"
+            value="//div[@role='option' and contains(., 'Request Availability')]",
         ),
         wait=False,
     )
@@ -286,7 +271,7 @@ Templates are listed in the 'TEMPLATES' section as <span> elements with names li
         "click",
         target=TargetSpec(
             strategy="xpath",
-            value="//div[@data-test='allow-candidate-suggest-times-checkbox']//label[not(contains(@class, '_labelChecked'))]"
+            value="//div[@data-test='allow-candidate-suggest-times-checkbox']//label[not(contains(@class, '_labelChecked'))]",
         ),
         no_action_if_target_not_found=True,
         wait=wait,
@@ -302,7 +287,7 @@ Templates are listed in the 'TEMPLATES' section as <span> elements with names li
         "click",
         target=TargetSpec(
             strategy="xpath",
-            value="//div[@data-test='share-itinerary-with-candidate-checkbox']//label[not(contains(@class, '_labelChecked'))]"
+            value="//div[@data-test='share-itinerary-with-candidate-checkbox']//label[not(contains(@class, '_labelChecked'))]",
         ),
         no_action_if_target_not_found=True,
         wait=wait,
@@ -317,8 +302,7 @@ Templates are listed in the 'TEMPLATES' section as <span> elements with names li
     graph.action(
         "click",
         target=TargetSpec(
-            strategy="xpath",
-            value="//div[@data-test='internal-calendar']"
+            strategy="xpath", value="//div[@data-test='internal-calendar']"
         ),
         wait=wait,
     )
@@ -332,7 +316,7 @@ Templates are listed in the 'TEMPLATES' section as <span> elements with names li
             value="""Find and click the internal calendar option in the dropdown.
 If there is only one calendar option available, select it.
 If there are multiple calendar options, select "Global R&D Interviews".
-The dropdown options should be visible after clicking the calendar selector."""
+The dropdown options should be visible after clicking the calendar selector.""",
         ),
         wait=wait,
     )
@@ -347,7 +331,7 @@ The dropdown options should be visible after clicking the calendar selector."""
         "click",
         target=TargetSpec(
             strategy="xpath",
-            value="//a[contains(@class, '_buttonTitle_') and contains(normalize-space(), 'Request Availability')]"
+            value="//a[contains(@class, '_buttonTitle_') and contains(normalize-space(), 'Request Availability')]",
         ),
         wait=wait,
     )
@@ -361,30 +345,38 @@ The dropdown options should be visible after clicking the calendar selector."""
 
 if __name__ == "__main__":
     import logging
-    
+
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
     _logger = logging.getLogger(__name__)
-    
+
     # Check for API key (needed for FindElementInferencer)
-    if not os.environ.get('ANTHROPIC_API_KEY'):
+    if not os.environ.get("ANTHROPIC_API_KEY"):
         _logger.error("ANTHROPIC_API_KEY environment variable not set!")
         _logger.error("Please set it: export ANTHROPIC_API_KEY='your-key-here'")
         sys.exit(1)
-    
-    from agent_foundation.common.inferencers.api_inferencers.ag.ag_claude_api_inferencer import AgClaudeApiInferencer as ClaudeApiInferencer
-    from rich_python_utils.string_utils.formatting.template_manager import TemplateManager
-    from rich_python_utils.string_utils.formatting.handlebars_format import format_template as handlebars_format
-    
+
+    from agent_foundation.common.inferencers.api_inferencers.ag.ag_claude_api_inferencer import (
+        AgClaudeApiInferencer as ClaudeApiInferencer,
+    )
+    from rich_python_utils.string_utils.formatting.handlebars_format import (
+        format_template as handlebars_format,
+    )
+    from rich_python_utils.string_utils.formatting.template_manager import (
+        TemplateManager,
+    )
+    from webaxon.automation.agents import (
+        FindElementInferenceConfig,
+        FindElementInferencer,
+    )
     from webaxon.automation.web_driver import WebDriver
-    from webaxon.automation.agents import FindElementInferencer, FindElementInferenceConfig
-    
+
     # Create WebDriver
     _logger.info("Initializing WebDriver...")
     webdriver = WebDriver(headless=False)
-    
+
     # Create reasoner for LLM-based element finding
     _logger.info("Creating Claude API reasoner...")
     reasoner = ClaudeApiInferencer(
@@ -392,20 +384,22 @@ if __name__ == "__main__":
         min_retry_wait=1.0,
         max_retry_wait=5.0,
     )
-    
+
     # Create TemplateManager for prompt templates
-    templates_path = os.path.join(project_root, "src", "webaxon", "automation", "agents", "prompt_templates")
+    templates_path = os.path.join(
+        project_root, "src", "webaxon", "automation", "agents", "prompt_templates"
+    )
     prompt_template_manager = TemplateManager(
         templates=templates_path,
         template_formatter=handlebars_format,
     )
-    
+
     # Create FindElementInferencer
     find_element_inferencer = FindElementInferencer(
         base_inferencer=reasoner,
         template_manager=prompt_template_manager,
     )
-    
+
     # Create wrapper for ActionGraph executor
     def find_element_agent(user_input: str, options=None, **_kwargs):
         """Wrapper that adapts ActionGraph call signature to FindElementInferencer."""
@@ -417,11 +411,11 @@ if __name__ == "__main__":
                 options=options,
             ),
         )
-    
+
     # Build action executor
     action_executor = {
-        'default': webdriver,
-        'find_element_agent': find_element_agent,
+        "default": webdriver,
+        "find_element_agent": find_element_agent,
     }
 
     # Navigate to GoodTime dashboard (manual setup step)
@@ -445,7 +439,7 @@ if __name__ == "__main__":
     _logger.info("Creating ActionGraph...")
     graph = create_goodtime_template_selection_graph(
         action_executor=action_executor,
-        candidate_name=None  # None = first queued, or specify name e.g. "Katie Meringolo"
+        candidate_name=None,  # None = first queued, or specify name e.g. "Katie Meringolo"
     )
 
     _logger.info("Starting ActionGraph execution...")

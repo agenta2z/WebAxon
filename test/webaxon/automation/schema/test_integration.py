@@ -18,26 +18,34 @@ for path in [webagent_src, rich_python_utils_src, agent_foundation_src]:
     if str(path) not in sys.path:
         sys.path.insert(0, str(path))
 
-import pytest
 from pathlib import Path
-from unittest.mock import Mock, MagicMock, patch
-from attr import attrs, attrib
+from unittest.mock import MagicMock, Mock, patch
 
+import pytest
+from attr import attrib, attrs
 from webaxon.automation.schema import (
-    load_sequence,
-    ActionMetadataRegistry,
     ActionFlow,
+    ActionMetadataRegistry,
     ExecutionResult,
+    load_sequence,
 )
 
 
 # Get examples directory - navigate from test/webaxon/automation/schema to src/webaxon/automation/schema/examples
-EXAMPLES_DIR = Path(__file__).parent.parent.parent.parent.parent / "src" / "webaxon" / "automation" / "schema" / "examples"
+EXAMPLES_DIR = (
+    Path(__file__).parent.parent.parent.parent.parent
+    / "src"
+    / "webaxon"
+    / "automation"
+    / "schema"
+    / "examples"
+)
 
 
 @attrs(slots=True)
 class MockActionResult:
     """Mock result that mimics WebDriverActionResult."""
+
     source: str = attrib(default="https://example.com")
     is_follow_up: bool = attrib(default=False)
 
@@ -54,13 +62,12 @@ def test_sequence_executor_initialization():
     # Create mock action executor
     mock_executor = create_mock_action_executor()
     action_metadata = ActionMetadataRegistry()
-    
+
     # Create executor with new interface
     executor = ActionFlow(
-        action_executor=mock_executor,
-        action_metadata=action_metadata
+        action_executor=mock_executor, action_metadata=action_metadata
     )
-    
+
     assert executor is not None
     assert executor.action_executor == mock_executor
     assert executor.action_metadata == action_metadata
@@ -70,9 +77,9 @@ def test_execute_wait_action():
     """Test executing a simple wait action (no target required)."""
     # Create mock action executor
     mock_executor = create_mock_action_executor()
-    
+
     # Load a simple sequence with just a wait action
-    sequence_json = '''
+    sequence_json = """
     {
         "version": "1.0",
         "id": "test_wait",
@@ -84,26 +91,26 @@ def test_execute_wait_action():
             }
         ]
     }
-    '''
-    
+    """
+
     from webaxon.automation.schema import load_sequence_from_string
+
     sequence = load_sequence_from_string(sequence_json)
-    
+
     action_metadata = ActionMetadataRegistry()
-    
+
     executor = ActionFlow(
-        action_executor=mock_executor,
-        action_metadata=action_metadata
+        action_executor=mock_executor, action_metadata=action_metadata
     )
-    
+
     # Execute sequence
     result = executor.execute(sequence)
-    
+
     # Verify result
     assert result.success is True
     assert "wait1" in result.context.results
     assert result.context.results["wait1"].success is True
-    
+
     # Verify action_executor was called with correct parameters
     mock_executor.assert_called_once()
     call_kwargs = mock_executor.call_args.kwargs
@@ -116,9 +123,9 @@ def test_execute_visit_url_action():
     """Test executing a visit_url action."""
     # Create mock action executor
     mock_executor = create_mock_action_executor()
-    
+
     # Load a simple sequence with visit_url
-    sequence_json = '''
+    sequence_json = """
     {
         "version": "1.0",
         "id": "test_visit",
@@ -130,26 +137,26 @@ def test_execute_visit_url_action():
             }
         ]
     }
-    '''
-    
+    """
+
     from webaxon.automation.schema import load_sequence_from_string
+
     sequence = load_sequence_from_string(sequence_json)
-    
+
     action_metadata = ActionMetadataRegistry()
-    
+
     executor = ActionFlow(
-        action_executor=mock_executor,
-        action_metadata=action_metadata
+        action_executor=mock_executor, action_metadata=action_metadata
     )
-    
+
     # Execute sequence
     result = executor.execute(sequence)
-    
+
     # Verify result
     assert result.success is True
     assert "visit1" in result.context.results
     assert result.context.results["visit1"].success is True
-    
+
     # Verify action_executor was called with URL as target
     mock_executor.assert_called_once()
     call_kwargs = mock_executor.call_args.kwargs
@@ -161,9 +168,9 @@ def test_execute_click_action_with_target():
     """Test executing a click action with target."""
     # Create mock action executor
     mock_executor = create_mock_action_executor()
-    
+
     # Load a simple sequence with click
-    sequence_json = '''
+    sequence_json = """
     {
         "version": "1.0",
         "id": "test_click",
@@ -178,26 +185,26 @@ def test_execute_click_action_with_target():
             }
         ]
     }
-    '''
-    
+    """
+
     from webaxon.automation.schema import load_sequence_from_string
+
     sequence = load_sequence_from_string(sequence_json)
-    
+
     action_metadata = ActionMetadataRegistry()
-    
+
     executor = ActionFlow(
-        action_executor=mock_executor,
-        action_metadata=action_metadata
+        action_executor=mock_executor, action_metadata=action_metadata
     )
-    
+
     # Execute sequence
     result = executor.execute(sequence)
-    
+
     # Verify result
     assert result.success is True
     assert "click1" in result.context.results
     assert result.context.results["click1"].success is True
-    
+
     # Verify action_executor was called with target value
     mock_executor.assert_called_once()
     call_kwargs = mock_executor.call_args.kwargs
@@ -209,9 +216,9 @@ def test_execute_sequence_with_error():
     """Test that execution stops on error."""
     # Create mock action executor that fails
     mock_executor = Mock(side_effect=Exception("Element not found"))
-    
+
     # Load a sequence that will fail
-    sequence_json = '''
+    sequence_json = """
     {
         "version": "1.0",
         "id": "test_error",
@@ -231,26 +238,26 @@ def test_execute_sequence_with_error():
             }
         ]
     }
-    '''
-    
+    """
+
     from webaxon.automation.schema import load_sequence_from_string
+
     sequence = load_sequence_from_string(sequence_json)
-    
+
     action_metadata = ActionMetadataRegistry()
-    
+
     executor = ActionFlow(
-        action_executor=mock_executor,
-        action_metadata=action_metadata
+        action_executor=mock_executor, action_metadata=action_metadata
     )
-    
+
     # Execute sequence
     result = executor.execute(sequence)
-    
+
     # Verify result
     assert result.success is False
     assert result.failed_action_id == "click1"
     assert result.error is not None
-    
+
     # Verify second action was not executed
     assert "wait1" not in result.context.results
 
@@ -258,15 +265,15 @@ def test_execute_sequence_with_error():
 def test_execute_with_fallback():
     """Test that fallback tries each target until one succeeds."""
     call_count = [0]
-    
+
     def mock_executor_with_fallback(action_type, action_target, action_args):
         call_count[0] += 1
         # Fail on first target, succeed on second
         if action_target == "target1":
             raise Exception("Target not found")
         return MockActionResult()
-    
-    sequence_json = '''
+
+    sequence_json = """
     {
         "version": "1.0",
         "id": "test_fallback",
@@ -283,20 +290,20 @@ def test_execute_with_fallback():
             }
         ]
     }
-    '''
-    
+    """
+
     from webaxon.automation.schema import load_sequence_from_string
+
     sequence = load_sequence_from_string(sequence_json)
-    
+
     action_metadata = ActionMetadataRegistry()
-    
+
     executor = ActionFlow(
-        action_executor=mock_executor_with_fallback,
-        action_metadata=action_metadata
+        action_executor=mock_executor_with_fallback, action_metadata=action_metadata
     )
-    
+
     result = executor.execute(sequence)
-    
+
     # Should succeed with second target
     assert result.success is True
     assert call_count[0] == 2  # Called twice: first failed, second succeeded
@@ -305,17 +312,17 @@ def test_execute_with_fallback():
 def test_composite_action_passes_target_directly():
     """
     Test that composite actions pass target directly to action_executor.
-    
+
     Design Principle:
     - Non-composite action: target is single element ID
     - Composite action: target is space-separated element IDs (string)
     - ActionFlow passes target through; WebDriver handles the distinction
     """
     mock_executor = create_mock_action_executor()
-    
+
     # Create a sequence with composite action using space-separated target
     # This is the new design: composite actions use 'target' with space-separated IDs
-    sequence_json = '''
+    sequence_json = """
     {
         "version": "1.0",
         "id": "test_composite",
@@ -327,20 +334,20 @@ def test_composite_action_passes_target_directly():
             }
         ]
     }
-    '''
-    
+    """
+
     from webaxon.automation.schema import load_sequence_from_string
+
     sequence = load_sequence_from_string(sequence_json)
-    
+
     action_metadata = ActionMetadataRegistry()
-    
+
     executor = ActionFlow(
-        action_executor=mock_executor,
-        action_metadata=action_metadata
+        action_executor=mock_executor, action_metadata=action_metadata
     )
-    
+
     result = executor.execute(sequence)
-    
+
     # Verify action_executor was called with target passed through directly
     mock_executor.assert_called_once()
     call_kwargs = mock_executor.call_args.kwargs

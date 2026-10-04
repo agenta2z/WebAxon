@@ -4,12 +4,11 @@ Uses hypothesis to verify handler delegation and serialization properties
 across generated inputs.
 """
 
-import resolve_path  # Setup import paths  # noqa: F401
-
-import pytest
-from hypothesis import given, settings, strategies as st, assume, HealthCheck
 from unittest.mock import MagicMock, patch
 
+import pytest
+import resolve_path  # Setup import paths  # noqa: F401
+from hypothesis import assume, given, HealthCheck, settings, strategies as st
 from webaxon.devsuite.web_agent_service_nextgen.communication.message_handlers import (
     MessageHandlers,
 )
@@ -44,7 +43,9 @@ _tag = st.text(
     alphabet=st.characters(whitelist_categories=("Ll",)),
 )
 
-_knowledge_type = st.sampled_from(["fact", "instruction", "preference", "procedure", "note"])
+_knowledge_type = st.sampled_from(
+    ["fact", "instruction", "preference", "procedure", "note"]
+)
 
 _score = st.floats(min_value=0.0, max_value=1.0, allow_nan=False, allow_infinity=False)
 
@@ -83,8 +84,14 @@ def _sent_response(queue_service):
     return queue_service.put.call_args[0][1]
 
 
-def _make_knowledge_piece(piece_id, content, domain="general", tags=None,
-                          knowledge_type="fact", is_active=True):
+def _make_knowledge_piece(
+    piece_id,
+    content,
+    domain="general",
+    tags=None,
+    knowledge_type="fact",
+    is_active=True,
+):
     """Create a MagicMock that looks like a KnowledgePiece."""
     piece = MagicMock()
     piece.piece_id = piece_id
@@ -116,8 +123,12 @@ class TestKbAddHandlerProperty:
         graph_edges_created=_nonneg_int,
     )
     def test_kb_add_handler_delegates_and_serializes(
-        self, text, pieces_created, metadata_created,
-        graph_nodes_created, graph_edges_created,
+        self,
+        text,
+        pieces_created,
+        metadata_created,
+        graph_nodes_created,
+        graph_edges_created,
     ):
         # Feature: kb-cli-commands, Property 6: kb-add handler delegates and serializes correctly
         handlers, agent_factory, queue_service = _make_handlers()
@@ -318,9 +329,7 @@ class TestKbDelConfirmDirectProperty:
         handlers.handle_kb_del(message)
 
         # Verify delegation with piece_ids
-        mock_deleter.delete_by_query.assert_called_once_with(
-            query, piece_ids=piece_ids
-        )
+        mock_deleter.delete_by_query.assert_called_once_with(query, piece_ids=piece_ids)
 
         response = _sent_response(queue_service)
         assert response["type"] == "kb_del_response"
@@ -526,9 +535,16 @@ class TestHandlerExceptionProperty:
 
     @settings(max_examples=100)
     @given(
-        msg_type=st.sampled_from([
-            "kb_add", "kb_update", "kb_del", "kb_get", "kb_list", "kb_restore",
-        ]),
+        msg_type=st.sampled_from(
+            [
+                "kb_add",
+                "kb_update",
+                "kb_del",
+                "kb_get",
+                "kb_list",
+                "kb_restore",
+            ]
+        ),
         error_text=_nonempty_text,
     )
     def test_handler_exception_produces_error_response(self, msg_type, error_text):

@@ -20,11 +20,11 @@ from datetime import datetime, timedelta
 
 # Import common utilities
 from common import (
-    setup_project_paths,
-    setup_logging,
-    TestResult,
     extract_executed_actions,
-    print_action_summary
+    print_action_summary,
+    setup_logging,
+    setup_project_paths,
+    TestResult,
 )
 
 # Setup paths and logging
@@ -42,16 +42,22 @@ def run_live_test() -> bool:
     3. Action agent can click the Flights tab
     4. Flights section is displayed
     """
-    from agent_foundation.common.inferencers.api_inferencers.claude_api_inferencer import ClaudeApiInferencer
-    from webaxon.automation.web_driver import WebDriver
+    from agent_foundation.common.inferencers.api_inferencers.claude_api_inferencer import (
+        ClaudeApiInferencer,
+    )
     from webaxon.automation.agents import create_action_agent
+    from webaxon.automation.web_driver import WebDriver
 
     _logger.info("Running LIVE test on Expedia (browser + API calls)")
     result = TestResult(_logger)
 
     # Check for API key
-    api_key = os.environ.get('ANTHROPIC_API_KEY')
-    result.check("ANTHROPIC_API_KEY is set", bool(api_key), "Set ANTHROPIC_API_KEY environment variable")
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    result.check(
+        "ANTHROPIC_API_KEY is set",
+        bool(api_key),
+        "Set ANTHROPIC_API_KEY environment variable",
+    )
     if not api_key:
         return result.summary()
 
@@ -92,7 +98,7 @@ def run_live_test() -> bool:
         result.check(
             "Initial page navigation to Expedia",
             "expedia" in initial_url.lower(),
-            f"URL: {initial_url}"
+            f"URL: {initial_url}",
         )
 
         # Test 5: Call action agent to search for flights
@@ -133,23 +139,28 @@ def run_live_test() -> bool:
 
         # Check if we're still on a flights-related page
         url_has_flights = "flight" in current_url.lower()
-        result.check(
-            "Still on flights page",
-            url_has_flights,
-            f"URL: {current_url}"
-        )
+        result.check("Still on flights page", url_has_flights, f"URL: {current_url}")
 
         # Check for any relevant actions executed
         # Accept Click, InputText, or Navigation actions
         relevant_actions = [
-            a for a in executed_actions
-            if any(action_type in a.get('type', '') for action_type in
-                   ['Click', 'InputText', 'Navigation', 'MakeAnswer', 'Clarification'])
+            a
+            for a in executed_actions
+            if any(
+                action_type in a.get("type", "")
+                for action_type in [
+                    "Click",
+                    "InputText",
+                    "Navigation",
+                    "MakeAnswer",
+                    "Clarification",
+                ]
+            )
         ]
         result.check(
             "Agent executed relevant actions",
             len(relevant_actions) > 0,
-            f"Found {len(relevant_actions)} actions, types: {[a.get('type') for a in executed_actions]}"
+            f"Found {len(relevant_actions)} actions, types: {[a.get('type') for a in executed_actions]}",
         )
 
     except Exception as e:
@@ -174,13 +185,13 @@ def main():
         epilog="""
 Examples:
   python example_action_agent_expedia.py --live    # Run the test
-        """
+        """,
     )
     parser.add_argument(
         "--live",
         action="store_true",
         default=True,
-        help="Run live test with browser and API calls (default: True)"
+        help="Run live test with browser and API calls (default: True)",
     )
 
     args = parser.parse_args()

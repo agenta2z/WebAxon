@@ -1,14 +1,15 @@
 import sys
 from pathlib import Path
 
-PIVOT_FOLDER_NAME = 'agent_debugger_nextgen'
-SRC_FOLDER_NAME = 'src'
+PIVOT_FOLDER_NAME = "agent_debugger_nextgen"
+SRC_FOLDER_NAME = "src"
 
 # Sibling projects that may be needed (relative to parent of project root)
 SIBLING_PROJECTS = [
-    'ScienceModelingTools',
-    'SciencePythonUtils',
+    "ScienceModelingTools",
+    "SciencePythonUtils",
 ]
+
 
 def resolve_path():
     """Resolve and add required paths to sys.path.
@@ -46,4 +47,6 @@ def resolve_path():
             return testcase_root
         current = current.parent
     else:
-        raise FileNotFoundError(f"Could not find '{PIVOT_FOLDER_NAME}' directory in path hierarchy")
+        raise FileNotFoundError(
+            f"Could not find '{PIVOT_FOLDER_NAME}' directory in path hierarchy"
+        )

@@ -40,6 +40,7 @@ def _is_status_update(text: str) -> bool:
     """Detect if an InstantResponse is a mid-task status update rather than a final answer."""
     return bool(_STATUS_UPDATE_RE.match(text.strip()))
 
+
 # Canonical action types from AgentFoundation schema/constants.py
 _ACTION_FORMAT_MAP = {
     "visit_url": lambda e: f"NAVIGATE {_get_arg(e, 'url', e.get('target', ''))}",
@@ -97,9 +98,13 @@ def capture(
     # Parse session logs if available
     if session_dir and Path(session_dir).is_dir():
         try:
-            thoughts, raw_generations, action_history, action_history_readable, answer = (
-                _parse_session_logs(session_dir)
-            )
+            (
+                thoughts,
+                raw_generations,
+                action_history,
+                action_history_readable,
+                answer,
+            ) = _parse_session_logs(session_dir)
         except Exception as exc:
             logger.warning("Session log parsing failed: %s", exc, exc_info=True)
 
@@ -146,8 +151,8 @@ def _parse_session_logs(
     raw_generations: List[str] = []
     action_history: List[str] = []
     action_history_readable: List[str] = []
-    best_answer = ""   # last non-status-update InstantResponse
-    last_answer = ""   # very last InstantResponse (fallback)
+    best_answer = ""  # last non-status-update InstantResponse
+    last_answer = ""  # very last InstantResponse (fallback)
 
     reader = SessionLogReader(session_dir, resolve_parts=True)
 
@@ -173,7 +178,10 @@ def _parse_session_logs(
 
             # Extract <Reasoning> and planned actions from XML
             _extract_reasoner_response(
-                raw_text, thoughts, action_history, action_history_readable,
+                raw_text,
+                thoughts,
+                action_history,
+                action_history_readable,
             )
 
             # Track InstantResponses: prefer substantive answers over status updates
@@ -203,7 +211,9 @@ def _iter_turns_from_disk(reader, session_dir: Path):
     # Discover turn_NNN directories and iterate them in order
     turn_dirs = sorted(
         [d for d in session_dir.iterdir() if d.is_dir() and d.name.startswith("turn_")],
-        key=lambda p: int(p.name.split("_")[1]) if p.name.split("_")[1].isdigit() else 0,
+        key=lambda p: int(p.name.split("_")[1])
+        if p.name.split("_")[1].isdigit()
+        else 0,
     )
 
     session_log_file = reader.manifest.session_log_file  # e.g. "session.jsonl"
@@ -346,7 +356,10 @@ def _compute_confidence(answer: str) -> float:
     if not answer:
         return 0.0
     lower = answer.lower()
-    if any(p in lower for p in ["task complete", "successfully", "done", "finished", "completed"]):
+    if any(
+        p in lower
+        for p in ["task complete", "successfully", "done", "finished", "completed"]
+    ):
         return 0.8
     if any(p in lower for p in ["error", "failed", "unable", "could not"]):
         return 0.2
@@ -355,10 +368,15 @@ def _compute_confidence(answer: str) -> float:
 
 def _write_placeholder_png(path: Path) -> None:
     """Write a minimal 1x1 white PNG file."""
+
     # Minimal valid PNG: 1x1 white pixel
     def _chunk(chunk_type: bytes, data: bytes) -> bytes:
         c = chunk_type + data
-        return struct.pack(">I", len(data)) + c + struct.pack(">I", zlib.crc32(c) & 0xFFFFFFFF)
+        return (
+            struct.pack(">I", len(data))
+            + c
+            + struct.pack(">I", zlib.crc32(c) & 0xFFFFFFFF)
+        )
 
     sig = b"\x89PNG\r\n\x1a\n"
     ihdr = _chunk(b"IHDR", struct.pack(">IIBBBBB", 1, 1, 8, 2, 0, 0, 0))

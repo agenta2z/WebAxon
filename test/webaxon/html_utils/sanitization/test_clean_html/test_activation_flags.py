@@ -7,20 +7,21 @@ key conditions rather than exact output matching to remain resilient to minor ch
 in clean_html logic.
 """
 
-import pytest
 import re
-from bs4 import BeautifulSoup
 
+import pytest
+from bs4 import BeautifulSoup
 from webaxon.html_utils.sanitization import (
     clean_html,
+    DEFAULT_HTML_CLEAN_ATTRIBUTES_TO_KEEP,
     DEFAULT_HTML_CLEAN_TAGS_TO_KEEP,
-    DEFAULT_HTML_CLEAN_ATTRIBUTES_TO_KEEP
 )
+
 from .conftest import (
     count_divs_with_pattern,
-    has_div_with_class,
+    count_total_divs,
     extract_text_content,
-    count_total_divs
+    has_div_with_class,
 )
 
 
@@ -44,21 +45,24 @@ class TestPreserveContainerActivationFlag:
             slack_test_html,
             tags_to_keep=DEFAULT_HTML_CLEAN_TAGS_TO_KEEP,
             attributes_to_keep=DEFAULT_HTML_CLEAN_ATTRIBUTES_TO_KEEP,
-            additional_rule_set_activation_flags=None  # NO FLAG
+            additional_rule_set_activation_flags=None,  # NO FLAG
         )
 
         # Critical assertion: Matching containers should be minimal/removed
-        scroll_count = count_divs_with_pattern(result, r'scroll')
-        list_count = count_divs_with_pattern(result, r'list')
-        view_count = count_divs_with_pattern(result, r'view')
+        scroll_count = count_divs_with_pattern(result, r"scroll")
+        list_count = count_divs_with_pattern(result, r"list")
+        view_count = count_divs_with_pattern(result, r"view")
 
         # Allow up to 5 of each type (some edge cases might slip through)
-        assert scroll_count < 5, \
+        assert scroll_count < 5, (
             f"Expected few 'scroll' divs without flag, got {scroll_count}"
-        assert list_count < 5, \
+        )
+        assert list_count < 5, (
             f"Expected few 'list' divs without flag, got {list_count}"
-        assert view_count < 5, \
+        )
+        assert view_count < 5, (
             f"Expected few 'view' divs without flag, got {view_count}"
+        )
 
     def test_containers_preserved_with_flag(self, slack_test_html):
         """
@@ -72,21 +76,22 @@ class TestPreserveContainerActivationFlag:
             slack_test_html,
             tags_to_keep=DEFAULT_HTML_CLEAN_TAGS_TO_KEEP,
             attributes_to_keep=DEFAULT_HTML_CLEAN_ATTRIBUTES_TO_KEEP,
-            additional_rule_set_activation_flags=['preserve_container']  # FLAG ON
+            additional_rule_set_activation_flags=["preserve_container"],  # FLAG ON
         )
 
         # Critical assertion: Many matching containers should be kept
-        scroll_count = count_divs_with_pattern(result, r'scroll')
-        list_count = count_divs_with_pattern(result, r'list')
-        view_count = count_divs_with_pattern(result, r'view')
+        scroll_count = count_divs_with_pattern(result, r"scroll")
+        list_count = count_divs_with_pattern(result, r"list")
+        view_count = count_divs_with_pattern(result, r"view")
 
         # Based on research: ~75 total matching divs in slack_test_page.html
         # We expect at least 20 to be preserved (conservative estimate)
         total_count = scroll_count + list_count + view_count
 
-        assert total_count > 20, \
-            f"Expected many preserved divs with flag, got {total_count} " \
+        assert total_count > 20, (
+            f"Expected many preserved divs with flag, got {total_count} "
             f"(scroll: {scroll_count}, list: {list_count}, view: {view_count})"
+        )
 
     def test_significant_difference_between_modes(self, slack_test_html):
         """
@@ -99,25 +104,26 @@ class TestPreserveContainerActivationFlag:
         result_without = clean_html(
             slack_test_html,
             tags_to_keep=DEFAULT_HTML_CLEAN_TAGS_TO_KEEP,
-            attributes_to_keep=['class'],
-            additional_rule_set_activation_flags=None
+            attributes_to_keep=["class"],
+            additional_rule_set_activation_flags=None,
         )
         result_with = clean_html(
             slack_test_html,
             tags_to_keep=DEFAULT_HTML_CLEAN_TAGS_TO_KEEP,
-            attributes_to_keep=['class'],
-            additional_rule_set_activation_flags=['preserve_container']
+            attributes_to_keep=["class"],
+            additional_rule_set_activation_flags=["preserve_container"],
         )
 
-        count_without = count_divs_with_pattern(result_without, r'scroll|list|view')
-        count_with = count_divs_with_pattern(result_with, r'scroll|list|view')
+        count_without = count_divs_with_pattern(result_without, r"scroll|list|view")
+        count_with = count_divs_with_pattern(result_with, r"scroll|list|view")
 
         # Critical assertion: Significant difference (at least 20 more containers)
         difference = count_with - count_without
 
-        assert difference > 20, \
-            f"Expected significant difference with flag, got {difference} " \
+        assert difference > 20, (
+            f"Expected significant difference with flag, got {difference} "
             f"(without: {count_without}, with: {count_with})"
+        )
 
     def test_specific_slack_containers_preserved(self, slack_test_html):
         """
@@ -130,16 +136,17 @@ class TestPreserveContainerActivationFlag:
         result = clean_html(
             slack_test_html,
             tags_to_keep=DEFAULT_HTML_CLEAN_TAGS_TO_KEEP,
-            attributes_to_keep=['class'],
-            additional_rule_set_activation_flags=['preserve_container']
+            attributes_to_keep=["class"],
+            additional_rule_set_activation_flags=["preserve_container"],
         )
 
         # Critical patterns that should be preserved (at least one div with each)
-        critical_patterns = ['view', 'list', 'scroll']
+        critical_patterns = ["view", "list", "scroll"]
 
         for pattern in critical_patterns:
-            assert has_div_with_class(result, pattern), \
+            assert has_div_with_class(result, pattern), (
                 f"Expected div with '{pattern}' in class to be preserved with flag"
+            )
 
     def test_content_preserved_in_both_modes(self, slack_test_html):
         """
@@ -151,12 +158,12 @@ class TestPreserveContainerActivationFlag:
         result_without = clean_html(
             slack_test_html,
             tags_to_keep=DEFAULT_HTML_CLEAN_TAGS_TO_KEEP,
-            additional_rule_set_activation_flags=None
+            additional_rule_set_activation_flags=None,
         )
         result_with = clean_html(
             slack_test_html,
             tags_to_keep=DEFAULT_HTML_CLEAN_TAGS_TO_KEEP,
-            additional_rule_set_activation_flags=['preserve_container']
+            additional_rule_set_activation_flags=["preserve_container"],
         )
 
         text_without = extract_text_content(result_without)
@@ -167,9 +174,10 @@ class TestPreserveContainerActivationFlag:
         length_diff = abs(len(text_without) - len(text_with))
         max_allowed_diff = 100  # characters
 
-        assert length_diff < max_allowed_diff, \
-            f"Text content length differs too much: {length_diff} characters " \
+        assert length_diff < max_allowed_diff, (
+            f"Text content length differs too much: {length_diff} characters "
             f"(without: {len(text_without)}, with: {len(text_with)})"
+        )
 
     def test_class_attributes_preserved_with_flag(self, slack_test_html):
         """
@@ -182,29 +190,31 @@ class TestPreserveContainerActivationFlag:
         result = clean_html(
             slack_test_html,
             tags_to_keep=DEFAULT_HTML_CLEAN_TAGS_TO_KEEP,
-            attributes_to_keep=['class'],
-            additional_rule_set_activation_flags=['preserve_container']
+            attributes_to_keep=["class"],
+            additional_rule_set_activation_flags=["preserve_container"],
         )
 
-        soup = BeautifulSoup(result, 'html.parser')
+        soup = BeautifulSoup(result, "html.parser")
 
         # Find divs that have the pattern in their classes
         matching_divs = [
-            d for d in soup.find_all('div')
-            if d.get('class') and
-            any(re.search(r'scroll|list|view', c, re.I)
-                for c in d.get('class', []))
+            d
+            for d in soup.find_all("div")
+            if d.get("class")
+            and any(re.search(r"scroll|list|view", c, re.I) for c in d.get("class", []))
         ]
 
         # Critical assertion: Multiple divs with classes preserved
-        assert len(matching_divs) > 10, \
+        assert len(matching_divs) > 10, (
             f"Expected multiple divs with classes preserved, got {len(matching_divs)}"
+        )
 
         # Verify first few actually have the expected patterns in classes
         for div in matching_divs[:5]:  # Check first 5
-            classes = ' '.join(div.get('class', []))
-            assert re.search(r'scroll|list|view', classes, re.I), \
+            classes = " ".join(div.get("class", []))
+            assert re.search(r"scroll|list|view", classes, re.I), (
                 f"Expected pattern in preserved div classes: {classes}"
+            )
 
     def test_total_div_count_higher_with_flag(self, slack_test_html):
         """
@@ -216,27 +226,29 @@ class TestPreserveContainerActivationFlag:
         result_without = clean_html(
             slack_test_html,
             tags_to_keep=DEFAULT_HTML_CLEAN_TAGS_TO_KEEP,
-            attributes_to_keep=['class'],
-            additional_rule_set_activation_flags=None
+            attributes_to_keep=["class"],
+            additional_rule_set_activation_flags=None,
         )
         result_with = clean_html(
             slack_test_html,
             tags_to_keep=DEFAULT_HTML_CLEAN_TAGS_TO_KEEP,
-            attributes_to_keep=['class'],
-            additional_rule_set_activation_flags=['preserve_container']
+            attributes_to_keep=["class"],
+            additional_rule_set_activation_flags=["preserve_container"],
         )
 
         total_without = count_total_divs(result_without)
         total_with = count_total_divs(result_with)
 
         # Critical assertion: More divs with flag enabled
-        assert total_with > total_without, \
+        assert total_with > total_without, (
             f"Expected more divs with flag, got without: {total_without}, with: {total_with}"
+        )
 
         # Should have at least 20 more divs (conservative)
         difference = total_with - total_without
-        assert difference > 20, \
+        assert difference > 20, (
             f"Expected significant increase in div count, got {difference}"
+        )
 
     def test_specific_class_c_virtual_list_scroll_container(self, slack_test_html):
         """
@@ -258,21 +270,21 @@ class TestPreserveContainerActivationFlag:
         result_without = clean_html(
             slack_test_html,
             tags_to_keep=DEFAULT_HTML_CLEAN_TAGS_TO_KEEP,
-            attributes_to_keep=['class'],
-            additional_rule_set_activation_flags=None  # NO FLAG
+            attributes_to_keep=["class"],
+            additional_rule_set_activation_flags=None,  # NO FLAG
         )
         result_with = clean_html(
             slack_test_html,
             tags_to_keep=DEFAULT_HTML_CLEAN_TAGS_TO_KEEP,
-            attributes_to_keep=['class'],
-            additional_rule_set_activation_flags=['preserve_container']  # FLAG ON
+            attributes_to_keep=["class"],
+            additional_rule_set_activation_flags=["preserve_container"],  # FLAG ON
         )
 
         # Test classes that clearly demonstrate the flag behavior
         test_classes = [
-            'c-virtual_list__scroll_container',
-            'c-scrollbar',
-            'c-virtual_list'
+            "c-virtual_list__scroll_container",
+            "c-scrollbar",
+            "c-virtual_list",
         ]
 
         for class_name in test_classes:
@@ -281,19 +293,23 @@ class TestPreserveContainerActivationFlag:
             class_exists_with = class_name in result_with
 
             # Critical assertion: Class should NOT exist without flag, but SHOULD exist with flag
-            assert not class_exists_without, \
+            assert not class_exists_without, (
                 f"Class '{class_name}' should be removed without preserve_container flag"
-            assert class_exists_with, \
+            )
+            assert class_exists_with, (
                 f"Class '{class_name}' should be preserved with preserve_container flag"
+            )
 
             # Additional verification: Check it's actually in a div element with the flag
             if class_exists_with:
-                soup = BeautifulSoup(result_with, 'html.parser')
-                matching_div = soup.find('div', class_=lambda c: c and class_name in c)
-                assert matching_div is not None, \
+                soup = BeautifulSoup(result_with, "html.parser")
+                matching_div = soup.find("div", class_=lambda c: c and class_name in c)
+                assert matching_div is not None, (
                     f"Class '{class_name}' should be in a div element"
-                assert 'class' in matching_div.attrs, \
+                )
+                assert "class" in matching_div.attrs, (
                     f"Div with '{class_name}' should have class attribute"
+                )
 
 
 class TestActivationFlagEdgeCases:
@@ -304,46 +320,49 @@ class TestActivationFlagEdgeCases:
         result_none = clean_html(
             slack_test_html,
             tags_to_keep=DEFAULT_HTML_CLEAN_TAGS_TO_KEEP,
-            additional_rule_set_activation_flags=None
+            additional_rule_set_activation_flags=None,
         )
         result_empty = clean_html(
             slack_test_html,
             tags_to_keep=DEFAULT_HTML_CLEAN_TAGS_TO_KEEP,
-            additional_rule_set_activation_flags=[]
+            additional_rule_set_activation_flags=[],
         )
 
-        count_none = count_divs_with_pattern(result_none, r'scroll|list|view')
-        count_empty = count_divs_with_pattern(result_empty, r'scroll|list|view')
+        count_none = count_divs_with_pattern(result_none, r"scroll|list|view")
+        count_empty = count_divs_with_pattern(result_empty, r"scroll|list|view")
 
         # Should behave the same way (minimal containers)
-        assert abs(count_none - count_empty) < 5, \
+        assert abs(count_none - count_empty) < 5, (
             f"Empty list should behave like None (none: {count_none}, empty: {count_empty})"
+        )
 
     def test_non_matching_activation_flag(self, slack_test_html):
         """Test that non-matching activation flag doesn't activate rules."""
         result = clean_html(
             slack_test_html,
             tags_to_keep=DEFAULT_HTML_CLEAN_TAGS_TO_KEEP,
-            additional_rule_set_activation_flags=['non_existent_flag']
+            additional_rule_set_activation_flags=["non_existent_flag"],
         )
 
-        count = count_divs_with_pattern(result, r'scroll|list|view')
+        count = count_divs_with_pattern(result, r"scroll|list|view")
 
         # Should behave like no flag (minimal containers)
-        assert count < 5, \
+        assert count < 5, (
             f"Non-matching flag should not activate rules, got {count} matching divs"
+        )
 
     def test_multiple_activation_flags(self, slack_test_html):
         """Test that preserve_container flag works when passed with other flags."""
         result = clean_html(
             slack_test_html,
             tags_to_keep=DEFAULT_HTML_CLEAN_TAGS_TO_KEEP,
-            attributes_to_keep=['class'],
-            additional_rule_set_activation_flags=['preserve_container', 'other_flag']
+            attributes_to_keep=["class"],
+            additional_rule_set_activation_flags=["preserve_container", "other_flag"],
         )
 
-        count = count_divs_with_pattern(result, r'scroll|list|view')
+        count = count_divs_with_pattern(result, r"scroll|list|view")
 
         # preserve_container should still work
-        assert count > 20, \
+        assert count > 20, (
             f"preserve_container should work with multiple flags, got {count} matching divs"
+        )

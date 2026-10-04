@@ -9,6 +9,7 @@ from time import sleep
 from typing import Any, List, Mapping, Optional, Sequence, TYPE_CHECKING
 
 from webaxon.automation.backends.exceptions import UnsupportedOperationError
+
 from .shims import PlaywrightElementShim
 
 if TYPE_CHECKING:
@@ -18,13 +19,13 @@ _logger = logging.getLogger(__name__)
 
 
 def execute_single_action(
-    backend: 'PlaywrightBackend',
+    backend: "PlaywrightBackend",
     element: Any,
     action_type: str,
     action_args: Optional[Mapping] = None,
     attachments: Optional[Sequence] = None,
     timeout: int = 20,
-    additional_wait_time: float = 2.0
+    additional_wait_time: float = 2.0,
 ) -> Optional[str]:
     """Execute a single action on an element.
 
@@ -43,40 +44,42 @@ def execute_single_action(
     action_args = dict(action_args) if action_args else {}
     action_type = action_type.lower()
 
-    if action_type == 'click':
+    if action_type == "click":
         backend.click_element(element, **action_args)
-    elif action_type == 'input_text':
-        text = action_args.pop('text', '')
-        clear = action_args.pop('clear_content', False)
+    elif action_type == "input_text":
+        text = action_args.pop("text", "")
+        clear = action_args.pop("clear_content", False)
         backend.input_text(element, text, clear_content=clear, **action_args)
-    elif action_type == 'scroll':
-        direction = action_args.pop('direction', 'Down')
-        distance = action_args.pop('distance', 'Large')
-        backend.scroll_element(element, direction=direction, distance=distance, **action_args)
-    elif action_type == 'get_text':
+    elif action_type == "scroll":
+        direction = action_args.pop("direction", "Down")
+        distance = action_args.pop("distance", "Large")
+        backend.scroll_element(
+            element, direction=direction, distance=distance, **action_args
+        )
+    elif action_type == "get_text":
         return backend.get_element_text(element)
-    elif action_type == 'get_html':
+    elif action_type == "get_html":
         return backend.get_element_html(element)
-    elif action_type == 'hover':
+    elif action_type == "hover":
         if isinstance(element, PlaywrightElementShim):
             element.hover()
         else:
             element.hover()
-    elif action_type == 'focus':
+    elif action_type == "focus":
         if isinstance(element, PlaywrightElementShim):
             element.focus()
         else:
             element.focus()
-    elif action_type == 'clear':
+    elif action_type == "clear":
         if isinstance(element, PlaywrightElementShim):
             element.clear()
         else:
             element.clear()
-    elif action_type == 'visit_url':
+    elif action_type == "visit_url":
         # element is the URL string for visit_url action
         url = element if isinstance(element, str) else str(element)
-        try_open_in_new_tab = action_args.get('try_open_in_new_tab', False)
-        wait_after = action_args.get('wait_after_opening_url', 0)
+        try_open_in_new_tab = action_args.get("try_open_in_new_tab", False)
+        wait_after = action_args.get("wait_after_opening_url", 0)
 
         _logger.debug(
             f"[execute_single_action] visit_url: "
@@ -88,7 +91,7 @@ def execute_single_action(
             # Open URL in a new tab
             new_page = backend._context.new_page()
             # Apply stealth scripts to new page if enabled
-            if getattr(backend, '_stealth_enabled', False):
+            if getattr(backend, "_stealth_enabled", False):
                 backend._apply_stealth_scripts(new_page)
             new_page.goto(url)
             _logger.debug(
@@ -114,7 +117,7 @@ def execute_single_action(
     else:
         raise UnsupportedOperationError(
             operation=action_type,
-            backend_type='playwright',
+            backend_type="playwright",
             message=f"Action type '{action_type}' is not supported",
         )
 
@@ -126,13 +129,13 @@ def execute_single_action(
 
 
 def execute_composite_action(
-    backend: 'PlaywrightBackend',
+    backend: "PlaywrightBackend",
     elements: List[Any],
     action_config,  # WebAgentAction from webaxon.automation.schema
     action_args: Optional[Mapping] = None,
     attachments: Optional[Sequence] = None,
     timeout: int = 20,
-    additional_wait_time: float = 2.0
+    additional_wait_time: float = 2.0,
 ) -> None:
     """Execute a composite action by decomposing it into multiple sub-actions.
 
@@ -159,9 +162,9 @@ def execute_composite_action(
         )
 
     # Handle both old enum format and new CompositeActionConfig format
-    if hasattr(composite_action, 'mode'):
+    if hasattr(composite_action, "mode"):
         mode = composite_action.mode
-    elif hasattr(composite_action, 'value'):
+    elif hasattr(composite_action, "value"):
         mode = composite_action.value
     else:
         mode = str(composite_action)
@@ -197,11 +200,13 @@ def execute_composite_action(
             action_args=step_action_args if step_action_args else None,
             attachments=attachments,
             timeout=timeout,
-            additional_wait_time=additional_wait_time
+            additional_wait_time=additional_wait_time,
         )
 
 
-def _extract_action_specific_args(action_type: str, all_action_args: Optional[Mapping]) -> Mapping:
+def _extract_action_specific_args(
+    action_type: str, all_action_args: Optional[Mapping]
+) -> Mapping:
     """Extract action-specific arguments from a mapping containing args for multiple actions.
 
     Supports prefixed args format: 'input_text_text' -> 'text' for input_text action
@@ -222,21 +227,21 @@ def _extract_action_specific_args(action_type: str, all_action_args: Optional[Ma
     for key, value in all_action_args.items():
         if key.startswith(prefix):
             # Remove prefix to get the actual parameter name
-            param_name = key[len(prefix):]
+            param_name = key[len(prefix) :]
             action_specific_args[param_name] = value
 
     return action_specific_args
 
 
 def execute_actions(
-    backend: 'PlaywrightBackend',
+    backend: "PlaywrightBackend",
     actions: Mapping,
     init_cond: Any = None,
     repeat: int = 0,
     repeat_when: Any = None,
     elements_dict: Any = None,
     output_path_action_records: Optional[str] = None,
-    **kwargs
+    **kwargs,
 ) -> None:
     """Execute a sequence of actions with conditions.
 
@@ -274,23 +279,23 @@ def execute_actions(
 
     try:
         from webaxon.automation.configs.task_config import (
-            FIELD_NAME_TASK_CONFIG_ACTION_INIT_COND,
             FIELD_NAME_TASK_CONFIG_ACTION_ARGS,
-            FIELD_NAME_TASK_CONFIG_ACTION_TARGET,
+            FIELD_NAME_TASK_CONFIG_ACTION_INIT_COND,
             FIELD_NAME_TASK_CONFIG_ACTION_NAME,
-            FIELD_NAME_TASK_CONFIG_ACTION_REPEAT_COND,
             FIELD_NAME_TASK_CONFIG_ACTION_REPEAT,
+            FIELD_NAME_TASK_CONFIG_ACTION_REPEAT_COND,
             FIELD_NAME_TASK_CONFIG_ACTION_SCREENSHOT,
+            FIELD_NAME_TASK_CONFIG_ACTION_TARGET,
         )
     except ImportError:
         # Fallback to hardcoded values if config module not available
-        FIELD_NAME_TASK_CONFIG_ACTION_NAME = 'action_name'
-        FIELD_NAME_TASK_CONFIG_ACTION_TARGET = 'action_target'
-        FIELD_NAME_TASK_CONFIG_ACTION_ARGS = 'action_args'
-        FIELD_NAME_TASK_CONFIG_ACTION_INIT_COND = 'init_cond'
-        FIELD_NAME_TASK_CONFIG_ACTION_REPEAT_COND = 'repeat_when'
-        FIELD_NAME_TASK_CONFIG_ACTION_REPEAT = 'repeat'
-        FIELD_NAME_TASK_CONFIG_ACTION_SCREENSHOT = 'screenshot'
+        FIELD_NAME_TASK_CONFIG_ACTION_NAME = "action_name"
+        FIELD_NAME_TASK_CONFIG_ACTION_TARGET = "action_target"
+        FIELD_NAME_TASK_CONFIG_ACTION_ARGS = "action_args"
+        FIELD_NAME_TASK_CONFIG_ACTION_INIT_COND = "init_cond"
+        FIELD_NAME_TASK_CONFIG_ACTION_REPEAT_COND = "repeat_when"
+        FIELD_NAME_TASK_CONFIG_ACTION_REPEAT = "repeat"
+        FIELD_NAME_TASK_CONFIG_ACTION_SCREENSHOT = "screenshot"
 
     def _check_conditions(conditions: Any) -> bool:
         """Check if conditions are met."""
@@ -301,21 +306,33 @@ def execute_actions(
         if isinstance(conditions, dict):
             # Simple element existence check
             for key, value in conditions.items():
-                if key in ('exists', 'element_exists'):
+                if key in ("exists", "element_exists"):
                     try:
-                        locator = backend._page.locator(value) if isinstance(value, str) else value
+                        locator = (
+                            backend._page.locator(value)
+                            if isinstance(value, str)
+                            else value
+                        )
                         return locator.count() > 0
                     except Exception:
                         return False
-                elif key in ('visible', 'element_visible'):
+                elif key in ("visible", "element_visible"):
                     try:
-                        locator = backend._page.locator(value) if isinstance(value, str) else value
+                        locator = (
+                            backend._page.locator(value)
+                            if isinstance(value, str)
+                            else value
+                        )
                         return locator.is_visible()
                     except Exception:
                         return False
-                elif key == 'not_exists':
+                elif key == "not_exists":
                     try:
-                        locator = backend._page.locator(value) if isinstance(value, str) else value
+                        locator = (
+                            backend._page.locator(value)
+                            if isinstance(value, str)
+                            else value
+                        )
                         return locator.count() == 0
                     except Exception:
                         return True
@@ -330,17 +347,16 @@ def execute_actions(
             return None
         if isinstance(target, str):
             # Try as XPath first, then CSS
-            if target.startswith('//') or target.startswith('('):
-                return backend.find_element('xpath', target)
+            if target.startswith("//") or target.startswith("("):
+                return backend.find_element("xpath", target)
             else:
-                return backend.find_element('css selector', target)
+                return backend.find_element("css selector", target)
         if elements_dict and isinstance(target, str) and target in elements_dict:
             return elements_dict[target]
         return target
 
     def _execute_actions_inner(
-        inner_actions: Mapping,
-        inner_output_path: Optional[str] = None
+        inner_actions: Mapping, inner_output_path: Optional[str] = None
     ):
         """Execute the inner action loop."""
         action_records = [] if inner_output_path else None
@@ -348,31 +364,40 @@ def execute_actions(
         for action_index, action in enumerate(inner_actions):
             if inner_output_path:
                 output_path_action_root = ensure_dir_existence(
-                    os_path.join(inner_output_path, f'action_{action_index}')
+                    os_path.join(inner_output_path, f"action_{action_index}")
                 )
-                action_records_jobj = {'action_index': action_index}
+                action_records_jobj = {"action_index": action_index}
 
             action_name = action[FIELD_NAME_TASK_CONFIG_ACTION_NAME]
             action_target = action.get(FIELD_NAME_TASK_CONFIG_ACTION_TARGET, None)
             action_args = action.get(FIELD_NAME_TASK_CONFIG_ACTION_ARGS, None)
             action_cond = action.get(FIELD_NAME_TASK_CONFIG_ACTION_INIT_COND, None)
-            action_repeat_when = action.get(FIELD_NAME_TASK_CONFIG_ACTION_REPEAT_COND, None)
-            action_repeat = action.get(
-                FIELD_NAME_TASK_CONFIG_ACTION_REPEAT,
-                int(not bool(action_repeat_when))
+            action_repeat_when = action.get(
+                FIELD_NAME_TASK_CONFIG_ACTION_REPEAT_COND, None
             )
-            action_screenshot = action.get(FIELD_NAME_TASK_CONFIG_ACTION_SCREENSHOT, True)
+            action_repeat = action.get(
+                FIELD_NAME_TASK_CONFIG_ACTION_REPEAT, int(not bool(action_repeat_when))
+            )
+            action_screenshot = action.get(
+                FIELD_NAME_TASK_CONFIG_ACTION_SCREENSHOT, True
+            )
 
             action_repeat_obj = Repeat(
                 repeat=action_repeat,
                 repeat_cond=lambda: _check_conditions(action_repeat_when),
-                init_cond=(True if action_cond is None else lambda: _check_conditions(action_cond))
+                init_cond=(
+                    True
+                    if action_cond is None
+                    else lambda: _check_conditions(action_cond)
+                ),
             )
 
             while action_repeat_obj:
                 if inner_output_path:
                     base_action_records_jobj = action_records_jobj.copy()
-                    base_action_records_jobj['action_repeat_index'] = action_repeat_obj.index
+                    base_action_records_jobj["action_repeat_index"] = (
+                        action_repeat_obj.index
+                    )
 
                 for action_target_index, _action_target in enumerate(
                     iter__(action_target, iter_none=True)
@@ -383,17 +408,22 @@ def execute_actions(
                         # Save HTML before action
                         output_path_html = os_path.join(
                             output_path_action_root,
-                            f'html_before_action-target_{action_target_index}-repeat_{action_repeat_obj.index}.html'
+                            f"html_before_action-target_{action_target_index}-repeat_{action_repeat_obj.index}.html",
                         )
-                        write_all_text(backend.get_body_html(return_dynamic_contents=True), output_path_html)
+                        write_all_text(
+                            backend.get_body_html(return_dynamic_contents=True),
+                            output_path_html,
+                        )
 
                         # Take screenshot before action
                         if action_screenshot:
                             output_path_screenshot = os_path.join(
                                 output_path_action_root,
-                                f'screenshot_before_action-target_{action_target_index}-repeat_{action_repeat_obj.index}.png'
+                                f"screenshot_before_action-target_{action_target_index}-repeat_{action_repeat_obj.index}.png",
                             )
-                            backend.capture_full_page_screenshot(output_path_screenshot, center_element=element)
+                            backend.capture_full_page_screenshot(
+                                output_path_screenshot, center_element=element
+                            )
 
                     # Execute the action
                     action_result = execute_single_action(
@@ -401,40 +431,46 @@ def execute_actions(
                         element=element,
                         action_type=action_name,
                         action_args=action_args,
-                        **kwargs
+                        **kwargs,
                     )
 
                     if inner_output_path:
                         _action_records_jobj = base_action_records_jobj.copy()
                         if _action_target is not None:
-                            _action_records_jobj['action_target_index'] = action_target_index
-                            _action_records_jobj['action_target'] = _action_target
+                            _action_records_jobj["action_target_index"] = (
+                                action_target_index
+                            )
+                            _action_records_jobj["action_target"] = _action_target
                         if element is not None:
-                            _action_records_jobj['action_target_element'] = backend.get_element_html(element)
+                            _action_records_jobj["action_target_element"] = (
+                                backend.get_element_html(element)
+                            )
                         if action_result is not None:
-                            _action_records_jobj['action_result'] = action_result
+                            _action_records_jobj["action_result"] = action_result
                         action_records.append(_action_records_jobj)
 
                     random_sleep(0.3, 2)
 
         if inner_output_path and action_records:
             write_json_objs(
-                action_records,
-                os_path.join(inner_output_path, 'action_records.jsonl')
+                action_records, os_path.join(inner_output_path, "action_records.jsonl")
             )
 
     # Main repeat loop
     repeat_obj = Repeat(
         repeat=repeat,
         repeat_cond=lambda: _check_conditions(repeat_when),
-        init_cond=(True if init_cond is None else lambda: _check_conditions(init_cond))
+        init_cond=(True if init_cond is None else lambda: _check_conditions(init_cond)),
     )
 
     while repeat_obj:
         _execute_actions_inner(
             inner_actions=actions,
             inner_output_path=(
-                None if output_path_action_records is None
-                else os_path.join(output_path_action_records, f'iteration_{repeat_obj.index}')
-            )
+                None
+                if output_path_action_records is None
+                else os_path.join(
+                    output_path_action_records, f"iteration_{repeat_obj.index}"
+                )
+            ),
         )

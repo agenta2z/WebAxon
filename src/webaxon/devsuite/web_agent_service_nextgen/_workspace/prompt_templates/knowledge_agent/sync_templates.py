@@ -22,20 +22,23 @@ constants; the wrapper functions (get_structuring_prompt, get_classification_pro
 remain unchanged.
 """
 
+import argparse
 import re
 import sys
-import argparse
 from pathlib import Path
 from typing import Dict, List, NamedTuple, Optional
 
 
 class TemplateMapping(NamedTuple):
     """Maps an .hbs template to its Python target."""
-    hbs_path: str                # Relative path from this script's directory
-    python_file: str             # Relative path to Python file from AgentFoundation prompts dir
-    constant_name: str           # Name of the Python constant to update
-    skip_sync: bool = False      # If True, skip this template (e.g., no Python counterpart)
-    format_specs: Dict[str, str] = {}  # Variable → Python format spec (e.g., {"similarity": ":.3f"})
+
+    hbs_path: str  # Relative path from this script's directory
+    python_file: str  # Relative path to Python file from AgentFoundation prompts dir
+    constant_name: str  # Name of the Python constant to update
+    skip_sync: bool = False  # If True, skip this template (e.g., no Python counterpart)
+    format_specs: Dict[
+        str, str
+    ] = {}  # Variable → Python format spec (e.g., {"similarity": ":.3f"})
 
 
 # Paths
@@ -118,7 +121,9 @@ MAPPINGS: List[TemplateMapping] = [
 ]
 
 
-def hbs_to_python_format(hbs_content: str, format_specs: Optional[Dict[str, str]] = None) -> str:
+def hbs_to_python_format(
+    hbs_content: str, format_specs: Optional[Dict[str, str]] = None
+) -> str:
     """Convert Handlebars template content to Python .format()-style string.
 
     Conversion steps:
@@ -139,7 +144,9 @@ def hbs_to_python_format(hbs_content: str, format_specs: Optional[Dict[str, str]
     format_specs = format_specs or {}
 
     # Step 1: Strip leading Handlebars comment
-    content = re.sub(r"^\s*\{\{!--.*?--\}\}\s*", "", hbs_content, count=1, flags=re.DOTALL)
+    content = re.sub(
+        r"^\s*\{\{!--.*?--\}\}\s*", "", hbs_content, count=1, flags=re.DOTALL
+    )
 
     # Step 2: Extract {{{variable}}} placeholders and replace with temporary markers
     # We use a marker that won't appear in normal text
@@ -197,7 +204,9 @@ def update_constant_in_python(
 
     prefix = match.group(1)  # e.g., 'DEDUP_LLM_JUDGE_PROMPT = '
     new_assignment = f'{prefix}"""{new_value}"""'
-    return python_content[:match.start()] + new_assignment + python_content[match.end():]
+    return (
+        python_content[: match.start()] + new_assignment + python_content[match.end() :]
+    )
 
 
 def sync_template(mapping: TemplateMapping, dry_run: bool = False) -> bool:
@@ -228,9 +237,13 @@ def sync_template(mapping: TemplateMapping, dry_run: bool = False) -> bool:
     python_content = read_python_file(python_path)
 
     # Update constant
-    updated = update_constant_in_python(python_content, mapping.constant_name, converted)
+    updated = update_constant_in_python(
+        python_content, mapping.constant_name, converted
+    )
     if updated is None:
-        print(f"  ERROR {mapping.constant_name}: constant not found in {mapping.python_file}")
+        print(
+            f"  ERROR {mapping.constant_name}: constant not found in {mapping.python_file}"
+        )
         return False
 
     if updated == python_content:
@@ -247,9 +260,15 @@ def sync_template(mapping: TemplateMapping, dry_run: bool = False) -> bool:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Sync .hbs templates to Python constants")
-    parser.add_argument("--dry-run", action="store_true", help="Show changes without writing")
-    parser.add_argument("--verify", action="store_true", help="Run parity test after sync")
+    parser = argparse.ArgumentParser(
+        description="Sync .hbs templates to Python constants"
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Show changes without writing"
+    )
+    parser.add_argument(
+        "--verify", action="store_true", help="Run parity test after sync"
+    )
     args = parser.parse_args()
 
     print(f"Syncing .hbs templates → Python constants")
@@ -277,6 +296,7 @@ def main():
     if args.verify and not args.dry_run:
         print("\nRunning parity test...")
         from test_template_parity import run_parity_tests
+
         if not run_parity_tests():
             print("PARITY TEST FAILED — sync may have introduced differences")
             sys.exit(1)

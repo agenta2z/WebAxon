@@ -241,7 +241,10 @@ def get_driver(
     elif driver_type == WebAutomationDrivers.Chrome:
         # Use system chromedriver if available (e.g., chromium-driver package on ARM Linux)
         import shutil
-        system_chromedriver = os.environ.get("CHROMEDRIVER_PATH") or shutil.which("chromedriver")
+
+        system_chromedriver = os.environ.get("CHROMEDRIVER_PATH") or shutil.which(
+            "chromedriver"
+        )
         if system_chromedriver:
             webdriver_service = ChromeService(system_chromedriver)
         elif effective_driver_version:
@@ -265,7 +268,11 @@ def get_driver(
         # Apply Chrome-specific config
         # Auto-detect system Chromium binary when using system chromedriver
         if not binary_location and system_chromedriver:
-            system_chromium = shutil.which("chromium") or shutil.which("google-chrome") or shutil.which("chromium-browser")
+            system_chromium = (
+                shutil.which("chromium")
+                or shutil.which("google-chrome")
+                or shutil.which("chromium-browser")
+            )
             if system_chromium:
                 binary_location = system_chromium
 
@@ -321,15 +328,24 @@ def get_driver(
 
                 def _set_platform_name_mac_arm64(self):
                     _orig_set_platform_name(self)
-                    if self.platform.endswith("darwin") and not self.is_old_chromedriver:
+                    if (
+                        self.platform.endswith("darwin")
+                        and not self.is_old_chromedriver
+                    ):
                         self.platform_name = "mac-arm64"
 
-                _uc_patcher_mod.Patcher._set_platform_name = _set_platform_name_mac_arm64
+                _uc_patcher_mod.Patcher._set_platform_name = (
+                    _set_platform_name_mac_arm64
+                )
                 setattr(_uc_patcher_mod.Patcher, _patch_attr, True)
             uc_darwin_arm64_platform_patch_applied = True
 
         uc_profile_dir = (
-            (uc_config.profile_directory if uc_config and uc_config.profile_directory else None)
+            (
+                uc_config.profile_directory
+                if uc_config and uc_config.profile_directory
+                else None
+            )
             or profile_directory
             or "Default"
         )
@@ -448,6 +464,7 @@ def get_driver(
         _logger.debug(f"Creating UndetectedChrome with user_data_dir={user_data_dir}")
         # Auto-detect installed Chrome major version to avoid driver/browser mismatch
         from webaxon.browser_utils.chrome.chrome_version import get_chrome_major_version
+
         chrome_major = get_chrome_major_version()
         uc_kwargs = {"options": _options}
         if effective_user_data_dir:

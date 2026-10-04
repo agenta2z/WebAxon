@@ -8,16 +8,13 @@ SHALL match the turn number in the manifest entry. Turn files SHALL have the
 `.jsonl` extension.
 """
 
-import resolve_path  # noqa: F401 - must be first import
-
 import re
 import shutil
 import tempfile
 from pathlib import Path
 
-from hypothesis import given, settings, HealthCheck
-from hypothesis import strategies as st
-
+import resolve_path  # noqa: F401 - must be first import
+from hypothesis import given, HealthCheck, settings, strategies as st
 from rich_python_utils.service_utils.session_management import (
     SessionLogger as SessionLogManager,
 )

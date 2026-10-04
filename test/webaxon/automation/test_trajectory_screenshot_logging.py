@@ -9,7 +9,7 @@ SessionLogger.
 import sys
 from pathlib import Path
 
-PIVOT_FOLDER_NAME = 'test'
+PIVOT_FOLDER_NAME = "test"
 current_file = Path(__file__).resolve()
 current_path = current_file.parent
 while current_path.name != PIVOT_FOLDER_NAME and current_path.parent != current_path:
@@ -24,7 +24,10 @@ if src_dir.exists() and str(src_dir) not in sys.path:
     sys.path.insert(0, str(src_dir))
 
 projects_root = webagent_root.parent
-for path_item in [projects_root / "RichPythonUtils" / "src", projects_root / "AgentFoundation" / "src"]:
+for path_item in [
+    projects_root / "RichPythonUtils" / "src",
+    projects_root / "AgentFoundation" / "src",
+]:
     if path_item.exists() and str(path_item) not in sys.path:
         sys.path.insert(0, str(path_item))
 
@@ -32,9 +35,9 @@ import inspect
 import os
 import re
 import tempfile
-import pytest
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import call, MagicMock, patch
 
+import pytest
 from webaxon.automation.web_driver import WebDriver
 
 
@@ -42,7 +45,7 @@ def _create_stub_webdriver():
     """Create a minimal WebDriver stub with trajectory capture fields."""
     driver = WebDriver.__new__(WebDriver)
     driver._backend = MagicMock()
-    driver._driver_type = 'chrome'
+    driver._driver_type = "chrome"
     driver._state = None
     driver.state_setting_max_retry = 3
     driver.state_setting_retry_wait = 0.2
@@ -63,6 +66,7 @@ def _create_stub_webdriver():
 # Unit tests: _log_trajectory_screenshot method
 # =============================================================================
 
+
 class TestLogTrajectoryScreenshot:
     """Tests for WebDriver._log_trajectory_screenshot()."""
 
@@ -70,7 +74,7 @@ class TestLogTrajectoryScreenshot:
         """_log_trajectory_screenshot calls self.log_info with log_type='TrajectoryScreenshot'."""
         driver = _create_stub_webdriver()
 
-        with patch.object(driver, 'log_info') as mock_log_info:
+        with patch.object(driver, "log_info") as mock_log_info:
             driver._log_trajectory_screenshot(
                 "/tmp/screenshots/0_screenshot.png", step=0, phase="before"
             )
@@ -83,7 +87,7 @@ class TestLogTrajectoryScreenshot:
         """The logged payload includes path, step, phase, and artifact_type."""
         driver = _create_stub_webdriver()
 
-        with patch.object(driver, 'log_info') as mock_log_info:
+        with patch.object(driver, "log_info") as mock_log_info:
             driver._log_trajectory_screenshot(
                 "/tmp/screenshots/3_screenshot.png", step=3, phase="after"
             )
@@ -100,7 +104,7 @@ class TestLogTrajectoryScreenshot:
         """Phase defaults to 'before' when not specified."""
         driver = _create_stub_webdriver()
 
-        with patch.object(driver, 'log_info') as mock_log_info:
+        with patch.object(driver, "log_info") as mock_log_info:
             driver._log_trajectory_screenshot(
                 "/tmp/screenshots/0_screenshot.png", step=0
             )
@@ -112,7 +116,7 @@ class TestLogTrajectoryScreenshot:
         """The logged timestamp is in ISO format."""
         driver = _create_stub_webdriver()
 
-        with patch.object(driver, 'log_info') as mock_log_info:
+        with patch.object(driver, "log_info") as mock_log_info:
             driver._log_trajectory_screenshot("/tmp/0.png", step=0)
 
         payload = mock_log_info.call_args[0][0]
@@ -125,7 +129,7 @@ class TestLogTrajectoryScreenshot:
         driver = _create_stub_webdriver()
 
         payloads = []
-        with patch.object(driver, 'log_info') as mock_log_info:
+        with patch.object(driver, "log_info") as mock_log_info:
             driver._log_trajectory_screenshot("/tmp/0.png", step=0, phase="before")
             driver._log_trajectory_screenshot("/tmp/1.png", step=1, phase="after")
 
@@ -142,6 +146,7 @@ class TestLogTrajectoryScreenshot:
 # Logger routing: verify log_info is called with correct structure
 # =============================================================================
 
+
 class TestSessionLoggerRouting:
     """Tests that the log entry has the right structure for SessionLogger routing.
 
@@ -156,7 +161,7 @@ class TestSessionLoggerRouting:
         passes as log_data['item'] to callable loggers."""
         driver = _create_stub_webdriver()
 
-        with patch.object(driver, 'log_info') as mock_log_info:
+        with patch.object(driver, "log_info") as mock_log_info:
             driver._log_trajectory_screenshot("/tmp/1.png", step=1, phase="before")
 
         payload = mock_log_info.call_args[0][0]
@@ -171,7 +176,7 @@ class TestSessionLoggerRouting:
         so SessionLogger doesn't trigger turn advancement on screenshot logs."""
         driver = _create_stub_webdriver()
 
-        with patch.object(driver, 'log_info') as mock_log_info:
+        with patch.object(driver, "log_info") as mock_log_info:
             driver._log_trajectory_screenshot("/tmp/0.png", step=0)
 
         _, kwargs = mock_log_info.call_args
@@ -184,6 +189,7 @@ class TestSessionLoggerRouting:
 # =============================================================================
 # Source-code verification: __call__ method wires _log_trajectory_screenshot
 # =============================================================================
+
 
 class TestCallMethodWiring:
     """Verify that WebDriver.__call__ calls _log_trajectory_screenshot
@@ -211,9 +217,8 @@ class TestCallMethodWiring:
         # Both _log_trajectory_screenshot calls should be in try blocks
         # Find all occurrences
         log_positions = [
-            m.start() for m in re.finditer(
-                r"self\._log_trajectory_screenshot\(", source
-            )
+            m.start()
+            for m in re.finditer(r"self\._log_trajectory_screenshot\(", source)
         ]
         assert len(log_positions) == 2, (
             f"Expected 2 _log_trajectory_screenshot calls, found {len(log_positions)}"
@@ -248,5 +253,7 @@ class TestCallMethodWiring:
         assert len(log_lines) == 2
 
         # Each log call should come after its corresponding capture call
-        assert log_lines[0] > capture_lines[0], "before-log should follow before-capture"
+        assert log_lines[0] > capture_lines[0], (
+            "before-log should follow before-capture"
+        )
         assert log_lines[1] > capture_lines[1], "after-log should follow after-capture"

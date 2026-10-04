@@ -1,8 +1,9 @@
 """Test script for ServiceConfig validation."""
-import sys
-import resolve_path  # Setup import paths
 
+import sys
 from pathlib import Path
+
+import resolve_path  # Setup import paths
 
 # Add parent directory to path
 from webaxon.devsuite.web_agent_service_nextgen.core import ServiceConfig
@@ -15,7 +16,7 @@ def test_default_config():
     print("✓ Default config validation passed")
     assert config.session_idle_timeout == 1800
     assert config.cleanup_check_interval == 300
-    assert config.default_agent_type == 'DefaultAgent'
+    assert config.default_agent_type == "DefaultAgent"
     print("✓ Default values correct")
 
 
@@ -58,22 +59,22 @@ def test_invalid_agent_type():
 def test_all_queue_ids():
     """Test all queue IDs are present."""
     config = ServiceConfig()
-    assert config.input_queue_id == 'user_input'
-    assert config.response_queue_id == 'agent_response'
-    assert config.client_control_queue_id == 'client_control'
-    assert config.server_control_queue_id == 'server_control'
+    assert config.input_queue_id == "user_input"
+    assert config.response_queue_id == "agent_response"
+    assert config.client_control_queue_id == "client_control"
+    assert config.server_control_queue_id == "server_control"
     print("✓ All queue IDs present and correct")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("Testing ServiceConfig...")
     print()
-    
+
     test_default_config()
     test_invalid_timeout()
     test_invalid_queue_id()
     test_invalid_agent_type()
     test_all_queue_ids()
-    
+
     print()
     print("All tests passed! ✓")

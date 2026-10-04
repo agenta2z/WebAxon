@@ -16,7 +16,7 @@ Validates: Compatibility Gap 1 (click_element strategies)
 import sys
 from pathlib import Path
 
-PIVOT_FOLDER_NAME = 'test'
+PIVOT_FOLDER_NAME = "test"
 current_file = Path(__file__).resolve()
 current_path = current_file.parent
 while current_path.name != PIVOT_FOLDER_NAME and current_path.parent != current_path:
@@ -31,14 +31,17 @@ if src_dir.exists() and str(src_dir) not in sys.path:
     sys.path.insert(0, str(src_dir))
 
 projects_root = webagent_root.parent
-for path_item in [projects_root / "SciencePythonUtils" / "src", projects_root / "ScienceModelingTools" / "src"]:
+for path_item in [
+    projects_root / "SciencePythonUtils" / "src",
+    projects_root / "ScienceModelingTools" / "src",
+]:
     if path_item.exists() and str(path_item) not in sys.path:
         sys.path.insert(0, str(path_item))
 
-import pytest
 import inspect
-from hypothesis import given, strategies as st, settings
 
+import pytest
+from hypothesis import given, settings, strategies as st
 from webaxon.automation.backends.base import BackendAdapter
 from webaxon.automation.backends.selenium.selenium_backend import SeleniumBackend
 
@@ -46,6 +49,7 @@ from webaxon.automation.backends.selenium.selenium_backend import SeleniumBacken
 # =============================================================================
 # Property 14: Click Element Strategy Compatibility
 # =============================================================================
+
 
 class TestClickElementStrategyCompatibility:
     """
@@ -55,39 +59,42 @@ class TestClickElementStrategyCompatibility:
 
     def test_selenium_backend_has_click_element(self):
         """SeleniumBackend should have click_element method."""
-        assert hasattr(SeleniumBackend, 'click_element')
-        assert callable(getattr(SeleniumBackend, 'click_element'))
+        assert hasattr(SeleniumBackend, "click_element")
+        assert callable(getattr(SeleniumBackend, "click_element"))
 
     def test_playwright_backend_has_click_element(self):
         """PlaywrightBackend should have click_element method."""
         from webaxon.automation.backends.playwright.shims import PLAYWRIGHT_AVAILABLE
+
         if not PLAYWRIGHT_AVAILABLE:
             pytest.skip("Playwright not installed")
 
-        from webaxon.automation.backends.playwright.playwright_backend import PlaywrightBackend
-        assert hasattr(PlaywrightBackend, 'click_element')
-        assert callable(getattr(PlaywrightBackend, 'click_element'))
+        from webaxon.automation.backends.playwright.playwright_backend import (
+            PlaywrightBackend,
+        )
+
+        assert hasattr(PlaywrightBackend, "click_element")
+        assert callable(getattr(PlaywrightBackend, "click_element"))
 
     def test_click_element_signature_has_try_open_in_new_tab(self):
         """click_element should have try_open_in_new_tab parameter."""
         sig = inspect.signature(SeleniumBackend.click_element)
         params = list(sig.parameters.keys())
-        assert 'try_open_in_new_tab' in params
+        assert "try_open_in_new_tab" in params
 
     def test_click_element_accepts_kwargs(self):
         """click_element should accept **kwargs for additional parameters."""
         sig = inspect.signature(SeleniumBackend.click_element)
         has_kwargs = any(
-            p.kind == inspect.Parameter.VAR_KEYWORD
-            for p in sig.parameters.values()
+            p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()
         )
         assert has_kwargs, "click_element should accept **kwargs"
 
     def test_base_adapter_defines_click_element(self):
         """BackendAdapter should define click_element as abstract method."""
-        assert hasattr(BackendAdapter, 'click_element')
-        method = getattr(BackendAdapter, 'click_element')
-        assert getattr(method, '__isabstractmethod__', False)
+        assert hasattr(BackendAdapter, "click_element")
+        method = getattr(BackendAdapter, "click_element")
+        assert getattr(method, "__isabstractmethod__", False)
 
 
 class TestClickElementSharedTypes:
@@ -97,9 +104,10 @@ class TestClickElementSharedTypes:
         """backends/shared/click_types.py should exist."""
         try:
             from webaxon.automation.backends.shared.click_types import (
-                OpenInNewTabMode,
                 NewTabClickStrategy,
+                OpenInNewTabMode,
             )
+
             assert OpenInNewTabMode is not None
             assert NewTabClickStrategy is not None
         except ImportError:
@@ -108,19 +116,22 @@ class TestClickElementSharedTypes:
     def test_new_tab_click_strategies_defined(self):
         """NewTabClickStrategy should define all 5 strategies."""
         try:
-            from webaxon.automation.backends.shared.click_types import NewTabClickStrategy
+            from webaxon.automation.backends.shared.click_types import (
+                NewTabClickStrategy,
+            )
 
             expected_strategies = [
-                'URL_EXTRACT',
-                'TARGET_BLANK',
-                'MODIFIER_KEY',
-                'CDP_CREATE_TARGET',
-                'MIDDLE_CLICK'
+                "URL_EXTRACT",
+                "TARGET_BLANK",
+                "MODIFIER_KEY",
+                "CDP_CREATE_TARGET",
+                "MIDDLE_CLICK",
             ]
 
             for strategy in expected_strategies:
-                assert hasattr(NewTabClickStrategy, strategy), \
+                assert hasattr(NewTabClickStrategy, strategy), (
                     f"Missing strategy: {strategy}"
+                )
         except ImportError:
             pytest.skip("click_types module not found")
 
@@ -130,7 +141,10 @@ class TestClickElementSharedTypes:
             from webaxon.automation.backends.shared.click_types import OpenInNewTabMode
 
             # Should have at least DISABLED and ENABLED modes
-            assert hasattr(OpenInNewTabMode, 'DISABLED') or 'disabled' in str(OpenInNewTabMode.__members__).lower()
+            assert (
+                hasattr(OpenInNewTabMode, "DISABLED")
+                or "disabled" in str(OpenInNewTabMode.__members__).lower()
+            )
         except ImportError:
             pytest.skip("click_types module not found")
 
@@ -154,16 +168,20 @@ class TestClickElementReturnType:
         selenium_params = set(selenium_sig.parameters.keys())
 
         # Selenium should have at least all base params
-        assert base_params <= selenium_params, \
+        assert base_params <= selenium_params, (
             f"SeleniumBackend missing params: {base_params - selenium_params}"
+        )
 
     def test_playwright_click_element_signature_matches_base(self):
         """PlaywrightBackend.click_element signature should match base class."""
         from webaxon.automation.backends.playwright.shims import PLAYWRIGHT_AVAILABLE
+
         if not PLAYWRIGHT_AVAILABLE:
             pytest.skip("Playwright not installed")
 
-        from webaxon.automation.backends.playwright.playwright_backend import PlaywrightBackend
+        from webaxon.automation.backends.playwright.playwright_backend import (
+            PlaywrightBackend,
+        )
 
         base_sig = inspect.signature(BackendAdapter.click_element)
         playwright_sig = inspect.signature(PlaywrightBackend.click_element)
@@ -171,8 +189,9 @@ class TestClickElementReturnType:
         base_params = set(base_sig.parameters.keys())
         playwright_params = set(playwright_sig.parameters.keys())
 
-        assert base_params <= playwright_params, \
+        assert base_params <= playwright_params, (
             f"PlaywrightBackend missing params: {base_params - playwright_params}"
+        )
 
 
 class TestClickElementBooleanMode:
@@ -183,7 +202,7 @@ class TestClickElementBooleanMode:
         backend = SeleniumBackend()
         # Just verify the parameter is accepted by checking signature
         sig = inspect.signature(backend.click_element)
-        param = sig.parameters.get('try_open_in_new_tab')
+        param = sig.parameters.get("try_open_in_new_tab")
         assert param is not None
         # Default should be False
         assert param.default == False
@@ -192,7 +211,7 @@ class TestClickElementBooleanMode:
         """click_element should accept try_open_in_new_tab=True."""
         backend = SeleniumBackend()
         sig = inspect.signature(backend.click_element)
-        param = sig.parameters.get('try_open_in_new_tab')
+        param = sig.parameters.get("try_open_in_new_tab")
         assert param is not None
 
 
@@ -206,8 +225,7 @@ class TestClickElementKwargsParameters:
 
         # Should have **kwargs
         has_kwargs = any(
-            p.kind == inspect.Parameter.VAR_KEYWORD
-            for p in sig.parameters.values()
+            p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()
         )
         assert has_kwargs, "Should accept **kwargs for strategy_order"
 
@@ -217,8 +235,7 @@ class TestClickElementKwargsParameters:
         sig = inspect.signature(backend.click_element)
 
         has_kwargs = any(
-            p.kind == inspect.Parameter.VAR_KEYWORD
-            for p in sig.parameters.values()
+            p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()
         )
         assert has_kwargs, "Should accept **kwargs for return_strategy_result"
 
@@ -229,41 +246,53 @@ class TestClickImplementationTypes:
     def test_click_implementation_enum_exists(self):
         """ClickImplementation enum should be importable from shared click_types."""
         from webaxon.automation.backends.shared.click_types import ClickImplementation
+
         assert ClickImplementation is not None
 
     def test_click_implementation_has_four_values(self):
         """ClickImplementation should define exactly 4 implementations."""
         from webaxon.automation.backends.shared.click_types import ClickImplementation
-        expected = ['NATIVE', 'JAVASCRIPT', 'ACTION_CHAIN', 'EVENT_DISPATCH']
+
+        expected = ["NATIVE", "JAVASCRIPT", "ACTION_CHAIN", "EVENT_DISPATCH"]
         for name in expected:
-            assert hasattr(ClickImplementation, name), f"Missing ClickImplementation.{name}"
+            assert hasattr(ClickImplementation, name), (
+                f"Missing ClickImplementation.{name}"
+            )
         assert len(ClickImplementation) == 4
 
     def test_default_click_implementation_order_preserves_behavior(self):
         """DEFAULT_CLICK_IMPLEMENTATION_ORDER should be (NATIVE, JAVASCRIPT) to match old default."""
         from webaxon.automation.backends.shared.click_types import (
-            ClickImplementation, DEFAULT_CLICK_IMPLEMENTATION_ORDER
+            ClickImplementation,
+            DEFAULT_CLICK_IMPLEMENTATION_ORDER,
         )
+
         assert DEFAULT_CLICK_IMPLEMENTATION_ORDER == (
-            ClickImplementation.NATIVE, ClickImplementation.JAVASCRIPT
+            ClickImplementation.NATIVE,
+            ClickImplementation.JAVASCRIPT,
         )
 
     def test_click_implementation_is_string_enum(self):
         """ClickImplementation values should be strings."""
         from webaxon.automation.backends.shared.click_types import ClickImplementation
+
         for member in ClickImplementation:
             assert isinstance(member.value, str)
 
     def test_selenium_click_element_has_implementation_param(self):
         """Selenium click_element should have 'implementation' parameter."""
         from webaxon.automation.backends.selenium.actions import click_element
+
         sig = inspect.signature(click_element)
-        assert 'implementation' in sig.parameters, \
+        assert "implementation" in sig.parameters, (
             "click_element should have 'implementation' parameter"
+        )
 
     def test_playwright_click_element_has_implementation_param(self):
         """Playwright click_element should have 'implementation' parameter."""
         from webaxon.automation.backends.playwright.actions import click_element
+
         sig = inspect.signature(click_element)
-        assert 'implementation' in sig.parameters, \
+        assert "implementation" in sig.parameters, (
             "click_element should have 'implementation' parameter"
+        )

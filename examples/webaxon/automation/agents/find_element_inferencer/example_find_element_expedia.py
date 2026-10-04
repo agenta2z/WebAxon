@@ -32,10 +32,13 @@ for pkg in ["SciencePythonUtils", "ScienceModelingTools"]:
     if os.path.exists(pkg_src) and pkg_src not in sys.path:
         sys.path.insert(0, pkg_src)
 
-from agent_foundation.common.inferencers.api_inferencers.claude_api_inferencer import ClaudeApiInferencer
+from agent_foundation.common.inferencers.api_inferencers.claude_api_inferencer import (
+    ClaudeApiInferencer,
+)
+from rich_python_utils.string_utils.formatting.handlebars_format import (
+    format_template as handlebars_format,
+)
 from rich_python_utils.string_utils.formatting.template_manager import TemplateManager
-from rich_python_utils.string_utils.formatting.handlebars_format import format_template as handlebars_format
-
 from webaxon.automation.agents import FindElementInferencer
 
 # Load test HTML file
@@ -51,7 +54,9 @@ reasoner = ClaudeApiInferencer(
 )
 
 # Create template manager pointing to bundled templates
-templates_path = os.path.join(project_root, "src", "webaxon", "automation", "agents", "prompt_templates")
+templates_path = os.path.join(
+    project_root, "src", "webaxon", "automation", "agents", "prompt_templates"
+)
 template_manager = TemplateManager(
     templates=templates_path,
     template_formatter=handlebars_format,
@@ -65,11 +70,12 @@ find_element_inferencer = FindElementInferencer(
 
 from lxml import etree
 
+
 def find_and_validate(description: str):
     """Find element and validate the xpath."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Finding: {description}")
-    print('='*60)
+    print("=" * 60)
 
     xpath = find_element_inferencer(
         html_source=html_content,
@@ -82,12 +88,13 @@ def find_and_validate(description: str):
     elements = tree.xpath(xpath)
     print(f"Found {len(elements)} element(s)")
     if elements:
-        html_str = etree.tostring(elements[0], encoding='unicode')
+        html_str = etree.tostring(elements[0], encoding="unicode")
         # Truncate long HTML for display
         if len(html_str) > 200:
             html_str = html_str[:200] + "..."
         print(f"Element HTML: {html_str}")
     return xpath
+
 
 # Example 1: Find the destination input ("Where to?")
 find_and_validate("the destination input field or 'Where to?' button")

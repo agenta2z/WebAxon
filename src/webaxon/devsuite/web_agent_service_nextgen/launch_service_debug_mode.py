@@ -11,6 +11,7 @@ Usage:
 If testcase_root is omitted, defaults to the _workspace directory.
 If --profile is omitted, an interactive chooser is shown at startup.
 """
+
 import argparse
 import sys
 from pathlib import Path
@@ -37,14 +38,14 @@ for path_item in [rich_python_utils_src, agent_foundation_src, webagent_src]:
     if path_item.exists() and str(path_item) not in sys.path:
         sys.path.insert(0, str(path_item))
 
-from webaxon.browser_utils.chrome.chrome_version import get_chrome_major_version
 from webaxon.browser_utils.chrome.chrome_profiles import (
     get_available_chrome_profiles,
     get_chrome_user_data_dir,
 )
+from webaxon.browser_utils.chrome.chrome_version import get_chrome_major_version
 from webaxon.devsuite.web_agent_service_nextgen.constants import DEFAULT_WORKSPACE_PATH
-from webaxon.devsuite.web_agent_service_nextgen.service import WebAgentService
 from webaxon.devsuite.web_agent_service_nextgen.core.config import ServiceConfig
+from webaxon.devsuite.web_agent_service_nextgen.service import WebAgentService
 
 CHROME_VERSION = get_chrome_major_version()
 
@@ -60,14 +61,19 @@ def _get_workspace_profiles(testcase_root: Path) -> list:
     results = []
     for item in sorted(persistent_root.iterdir()):
         if item.is_dir() and (item / "Preferences").exists():
-            from webaxon.browser_utils.chrome.chrome_profiles import get_chrome_profile_name
+            from webaxon.browser_utils.chrome.chrome_profiles import (
+                get_chrome_profile_name,
+            )
+
             name = get_chrome_profile_name(str(item))
-            results.append({
-                "name": f"📂 {name}",
-                "profile_dir": item.name,
-                "user_data_dir": str(persistent_root),
-                "type": "workspace",
-            })
+            results.append(
+                {
+                    "name": f"📂 {name}",
+                    "profile_dir": item.name,
+                    "user_data_dir": str(persistent_root),
+                    "type": "workspace",
+                }
+            )
     return results
 
 
@@ -90,43 +96,51 @@ def choose_chrome_profile(
     chrome_profiles = get_available_chrome_profiles()
     for p in chrome_profiles:
         if p["directory"]:
-            options.append({
-                "label": p["name"],
-                "dir_label": p["directory"],
-                "type": "chrome",
-                "profile_dir": p["directory"],
-                "user_data_dir": user_data_dir,
-            })
+            options.append(
+                {
+                    "label": p["name"],
+                    "dir_label": p["directory"],
+                    "type": "chrome",
+                    "profile_dir": p["directory"],
+                    "user_data_dir": user_data_dir,
+                }
+            )
 
     # 2) Temporary profile (always present)
-    options.append({
-        "label": "🆕 New Temporary Profile",
-        "dir_label": "(temporary)",
-        "type": "temp",
-        "profile_dir": None,
-        "user_data_dir": None,
-    })
+    options.append(
+        {
+            "label": "🆕 New Temporary Profile",
+            "dir_label": "(temporary)",
+            "type": "temp",
+            "profile_dir": None,
+            "user_data_dir": None,
+        }
+    )
 
     # 3) Existing workspace persistent profiles
     workspace_profiles = _get_workspace_profiles(testcase_root)
     for wp in workspace_profiles:
-        options.append({
-            "label": wp["name"],
-            "dir_label": f"{wp['user_data_dir']}/{wp['profile_dir']}",
-            "type": "workspace",
-            "profile_dir": wp["profile_dir"],
-            "user_data_dir": wp["user_data_dir"],
-        })
+        options.append(
+            {
+                "label": wp["name"],
+                "dir_label": f"{wp['user_data_dir']}/{wp['profile_dir']}",
+                "type": "workspace",
+                "profile_dir": wp["profile_dir"],
+                "user_data_dir": wp["user_data_dir"],
+            }
+        )
 
     # 4) Create new persistent profile
     persistent_root = testcase_root / PERSISTENT_PROFILE_DIR_NAME
-    options.append({
-        "label": "🆕 New Persistent Profile",
-        "dir_label": str(persistent_root),
-        "type": "new_persistent",
-        "profile_dir": None,
-        "user_data_dir": None,
-    })
+    options.append(
+        {
+            "label": "🆕 New Persistent Profile",
+            "dir_label": str(persistent_root),
+            "type": "new_persistent",
+            "profile_dir": None,
+            "user_data_dir": None,
+        }
+    )
 
     # --- Display ---
     print("\nAvailable Chrome profiles:")
@@ -193,7 +207,7 @@ def main():
         type=str,
         default=None,
         help='Chrome profile directory name (e.g. "Default", "Profile 1"). '
-             "Shows interactive chooser when omitted.",
+        "Shows interactive chooser when omitted.",
     )
     copy_group = parser.add_mutually_exclusive_group()
     copy_group.add_argument(
@@ -267,6 +281,7 @@ def main():
     except Exception as e:
         print(f"\nFatal error: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

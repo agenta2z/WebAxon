@@ -1,39 +1,51 @@
 ﻿"""Property-based test for public interface documentation."""
-import sys
-import resolve_path  # Setup import paths
 
 import inspect
+import sys
 from pathlib import Path
-from hypothesis import given, strategies as st, settings
+
+import resolve_path  # Setup import paths
+from hypothesis import given, settings, strategies as st
+
 
 def get_all_public_classes_and_methods():
     items = []
     modules_to_check = [
-        ('core.config', 'ServiceConfig'),
-        ('session.agent_session_info', 'AgentSessionInfo'),
-        ('session.agent_session', 'AgentSession'),
-        ('session.session_manager', 'SessionManager'),
-        ('core.agent_factory', 'AgentFactory'),
-        ('communication.queue_manager', 'QueueManager'),
-        ('communication.message_handlers', 'MessageHandlers'),
-        ('agents.agent_runner', 'AgentRunner'),
-        ('agents.template_manager', 'TemplateManagerWrapper'),
-        ('session.session_monitor', 'SessionMonitor'),
-        ('service', 'WebAgentService'),
+        ("core.config", "ServiceConfig"),
+        ("session.agent_session_info", "AgentSessionInfo"),
+        ("session.agent_session", "AgentSession"),
+        ("session.session_manager", "SessionManager"),
+        ("core.agent_factory", "AgentFactory"),
+        ("communication.queue_manager", "QueueManager"),
+        ("communication.message_handlers", "MessageHandlers"),
+        ("agents.agent_runner", "AgentRunner"),
+        ("agents.template_manager", "TemplateManagerWrapper"),
+        ("session.session_monitor", "SessionMonitor"),
+        ("service", "WebAgentService"),
     ]
     for module_path, class_name in modules_to_check:
         try:
-            module = __import__(f'webaxondevsuite.web_agent_service_nextgen.{module_path}', fromlist=[class_name])
+            module = __import__(
+                f"webaxondevsuite.web_agent_service_nextgen.{module_path}",
+                fromlist=[class_name],
+            )
             cls = getattr(module, class_name)
-            items.append((f'{module_path}.{class_name}', cls, 'class'))
+            items.append((f"{module_path}.{class_name}", cls, "class"))
             for method_name in dir(cls):
-                if not method_name.startswith('_'):
+                if not method_name.startswith("_"):
                     method = getattr(cls, method_name)
                     if callable(method):
-                        items.append((f'{module_path}.{class_name}.{method_name}', method, 'method'))
+                        items.append(
+                            (
+                                f"{module_path}.{class_name}.{method_name}",
+                                method,
+                                "method",
+                            )
+                        )
         except Exception as e:
             print(f"Warning: Could not import {module_path}.{class_name}: {e}")
     return items
+
 
 # Feature: web-agent-service-modularization, Property 49: Public Interface Documentation
 # Validates: Requirements 13.2
@@ -46,8 +58,13 @@ def test_public_interface_documentation(item_index):
     actual_index = item_index % len(items)
     name, obj, obj_type = items[actual_index]
     docstring = inspect.getdoc(obj)
-    assert docstring is not None, f"{obj_type.capitalize()} {name} is missing a docstring."
-    assert len(docstring.strip()) >= 10, f"{obj_type.capitalize()} {name} has a docstring that is too short."
+    assert docstring is not None, (
+        f"{obj_type.capitalize()} {name} is missing a docstring."
+    )
+    assert len(docstring.strip()) >= 10, (
+        f"{obj_type.capitalize()} {name} has a docstring that is too short."
+    )
+
 
 def test_all_public_classes_have_docstrings():
     items = get_all_public_classes_and_methods()
@@ -72,33 +89,44 @@ def test_all_public_classes_have_docstrings():
         for name, obj_type, doc in short_docs:
             print(f"  - {obj_type}: {name}")
             print(f"    Docstring: '{doc}'")
-    assert not missing_docs, f"{len(missing_docs)} public classes/methods are missing docstrings."
-    assert not short_docs, f"{len(short_docs)} public classes/methods have docstrings that are too short."
+    assert not missing_docs, (
+        f"{len(missing_docs)} public classes/methods are missing docstrings."
+    )
+    assert not short_docs, (
+        f"{len(short_docs)} public classes/methods have docstrings that are too short."
+    )
     print(f"\nOK All {len(items)} public classes and methods have proper documentation")
+
 
 def test_specific_classes_have_detailed_docstrings():
     key_classes = [
-        ('core.config', 'ServiceConfig'),
-        ('session.session_manager', 'SessionManager'),
-        ('core.agent_factory', 'AgentFactory'),
-        ('communication.message_handlers', 'MessageHandlers'),
-        ('service', 'WebAgentService'),
+        ("core.config", "ServiceConfig"),
+        ("session.session_manager", "SessionManager"),
+        ("core.agent_factory", "AgentFactory"),
+        ("communication.message_handlers", "MessageHandlers"),
+        ("service", "WebAgentService"),
     ]
     print("\nChecking key classes for detailed documentation...")
     print("=" * 70)
     for module_path, class_name in key_classes:
         try:
-            module = __import__(f'webaxondevsuite.web_agent_service_nextgen.{module_path}', fromlist=[class_name])
+            module = __import__(
+                f"webaxondevsuite.web_agent_service_nextgen.{module_path}",
+                fromlist=[class_name],
+            )
             cls = getattr(module, class_name)
             docstring = inspect.getdoc(cls)
             assert docstring is not None, f"{class_name} is missing a docstring"
-            assert len(docstring) >= 50, f"{class_name} docstring is too short ({len(docstring)} chars)."
+            assert len(docstring) >= 50, (
+                f"{class_name} docstring is too short ({len(docstring)} chars)."
+            )
             print(f"OK {class_name}: {len(docstring)} characters")
         except Exception as e:
             raise AssertionError(f"Error checking {class_name}: {e}")
     print(f"\nOK All key classes have detailed documentation")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     print("Running property-based tests for public interface documentation...")
     print("=" * 70)
     print()

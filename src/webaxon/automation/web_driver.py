@@ -15,8 +15,8 @@ from typing import (
 
 _logger = logging.getLogger(__name__)
 
-from attr import attrib, attrs
 from agent_foundation.common.memory import ContentMemory
+from attr import attrib, attrs
 from rich_python_utils.common_objects.debuggable import Debuggable
 from rich_python_utils.common_utils import execute_with_retry, get_
 from rich_python_utils.io_utils.artifact import artifact_field
@@ -51,9 +51,9 @@ if TYPE_CHECKING:
     from webaxon.automation.backends.config import BrowserConfig
 
 
-@artifact_field('body_html_before_last_action', type='html', group='ui_source')
-@artifact_field('body_html_after_last_action', type='html', group='ui_source')
-@artifact_field('cleaned_body_html_after_last_action', type='html', group='ui_source')
+@artifact_field("body_html_before_last_action", type="html", group="ui_source")
+@artifact_field("body_html_after_last_action", type="html", group="ui_source")
+@artifact_field("cleaned_body_html_after_last_action", type="html", group="ui_source")
 @attrs(slots=True)
 class WebDriverActionResult:
     body_html_before_last_action: str = attrib()
@@ -106,22 +106,22 @@ class WebDriver(Debuggable):
     STATE_FIELD_CURRENT_WINDOW = "current_window"
 
     def __init__(
-            self,
-            driver_type: WebAutomationDrivers = WebAutomationDrivers.UndetectedChrome,
-            headless: bool = True,
-            user_agent: str = None,
-            timeout: int = 120,
-            options: List[str] = None,
-            user_data_dir: str = None,
-            profile_directory: str = None,
-            copy_profile: Union[bool, str] = False,
-            state: Mapping[str, Any] = None,
-            state_setting_max_retry: int = 3,
-            state_setting_min_wait: float = 0.2,
-            action_configs: Mapping[str, WebAgentAction] = None,
-            backend: Optional[Any] = None,
-            config: Optional[Any] = None,
-            **kwargs
+        self,
+        driver_type: WebAutomationDrivers = WebAutomationDrivers.UndetectedChrome,
+        headless: bool = True,
+        user_agent: str = None,
+        timeout: int = 120,
+        options: List[str] = None,
+        user_data_dir: str = None,
+        profile_directory: str = None,
+        copy_profile: Union[bool, str] = False,
+        state: Mapping[str, Any] = None,
+        state_setting_max_retry: int = 3,
+        state_setting_min_wait: float = 0.2,
+        action_configs: Mapping[str, WebAgentAction] = None,
+        backend: Optional[Any] = None,
+        config: Optional[Any] = None,
+        **kwargs,
     ):
         """
         Initializes a WebDriver instance with the specified configuration upon creation of the class instance.
@@ -161,7 +161,9 @@ class WebDriver(Debuggable):
         else:
             # Copy profile to a separate directory if requested
             if copy_profile and user_data_dir and profile_directory:
-                from webaxon.browser_utils.chrome.chrome_profiles import copy_chrome_profile
+                from webaxon.browser_utils.chrome.chrome_profiles import (
+                    copy_chrome_profile,
+                )
 
                 dest = None if copy_profile is True else str(copy_profile)
                 user_data_dir = copy_chrome_profile(
@@ -252,7 +254,7 @@ class WebDriver(Debuggable):
             )
 
         # Set self as Debuggable logger on backend for session-level log passthrough
-        if hasattr(self._backend, '_logger'):
+        if hasattr(self._backend, "_logger"):
             self._backend._logger = self
 
         # Get driver type from backend
@@ -720,7 +722,7 @@ class WebDriver(Debuggable):
             output_path=output_path,
             reset_zoom=reset_zoom,
             use_cdp_cmd_for_chrome=(
-                hasattr(self._backend, 'supports_cdp') and self._backend.supports_cdp()
+                hasattr(self._backend, "supports_cdp") and self._backend.supports_cdp()
             ),
         )
 
@@ -1332,12 +1334,12 @@ class WebDriver(Debuggable):
         _screenshot_before_path = None
         _screenshot_after_path = None
 
-        if action_type == 'no_op':
+        if action_type == "no_op":
             # No operation — just capture current page state (used after user copilot interactions)
             action_is_follow_up = False
             element = None
             memory_element = None
-        elif action_type == 'wait':
+        elif action_type == "wait":
             action_is_follow_up = False
             element = None
             memory_element = None  # No memory capture for wait actions
@@ -1527,7 +1529,7 @@ class WebDriver(Debuggable):
                 self._trajectory_step_counter += 1
 
             # Log window handle after visit_url to trace tab switching
-            if action_type == 'visit_url':
+            if action_type == "visit_url":
                 _logger.debug(
                     f"[visit_url] AFTER execute_single_action: "
                     f"current_window_handle={self.current_window_handle()}"
@@ -1591,6 +1593,7 @@ class WebDriver(Debuggable):
         # Clean up temp profile directory created by copy_profile=True
         if hasattr(self, "_copied_profile_dir") and self._copied_profile_dir:
             import shutil
+
             shutil.rmtree(self._copied_profile_dir, ignore_errors=True)
             self._copied_profile_dir = None
 

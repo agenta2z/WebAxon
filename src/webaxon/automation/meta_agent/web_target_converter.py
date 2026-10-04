@@ -33,7 +33,7 @@ except ImportError:  # pragma: no cover
 # Regex helpers (used when bs4 is not available)
 # ---------------------------------------------------------------------------
 
-_ATTR_RE = re.compile(r'''([\w-]+)\s*=\s*(?:"([^"]*)"|'([^']*)')''')
+_ATTR_RE = re.compile(r"""([\w-]+)\s*=\s*(?:"([^"]*)"|'([^']*)')""")
 _TAG_RE = re.compile(r"<(\w+)\s")
 
 
@@ -161,9 +161,7 @@ class WebTargetConverter(TargetConverterBase):
     # Element location
     # ------------------------------------------------------------------
 
-    def _find_element_by_id(
-        self, html: str, framework_id: str
-    ) -> Optional[str]:
+    def _find_element_by_id(self, html: str, framework_id: str) -> Optional[str]:
         """
         Find element HTML by ``__id__`` attribute in the page source.
 
@@ -200,9 +198,7 @@ class WebTargetConverter(TargetConverterBase):
     # Strategy generators
     # ------------------------------------------------------------------
 
-    def _try_data_attributes(
-        self, element_html: str
-    ) -> Optional[List[TargetSpec]]:
+    def _try_data_attributes(self, element_html: str) -> Optional[List[TargetSpec]]:
         """Try ``data-qa`` and ``data-testid`` attributes."""
         attrs = self._get_attrs(element_html)
         results: List[TargetSpec] = []
@@ -349,7 +345,7 @@ class WebTargetConverter(TargetConverterBase):
         if spec.strategy == "id":
             html_id = value.lstrip("#")
             pattern = re.compile(
-                r'''id\s*=\s*["']''' + re.escape(html_id) + r"""['"]"""
+                r"""id\s*=\s*["']""" + re.escape(html_id) + r"""['"]"""
             )
             return len(pattern.findall(html)) == 1
 
@@ -360,7 +356,7 @@ class WebTargetConverter(TargetConverterBase):
                 return False
             label = m.group(1)
             pattern = re.compile(
-                r'''aria-label\s*=\s*["']''' + re.escape(label) + r"""['"]"""
+                r"""aria-label\s*=\s*["']""" + re.escape(label) + r"""['"]"""
             )
             return len(pattern.findall(html)) == 1
 
@@ -382,7 +378,7 @@ class WebTargetConverter(TargetConverterBase):
                 return False
             cls = m.group(1)
             pattern = re.compile(
-                r'''class\s*=\s*["'][^"']*''' + re.escape(cls) + r"""[^"']*['"]"""
+                r"""class\s*=\s*["'][^"']*""" + re.escape(cls) + r"""[^"']*['"]"""
             )
             return len(pattern.findall(html)) == 1
 
@@ -414,7 +410,10 @@ class WebTargetConverter(TargetConverterBase):
             soup = BeautifulSoup(element_html, "html.parser")
             el = soup.find()
             if el and isinstance(el, Tag):
-                return {k: (v if isinstance(v, str) else " ".join(v)) for k, v in el.attrs.items()}
+                return {
+                    k: (v if isinstance(v, str) else " ".join(v))
+                    for k, v in el.attrs.items()
+                }
             return {}
         return _parse_attrs(element_html)
 
@@ -432,7 +431,7 @@ class WebTargetConverter(TargetConverterBase):
         if isinstance(target, str):
             # "elem_42" or "__id__=elem_42"
             if target.startswith("__id__="):
-                return target[len("__id__="):]
+                return target[len("__id__=") :]
             return None
 
         if isinstance(target, dict):

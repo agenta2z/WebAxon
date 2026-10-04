@@ -11,8 +11,10 @@ if __name__ == "__main__":
     # If CLI args provided (beyond script name), use argparse-based main()
     if len(sys.argv) > 1:
         from .server import main
+
         main()
     else:
         # No CLI args: read config from environment variables
         from .server import run_server
+
         run_server()

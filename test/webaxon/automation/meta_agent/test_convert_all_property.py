@@ -9,15 +9,12 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-from hypothesis import given, settings
-from hypothesis import strategies as st
-
 from agent_foundation.automation.meta_agent.models import TraceStep
 from agent_foundation.automation.meta_agent.target_converter import (
     TargetConverterBase,
     TargetSpecWithFallback,
 )
-
+from hypothesis import given, settings, strategies as st
 from webaxon.automation.meta_agent.web_target_converter import WebTargetConverter
 
 
@@ -67,12 +64,10 @@ def test_convert_all_calls_convert_for_each_should_convert_step(
 
     # Record which steps should be converted
     convertible_indices = [
-        i for i, step in enumerate(steps)
-        if converter.should_convert(step)
+        i for i, step in enumerate(steps) if converter.should_convert(step)
     ]
     non_convertible_indices = [
-        i for i, step in enumerate(steps)
-        if not converter.should_convert(step)
+        i for i, step in enumerate(steps) if not converter.should_convert(step)
     ]
 
     # Save original targets for non-convertible steps

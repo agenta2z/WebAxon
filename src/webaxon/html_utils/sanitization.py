@@ -1,82 +1,118 @@
 import re
 from functools import partial
 from types import MappingProxyType
-from typing import Iterable, Union, Mapping, Tuple, Sequence, Optional
+from typing import Iterable, Mapping, Optional, Sequence, Tuple, Union
 
 from bs4 import BeautifulSoup, Comment, Tag
-
 from rich_python_utils.algorithms.tree.traversal import post_order_traversal
 from webaxon.html_utils.common import (
-    is_element_hidden,
-    is_element_hidden_,
+    get_immediate_text,
+    has_immediate_text,
+    HTML_COMMON_LIST_LIKE_ATTRIBUTES,
+    HTML_COMMON_NON_INTERACTABLE_TAGS,
     is_element_disabled,
     is_element_disabled_,
+    is_element_hidden,
+    is_element_hidden_,
     keep_specified_attributes,
-    has_immediate_text,
+    merge_attributes as _merge_attributes,
     remove_immediate_text,
-    support_input_html, get_immediate_text,
-    HTML_COMMON_NON_INTERACTABLE_TAGS, HTML_COMMON_LIST_LIKE_ATTRIBUTES
+    support_input_html,
 )
-from webaxon.html_utils.common import merge_attributes as _merge_attributes
-from webaxon.html_utils.element_identification import extract_incremental_html_change, ATTR_NAME_INCREMENTAL_ID
+from webaxon.html_utils.element_identification import (
+    ATTR_NAME_INCREMENTAL_ID,
+    extract_incremental_html_change,
+)
 from webaxon.html_utils.element_rule_matching import (
-    is_element_matching_rule_set,
-    get_active_rules,
-    RULESET_NAME_GLOBAL,
     ACTIVATION_FLAG_PRESERVE_CONTAINER,
-    RULE_TYPE_ANY_ATTRIBUTE_VALUE_MATCHES_PATTERN
+    get_active_rules,
+    is_element_matching_rule_set,
+    RULE_TYPE_ANY_ATTRIBUTE_VALUE_MATCHES_PATTERN,
+    RULESET_NAME_GLOBAL,
 )
 
-DEFAULT_HTML_CLEAN_TAGS_TO_ALWAYS_REMOVE = ('script', 'style')
-DEFAULT_HTML_TAGS_REPLACE_BY_BEGIN_END_MARKS = MappingProxyType({
-    'strong': ('**', '**'),
-    'b': ('**', '**'),
-    'em': ('**', '**'),
-    'i': ('_', '_'),
-    'p': ('\n', '\n')
-})
-DEFAULT_HTML_CLEAN_TAGS_TO_KEEP = (
-    'a', 'button', 'input', 'ul', 'ol', 'li', 'select', 'option'
+DEFAULT_HTML_CLEAN_TAGS_TO_ALWAYS_REMOVE = ("script", "style")
+DEFAULT_HTML_TAGS_REPLACE_BY_BEGIN_END_MARKS = MappingProxyType(
+    {
+        "strong": ("**", "**"),
+        "b": ("**", "**"),
+        "em": ("**", "**"),
+        "i": ("_", "_"),
+        "p": ("\n", "\n"),
+    }
 )
-DEFAULT_HTML_CLEAN_TAGS_TO_KEEP_WITH_EXTRA_CONTENTS = DEFAULT_HTML_CLEAN_TAGS_TO_KEEP + (
-    'img', 'video', 'audio', 'embed', 'object', 'iframe'
+DEFAULT_HTML_CLEAN_TAGS_TO_KEEP = (
+    "a",
+    "button",
+    "input",
+    "ul",
+    "ol",
+    "li",
+    "select",
+    "option",
+)
+DEFAULT_HTML_CLEAN_TAGS_TO_KEEP_WITH_EXTRA_CONTENTS = (
+    DEFAULT_HTML_CLEAN_TAGS_TO_KEEP
+    + ("img", "video", "audio", "embed", "object", "iframe")
 )
 DEFAULT_HTML_CLEAN_ATTRIBUTES_TO_KEEP = (
-    'class', 'href', '*name', '*label', 'alt', 'src', 'type', 'data', '*title', 'srcdoc', 'disabled')
+    "class",
+    "href",
+    "*name",
+    "*label",
+    "alt",
+    "src",
+    "type",
+    "data",
+    "*title",
+    "srcdoc",
+    "disabled",
+)
 
-DEFAULT_HTML_CLEAN_ATTRIBUTES_TO_KEEP_WITH_INCREMENTAL_ID = DEFAULT_HTML_CLEAN_ATTRIBUTES_TO_KEEP + (
-    ATTR_NAME_INCREMENTAL_ID,)
+DEFAULT_HTML_CLEAN_ATTRIBUTES_TO_KEEP_WITH_INCREMENTAL_ID = (
+    DEFAULT_HTML_CLEAN_ATTRIBUTES_TO_KEEP + (ATTR_NAME_INCREMENTAL_ID,)
+)
 
-DEFAULT_ADDITIONAL_RULES = MappingProxyType({
-    RULESET_NAME_GLOBAL: (
-        MappingProxyType({
-            'return': 'keep',
-            'tags': ('div',),
-            'activation_flags': (ACTIVATION_FLAG_PRESERVE_CONTAINER,),
-            'rule-type': RULE_TYPE_ANY_ATTRIBUTE_VALUE_MATCHES_PATTERN,
-            'attributes': ('class', '*name', '*title', 'id'),
-            'pattern': '*@ scroll|list|view|editor'
-        }),
-    )
-})
+DEFAULT_ADDITIONAL_RULES = MappingProxyType(
+    {
+        RULESET_NAME_GLOBAL: (
+            MappingProxyType(
+                {
+                    "return": "keep",
+                    "tags": ("div",),
+                    "activation_flags": (ACTIVATION_FLAG_PRESERVE_CONTAINER,),
+                    "rule-type": RULE_TYPE_ANY_ATTRIBUTE_VALUE_MATCHES_PATTERN,
+                    "attributes": ("class", "*name", "*title", "id"),
+                    "pattern": "*@ scroll|list|view|editor",
+                }
+            ),
+        )
+    }
+)
 
-DEFAULT_ADDITIONAL_RULES_FOR_DISABLED_ELEMENTS = MappingProxyType({
-    RULESET_NAME_GLOBAL: (
-        # Rule 1: Remove disabled input elements
-        MappingProxyType({
-            'return': 'remove',
-            'tags': ('input',),  # Conservative: only inputs by default
-            'rule-type': RULE_TYPE_ANY_ATTRIBUTE_VALUE_MATCHES_PATTERN,
-            'attributes': ('disabled',),
-            'pattern': '!/false'  # Match any disabled value except "false" (case-insensitive, for JS frameworks)
-        }),
-        # Rule 2: Keep all other elements (prevents fallback to comprehensive check)
-        MappingProxyType({
-            'return': 'keep',
-            'tags': ('*',)  # Wildcard: matches all tags
-        }),
-    )
-})
+DEFAULT_ADDITIONAL_RULES_FOR_DISABLED_ELEMENTS = MappingProxyType(
+    {
+        RULESET_NAME_GLOBAL: (
+            # Rule 1: Remove disabled input elements
+            MappingProxyType(
+                {
+                    "return": "remove",
+                    "tags": ("input",),  # Conservative: only inputs by default
+                    "rule-type": RULE_TYPE_ANY_ATTRIBUTE_VALUE_MATCHES_PATTERN,
+                    "attributes": ("disabled",),
+                    "pattern": "!/false",  # Match any disabled value except "false" (case-insensitive, for JS frameworks)
+                }
+            ),
+            # Rule 2: Keep all other elements (prevents fallback to comprehensive check)
+            MappingProxyType(
+                {
+                    "return": "keep",
+                    "tags": ("*",),  # Wildcard: matches all tags
+                }
+            ),
+        )
+    }
+)
 
 # Default rules for hidden element filtering
 # By default, use a special sentinel dict that triggers comprehensive is_element_hidden() checking
@@ -85,14 +121,16 @@ DEFAULT_ADDITIONAL_RULES_FOR_DISABLED_ELEMENTS = MappingProxyType({
 # To disable hidden element removal entirely, pass hidden_element_rule_sets={} or None
 # To keep specific hidden elements, add custom rules with 'keep' actions
 # Special marker dict that is non-empty (truthy) but has a special key
-DEFAULT_ADDITIONAL_RULES_FOR_HIDDEN_ELEMENTS = MappingProxyType({'__use_comprehensive_check__': True})
-
-DEFAULT_RULE_ACTIVATION_FLAGS = (
-    ACTIVATION_FLAG_PRESERVE_CONTAINER,
+DEFAULT_ADDITIONAL_RULES_FOR_HIDDEN_ELEMENTS = MappingProxyType(
+    {"__use_comprehensive_check__": True}
 )
 
+DEFAULT_RULE_ACTIVATION_FLAGS = (ACTIVATION_FLAG_PRESERVE_CONTAINER,)
 
-def clean_newlines_between_tags(html: str, exclude_tags: tuple = ('pre', 'textarea')) -> str:
+
+def clean_newlines_between_tags(
+    html: str, exclude_tags: tuple = ("pre", "textarea")
+) -> str:
     """
     Removes multiple newlines between HTML tags while preserving newlines within specified tags.
 
@@ -251,223 +289,223 @@ def clean_newlines_between_tags(html: str, exclude_tags: tuple = ('pre', 'textar
     # Create a regex pattern to match newlines between tags, excluding specified tags
     if exclude_tags:
         # Join the exclude_tags into a regex pattern
-        excluded = '|'.join(re.escape(tag) for tag in exclude_tags)
-        pattern = r'>(?!\s*<\/?(?:{}))\s*\n\s*<'.format(excluded)
+        excluded = "|".join(re.escape(tag) for tag in exclude_tags)
+        pattern = r">(?!\s*<\/?(?:{}))\s*\n\s*<".format(excluded)
     else:
-        pattern = r'>\s*\n\s*<'
+        pattern = r">\s*\n\s*<"
 
-    replacement = '>\n<'
+    replacement = ">\n<"
 
     # Replace the matched patterns
     cleaned_html = re.sub(pattern, replacement, html)
 
     # # Collapse multiple consecutive newlines into a single newline
-    cleaned_html = re.sub(r'>\n{2,}<', '>\n<', cleaned_html)
+    cleaned_html = re.sub(r">\n{2,}<", ">\n<", cleaned_html)
 
     return cleaned_html
 
 
 @support_input_html
 def collapse_repeated_tags(
-        element,
-        tags_to_consider: Iterable[str] = HTML_COMMON_NON_INTERACTABLE_TAGS,
-        merge_attributes: bool = True,
-        merge_attributes_exclusion: Iterable[str] = None,
-        list_like_attrs: Iterable[str] = HTML_COMMON_LIST_LIKE_ATTRIBUTES,
-        cross_tag_collapse: bool = False
+    element,
+    tags_to_consider: Iterable[str] = HTML_COMMON_NON_INTERACTABLE_TAGS,
+    merge_attributes: bool = True,
+    merge_attributes_exclusion: Iterable[str] = None,
+    list_like_attrs: Iterable[str] = HTML_COMMON_LIST_LIKE_ATTRIBUTES,
+    cross_tag_collapse: bool = False,
 ):
     """
-   Collapse nested tags in a single pass (stack-based DFS post-order), optionally
-    merging attributes and allowing cross-tag collapsing.
+    Collapse nested tags in a single pass (stack-based DFS post-order), optionally
+     merging attributes and allowing cross-tag collapsing.
 
-    This function traverses the DOM bottom-up, looking for situations where:
-      1. A parent tag is in ``tags_to_consider``.
-      2. The parent has exactly one element child (no sibling tags).
-      3. The parent has no non-whitespace text outside that child (via :func:`get_immediate_text`).
+     This function traverses the DOM bottom-up, looking for situations where:
+       1. A parent tag is in ``tags_to_consider``.
+       2. The parent has exactly one element child (no sibling tags).
+       3. The parent has no non-whitespace text outside that child (via :func:`get_immediate_text`).
 
-    **Normal Collapse** (default):
-      - Parent and child **must share the same tag name** (e.g., both <div>).
+     **Normal Collapse** (default):
+       - Parent and child **must share the same tag name** (e.g., both <div>).
 
-    **Cross-Tag Collapse**:
-      - If ``cross_tag_collapse=True``, the parent and child **only need to be** in
-        ``tags_to_consider``, but **do not** need the same tag name. For instance,
-        a `<div>` parent could collapse into a `<span>` child, merging their attributes.
+     **Cross-Tag Collapse**:
+       - If ``cross_tag_collapse=True``, the parent and child **only need to be** in
+         ``tags_to_consider``, but **do not** need the same tag name. For instance,
+         a `<div>` parent could collapse into a `<span>` child, merging their attributes.
 
-    When a collapse occurs:
-      - If ``merge_attributes`` is True, attributes from the parent are merged
-        into the child (via an internal :func:`_merge_attributes`).
-      - The parent node is then removed from the DOM, replaced by its single child.
-      - This can happen even if the ``root_element`` itself collapses, in which
-        case the newly promoted child becomes the top-level node.
+     When a collapse occurs:
+       - If ``merge_attributes`` is True, attributes from the parent are merged
+         into the child (via an internal :func:`_merge_attributes`).
+       - The parent node is then removed from the DOM, replaced by its single child.
+       - This can happen even if the ``root_element`` itself collapses, in which
+         case the newly promoted child becomes the top-level node.
 
-    Because this function is decorated with ``@support_input_html``, the input
-    ``root_element`` is already a BeautifulSoup element or soup object (no string
-    parsing here). The DOM is modified **in place**.
+     Because this function is decorated with ``@support_input_html``, the input
+     ``root_element`` is already a BeautifulSoup element or soup object (no string
+     parsing here). The DOM is modified **in place**.
 
-    Args:
-        element (bs4.element.Tag or bs4.BeautifulSoup):
-            A BeautifulSoup Tag or soup object to process in place.
-        tags_to_consider (Iterable[str], optional):
-            One or more tag names that can be collapsed if nested. Defaults to
-            ``HTML_COMMON_NON_INTERACTABLE_TAGS`` (e.g., 'div', 'span', etc.).
-        merge_attributes (bool, optional):
-            If True, merges the parent's attributes into the child before collapsing.
-            Defaults to True.
-        list_like_attrs (Iterable[str], optional):
-            A set/list of attribute names (e.g., ``{'class', 'rel'}``) that should be
-            merged as space-delimited lists with deduplication. Defaults to ``{'class'}``.
-        cross_tag_collapse (bool, optional):
-            If False (default), parent and child **must share the same tag name** to collapse.
-            If True, any single child *in* ``tags_to_consider`` can replace its parent
-            *also in* ``tags_to_consider``—even if their names differ.
+     Args:
+         element (bs4.element.Tag or bs4.BeautifulSoup):
+             A BeautifulSoup Tag or soup object to process in place.
+         tags_to_consider (Iterable[str], optional):
+             One or more tag names that can be collapsed if nested. Defaults to
+             ``HTML_COMMON_NON_INTERACTABLE_TAGS`` (e.g., 'div', 'span', etc.).
+         merge_attributes (bool, optional):
+             If True, merges the parent's attributes into the child before collapsing.
+             Defaults to True.
+         list_like_attrs (Iterable[str], optional):
+             A set/list of attribute names (e.g., ``{'class', 'rel'}``) that should be
+             merged as space-delimited lists with deduplication. Defaults to ``{'class'}``.
+         cross_tag_collapse (bool, optional):
+             If False (default), parent and child **must share the same tag name** to collapse.
+             If True, any single child *in* ``tags_to_consider`` can replace its parent
+             *also in* ``tags_to_consider``—even if their names differ.
 
-    Returns:
-        bs4.element.Tag or bs4.BeautifulSoup:
-            The updated ``root_element`` (or its replacement if it was collapsed).
-            If the top-level node collapses into its single child, that child
-            effectively becomes the new root in the DOM tree.
+     Returns:
+         bs4.element.Tag or bs4.BeautifulSoup:
+             The updated ``root_element`` (or its replacement if it was collapsed).
+             If the top-level node collapses into its single child, that child
+             effectively becomes the new root in the DOM tree.
 
-    Examples:
-        # 1) Basic collapse of nested <div> elements:
-        >>> html = \"\"\"<div class="outer"><div class="inner">Hello</div></div>\"\"\"
-        >>> new_soup = collapse_repeated_tags(html, tags_to_consider=('div',))
-        >>> print(new_soup)
-        <div class="outer inner">Hello</div>
-        >>> html = \"\"\"<div class="level1"><div class="level1"><p>Some text</p></div></div>\"\"\"
-        >>> new_soup = collapse_repeated_tags(html, tags_to_consider=('div',))
-        >>> print(new_soup)
-        <div class="level1"><p>Some text</p></div>
+     Examples:
+         # 1) Basic collapse of nested <div> elements:
+         >>> html = \"\"\"<div class="outer"><div class="inner">Hello</div></div>\"\"\"
+         >>> new_soup = collapse_repeated_tags(html, tags_to_consider=('div',))
+         >>> print(new_soup)
+         <div class="outer inner">Hello</div>
+         >>> html = \"\"\"<div class="level1"><div class="level1"><p>Some text</p></div></div>\"\"\"
+         >>> new_soup = collapse_repeated_tags(html, tags_to_consider=('div',))
+         >>> print(new_soup)
+         <div class="level1"><p>Some text</p></div>
 
-        # 2) Parent has non-whitespace text => no collapse:
-        >>> html = \"\"\"<div class="outer">Text <div class="inner">Hello</div></div>\"\"\"
-        >>> new_soup = collapse_repeated_tags(html, tags_to_consider=('div',))
-        >>> print(new_soup)
-        <div class="outer">Text <div class="inner">Hello</div></div>
+         # 2) Parent has non-whitespace text => no collapse:
+         >>> html = \"\"\"<div class="outer">Text <div class="inner">Hello</div></div>\"\"\"
+         >>> new_soup = collapse_repeated_tags(html, tags_to_consider=('div',))
+         >>> print(new_soup)
+         <div class="outer">Text <div class="inner">Hello</div></div>
 
-        # 3) Multiple children => no collapse:
-        >>> html = \"\"\"<div><div class="child1">A</div><div class="child2">B</div></div>\"\"\"
-        >>> new_soup = collapse_repeated_tags(html, tags_to_consider=('div',))
-        >>> print(new_soup)
-        <div><div class="child1">A</div><div class="child2">B</div></div>
+         # 3) Multiple children => no collapse:
+         >>> html = \"\"\"<div><div class="child1">A</div><div class="child2">B</div></div>\"\"\"
+         >>> new_soup = collapse_repeated_tags(html, tags_to_consider=('div',))
+         >>> print(new_soup)
+         <div><div class="child1">A</div><div class="child2">B</div></div>
 
-        # 4) Collapsing but preserving parent attributes by merging them:
-        >>> html = \"\"\"<span id="parent" class="outer"><span class="inner">Text</span></span>\"\"\"
-        >>> new_soup = collapse_repeated_tags(html, tags_to_consider=('span',), merge_attributes=True)
-        >>> print(new_soup)
-        <span class="outer inner" id="parent">Text</span>
+         # 4) Collapsing but preserving parent attributes by merging them:
+         >>> html = \"\"\"<span id="parent" class="outer"><span class="inner">Text</span></span>\"\"\"
+         >>> new_soup = collapse_repeated_tags(html, tags_to_consider=('span',), merge_attributes=True)
+         >>> print(new_soup)
+         <span class="outer inner" id="parent">Text</span>
 
-        # 5) Disabling attribute merging:
-        >>> html = \"\"\"<div class="outer" data-info="p123"><div class="inner">Hello</div></div>\"\"\"
-        >>> new_soup = collapse_repeated_tags(html, tags_to_consider=('div',), merge_attributes=False)
-        >>> print(new_soup)
-        <div class="inner">Hello</div>
+         # 5) Disabling attribute merging:
+         >>> html = \"\"\"<div class="outer" data-info="p123"><div class="inner">Hello</div></div>\"\"\"
+         >>> new_soup = collapse_repeated_tags(html, tags_to_consider=('div',), merge_attributes=False)
+         >>> print(new_soup)
+         <div class="inner">Hello</div>
 
-        # 6) Root element itself collapses (becomes its child):
-        >>> html = \"\"\"<div><div class="outer"><div class="inner">Hello</div></div></div>\"\"\"
-        >>> new_soup = collapse_repeated_tags(html, tags_to_consider=('div',))
-        >>> print(new_soup)
-        <div class="outer inner">Hello</div>
+         # 6) Root element itself collapses (becomes its child):
+         >>> html = \"\"\"<div><div class="outer"><div class="inner">Hello</div></div></div>\"\"\"
+         >>> new_soup = collapse_repeated_tags(html, tags_to_consider=('div',))
+         >>> print(new_soup)
+         <div class="outer inner">Hello</div>
 
-        # 7) Multiple tag types to consider (both <div> and <span>):
-        >>> html = \"\"\"<div class="wrap">
-        ...   <div class="outer">
-        ...     <div class="outer">
-        ...       <span class="middle">
-        ...         <span class="middle inner">Hello</span>
-        ...       </span>
-        ...     </div>
-        ...   </div>
-        ... </div>\"\"\"
-        >>> new_soup = collapse_repeated_tags(html, tags_to_consider=('div', 'span'))
-        >>> print(new_soup)
-        <div class="wrap outer">
-        <span class="middle inner">Hello</span>
-        </div>
-        >>> new_soup = collapse_repeated_tags(html, tags_to_consider=('div', 'span'), cross_tag_collapse=True)
-        >>> print(new_soup)
-        <span class="wrap outer middle inner">Hello</span>
+         # 7) Multiple tag types to consider (both <div> and <span>):
+         >>> html = \"\"\"<div class="wrap">
+         ...   <div class="outer">
+         ...     <div class="outer">
+         ...       <span class="middle">
+         ...         <span class="middle inner">Hello</span>
+         ...       </span>
+         ...     </div>
+         ...   </div>
+         ... </div>\"\"\"
+         >>> new_soup = collapse_repeated_tags(html, tags_to_consider=('div', 'span'))
+         >>> print(new_soup)
+         <div class="wrap outer">
+         <span class="middle inner">Hello</span>
+         </div>
+         >>> new_soup = collapse_repeated_tags(html, tags_to_consider=('div', 'span'), cross_tag_collapse=True)
+         >>> print(new_soup)
+         <span class="wrap outer middle inner">Hello</span>
 
-        # 8) Two realistic complex examples:
-        >>> html = \"\"\"<div __id__="1827" class="span12 widget-span widget-type-cell dnd-column">
-        ... <div __id__="1828" class="row-fluid-wrapper row-depth-1 row-number-9 dnd-row">
-        ... <div __id__="1829" class="row-fluid">
-        ... <div __id__="1831" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_module">
-        ... <h3 __id__="1841">Swim Clinics</h3>
-        ... <h4 __id__="1842">Focused Training for Advanced Swimmers</h4>
-        ... <p __id__="1843">Our stroke clinics are ideal for swimmers looking to refine specific techniques or prepare for competitive events. With targeted instruction from experienced coaches, swimmers improve efficiency, strength, and speed in the water.</p>
-        ... <strong __id__="1845">Clinic Options</strong>
-        ... <p __id__="1846"><strong __id__="1847">Stroke Clinics:</strong> Focus on perfecting stroke mechanics.</p>
-        ... <p __id__="1848"><strong __id__="1849">Starts &amp; Turns Clinics:</strong> Learn the fundamentals of competitive starts and turns to gain an edge in races.</p>
-        ... </div>
-        ... </div>
-        ... </div>
-        ... </div>\"\"\"
-        >>> new_soup = collapse_repeated_tags(
-        ...     html,
-        ...     tags_to_consider=('div', 'span'),
-        ...     cross_tag_collapse=True,
-        ...     merge_attributes_exclusion=('__id__',)
-        ... )
-        >>> print(new_soup)
-        <div __id__="1831" class="span12 widget-span widget-type-cell dnd-column row-fluid-wrapper row-depth-1 row-number-9 dnd-row hs_cos_wrapper_widget hs_cos_wrapper_type_module">
-        <h3 __id__="1841">Swim Clinics</h3>
-        <h4 __id__="1842">Focused Training for Advanced Swimmers</h4>
-        <p __id__="1843">Our stroke clinics are ideal for swimmers looking to refine specific techniques or prepare for competitive events. With targeted instruction from experienced coaches, swimmers improve efficiency, strength, and speed in the water.</p>
-        <strong __id__="1845">Clinic Options</strong>
-        <p __id__="1846"><strong __id__="1847">Stroke Clinics:</strong> Focus on perfecting stroke mechanics.</p>
-        <p __id__="1848"><strong __id__="1849">Starts &amp; Turns Clinics:</strong> Learn the fundamentals of competitive starts and turns to gain an edge in races.</p>
-        </div>
-        >>> html = \"\"\"<div __id__="1827" class="span12 widget-span widget-type-cell dnd-column">
-        ... <div __id__="581" class="row-fluid-wrapper row-depth-1 row-number-2 dnd-row">
-        ... <div __id__="582" class="row-fluid">
-        ... <div __id__="584" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_module">
-        ... <span __id__="593">Swim Lessons in Bellevue (Kelsey Creek)</span>
-        ... <span __id__="595">Safety for All, Confidence for Life.</span>
-        ... <a __id__="597" class="cta-primary ga-safesplash-signup" href="https://app.iclasspro.com/portal/bellevuewa/classes?__hstc=167463265.d0093c0c031aefa85c4726eb13ca07b9.1738195760736.1738195760736.1738195760736.1&amp;__hssc=167463265.1.1738195760736&amp;__hsfp=1877921029">Enroll Now</a>
-        ... </div>
-        ... </div>
-        ... </div>
-        ... <div __id__="601" class="row-fluid-wrapper row-depth-1 row-number-3 dnd-row">
-        ... <div __id__="603" class="span12 widget-span widget-type-custom_widget dnd-module">
-        ... <div __id__="604" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_module">
-        ... <h2 __id__="613">Bellevue Swim Lessons Hosted at La Fitness</h2>
-        ... <p __id__="614">Ready to make a splash in Bellevue? SafeSplash offers swimming lessons for all ages and skill levels, right near Kelsey Creek and Larsen Lake. Whether you're a beginner or looking to refine your swimming technique, our expert instructors are here to guide you every stroke of the way.</p>
-        ... <p __id__="615">At SafeSplash Bellevue, we focus on water safety, skill-building, and building confidence in the water. Our comprehensive swim programs are designed for children and adults alike, with a variety of class options that cater to different schedules and skill levels. We believe in creating a positive, supportive environment where swimmers can thrive and develop at their own pace.</p>
-        ... <p __id__="616">Conveniently located on Bellevue’s Eastside, SafeSplash is your go-to spot for swimming lessons near Kelsey Creek. Our facility provides a safe and welcoming space for families to learn and grow together. Whether you’re preparing your little one for their first swim or looking to refine your own skills, SafeSplash in Bellevue is the place to be. Come see why we’re a trusted choice for swim lessons in Bellevue, WA!</p>
-        ... <a __id__="618" class="cta-primary" href="https://www.safesplash.com/locations/bellevue-kelsey-creek-wa/swim-lessons">LEARN MORE ABOUT OUR PROGRAMS</a>
-        ... </div>
-        ... </div>
-        ... </div>
-        ... </div>\"\"\"
-        >>> new_soup = collapse_repeated_tags(
-        ...     BeautifulSoup(html),
-        ...     tags_to_consider=('div', 'span'),
-        ...     cross_tag_collapse=True,
-        ...     merge_attributes_exclusion=('__id__',)
-        ... )
-        >>> print(new_soup)
-        <html><body><div __id__="1827" class="span12 widget-span widget-type-cell dnd-column">
-        <div __id__="584" class="row-fluid-wrapper row-depth-1 row-number-2 dnd-row hs_cos_wrapper_widget hs_cos_wrapper_type_module">
-        <span __id__="593">Swim Lessons in Bellevue (Kelsey Creek)</span>
-        <span __id__="595">Safety for All, Confidence for Life.</span>
-        <a __id__="597" class="cta-primary ga-safesplash-signup" href="https://app.iclasspro.com/portal/bellevuewa/classes?__hstc=167463265.d0093c0c031aefa85c4726eb13ca07b9.1738195760736.1738195760736.1738195760736.1&amp;__hssc=167463265.1.1738195760736&amp;__hsfp=1877921029">Enroll Now</a>
-        </div>
-        <div __id__="604" class="row-fluid-wrapper row-depth-1 row-number-3 dnd-row span12 widget-span widget-type-custom_widget dnd-module hs_cos_wrapper_widget hs_cos_wrapper_type_module">
-        <h2 __id__="613">Bellevue Swim Lessons Hosted at La Fitness</h2>
-        <p __id__="614">Ready to make a splash in Bellevue? SafeSplash offers swimming lessons for all ages and skill levels, right near Kelsey Creek and Larsen Lake. Whether you're a beginner or looking to refine your swimming technique, our expert instructors are here to guide you every stroke of the way.</p>
-        <p __id__="615">At SafeSplash Bellevue, we focus on water safety, skill-building, and building confidence in the water. Our comprehensive swim programs are designed for children and adults alike, with a variety of class options that cater to different schedules and skill levels. We believe in creating a positive, supportive environment where swimmers can thrive and develop at their own pace.</p>
-        <p __id__="616">Conveniently located on Bellevue’s Eastside, SafeSplash is your go-to spot for swimming lessons near Kelsey Creek. Our facility provides a safe and welcoming space for families to learn and grow together. Whether you’re preparing your little one for their first swim or looking to refine your own skills, SafeSplash in Bellevue is the place to be. Come see why we’re a trusted choice for swim lessons in Bellevue, WA!</p>
-        <a __id__="618" class="cta-primary" href="https://www.safesplash.com/locations/bellevue-kelsey-creek-wa/swim-lessons">LEARN MORE ABOUT OUR PROGRAMS</a>
-        </div>
-        </div></body></html>
-        >>> new_soup2 = collapse_repeated_tags(
-        ...     new_soup,
-        ...     tags_to_consider=('div', 'span'),
-        ...     cross_tag_collapse=True,
-        ...     merge_attributes_exclusion=('__id__',)
-        ... )
-        >>> print(str(new_soup2) == str(new_soup))
-        True
+         # 8) Two realistic complex examples:
+         >>> html = \"\"\"<div __id__="1827" class="span12 widget-span widget-type-cell dnd-column">
+         ... <div __id__="1828" class="row-fluid-wrapper row-depth-1 row-number-9 dnd-row">
+         ... <div __id__="1829" class="row-fluid">
+         ... <div __id__="1831" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_module">
+         ... <h3 __id__="1841">Swim Clinics</h3>
+         ... <h4 __id__="1842">Focused Training for Advanced Swimmers</h4>
+         ... <p __id__="1843">Our stroke clinics are ideal for swimmers looking to refine specific techniques or prepare for competitive events. With targeted instruction from experienced coaches, swimmers improve efficiency, strength, and speed in the water.</p>
+         ... <strong __id__="1845">Clinic Options</strong>
+         ... <p __id__="1846"><strong __id__="1847">Stroke Clinics:</strong> Focus on perfecting stroke mechanics.</p>
+         ... <p __id__="1848"><strong __id__="1849">Starts &amp; Turns Clinics:</strong> Learn the fundamentals of competitive starts and turns to gain an edge in races.</p>
+         ... </div>
+         ... </div>
+         ... </div>
+         ... </div>\"\"\"
+         >>> new_soup = collapse_repeated_tags(
+         ...     html,
+         ...     tags_to_consider=('div', 'span'),
+         ...     cross_tag_collapse=True,
+         ...     merge_attributes_exclusion=('__id__',)
+         ... )
+         >>> print(new_soup)
+         <div __id__="1831" class="span12 widget-span widget-type-cell dnd-column row-fluid-wrapper row-depth-1 row-number-9 dnd-row hs_cos_wrapper_widget hs_cos_wrapper_type_module">
+         <h3 __id__="1841">Swim Clinics</h3>
+         <h4 __id__="1842">Focused Training for Advanced Swimmers</h4>
+         <p __id__="1843">Our stroke clinics are ideal for swimmers looking to refine specific techniques or prepare for competitive events. With targeted instruction from experienced coaches, swimmers improve efficiency, strength, and speed in the water.</p>
+         <strong __id__="1845">Clinic Options</strong>
+         <p __id__="1846"><strong __id__="1847">Stroke Clinics:</strong> Focus on perfecting stroke mechanics.</p>
+         <p __id__="1848"><strong __id__="1849">Starts &amp; Turns Clinics:</strong> Learn the fundamentals of competitive starts and turns to gain an edge in races.</p>
+         </div>
+         >>> html = \"\"\"<div __id__="1827" class="span12 widget-span widget-type-cell dnd-column">
+         ... <div __id__="581" class="row-fluid-wrapper row-depth-1 row-number-2 dnd-row">
+         ... <div __id__="582" class="row-fluid">
+         ... <div __id__="584" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_module">
+         ... <span __id__="593">Swim Lessons in Bellevue (Kelsey Creek)</span>
+         ... <span __id__="595">Safety for All, Confidence for Life.</span>
+         ... <a __id__="597" class="cta-primary ga-safesplash-signup" href="https://app.iclasspro.com/portal/bellevuewa/classes?__hstc=167463265.d0093c0c031aefa85c4726eb13ca07b9.1738195760736.1738195760736.1738195760736.1&amp;__hssc=167463265.1.1738195760736&amp;__hsfp=1877921029">Enroll Now</a>
+         ... </div>
+         ... </div>
+         ... </div>
+         ... <div __id__="601" class="row-fluid-wrapper row-depth-1 row-number-3 dnd-row">
+         ... <div __id__="603" class="span12 widget-span widget-type-custom_widget dnd-module">
+         ... <div __id__="604" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_module">
+         ... <h2 __id__="613">Bellevue Swim Lessons Hosted at La Fitness</h2>
+         ... <p __id__="614">Ready to make a splash in Bellevue? SafeSplash offers swimming lessons for all ages and skill levels, right near Kelsey Creek and Larsen Lake. Whether you're a beginner or looking to refine your swimming technique, our expert instructors are here to guide you every stroke of the way.</p>
+         ... <p __id__="615">At SafeSplash Bellevue, we focus on water safety, skill-building, and building confidence in the water. Our comprehensive swim programs are designed for children and adults alike, with a variety of class options that cater to different schedules and skill levels. We believe in creating a positive, supportive environment where swimmers can thrive and develop at their own pace.</p>
+         ... <p __id__="616">Conveniently located on Bellevue’s Eastside, SafeSplash is your go-to spot for swimming lessons near Kelsey Creek. Our facility provides a safe and welcoming space for families to learn and grow together. Whether you’re preparing your little one for their first swim or looking to refine your own skills, SafeSplash in Bellevue is the place to be. Come see why we’re a trusted choice for swim lessons in Bellevue, WA!</p>
+         ... <a __id__="618" class="cta-primary" href="https://www.safesplash.com/locations/bellevue-kelsey-creek-wa/swim-lessons">LEARN MORE ABOUT OUR PROGRAMS</a>
+         ... </div>
+         ... </div>
+         ... </div>
+         ... </div>\"\"\"
+         >>> new_soup = collapse_repeated_tags(
+         ...     BeautifulSoup(html),
+         ...     tags_to_consider=('div', 'span'),
+         ...     cross_tag_collapse=True,
+         ...     merge_attributes_exclusion=('__id__',)
+         ... )
+         >>> print(new_soup)
+         <html><body><div __id__="1827" class="span12 widget-span widget-type-cell dnd-column">
+         <div __id__="584" class="row-fluid-wrapper row-depth-1 row-number-2 dnd-row hs_cos_wrapper_widget hs_cos_wrapper_type_module">
+         <span __id__="593">Swim Lessons in Bellevue (Kelsey Creek)</span>
+         <span __id__="595">Safety for All, Confidence for Life.</span>
+         <a __id__="597" class="cta-primary ga-safesplash-signup" href="https://app.iclasspro.com/portal/bellevuewa/classes?__hstc=167463265.d0093c0c031aefa85c4726eb13ca07b9.1738195760736.1738195760736.1738195760736.1&amp;__hssc=167463265.1.1738195760736&amp;__hsfp=1877921029">Enroll Now</a>
+         </div>
+         <div __id__="604" class="row-fluid-wrapper row-depth-1 row-number-3 dnd-row span12 widget-span widget-type-custom_widget dnd-module hs_cos_wrapper_widget hs_cos_wrapper_type_module">
+         <h2 __id__="613">Bellevue Swim Lessons Hosted at La Fitness</h2>
+         <p __id__="614">Ready to make a splash in Bellevue? SafeSplash offers swimming lessons for all ages and skill levels, right near Kelsey Creek and Larsen Lake. Whether you're a beginner or looking to refine your swimming technique, our expert instructors are here to guide you every stroke of the way.</p>
+         <p __id__="615">At SafeSplash Bellevue, we focus on water safety, skill-building, and building confidence in the water. Our comprehensive swim programs are designed for children and adults alike, with a variety of class options that cater to different schedules and skill levels. We believe in creating a positive, supportive environment where swimmers can thrive and develop at their own pace.</p>
+         <p __id__="616">Conveniently located on Bellevue’s Eastside, SafeSplash is your go-to spot for swimming lessons near Kelsey Creek. Our facility provides a safe and welcoming space for families to learn and grow together. Whether you’re preparing your little one for their first swim or looking to refine your own skills, SafeSplash in Bellevue is the place to be. Come see why we’re a trusted choice for swim lessons in Bellevue, WA!</p>
+         <a __id__="618" class="cta-primary" href="https://www.safesplash.com/locations/bellevue-kelsey-creek-wa/swim-lessons">LEARN MORE ABOUT OUR PROGRAMS</a>
+         </div>
+         </div></body></html>
+         >>> new_soup2 = collapse_repeated_tags(
+         ...     new_soup,
+         ...     tags_to_consider=('div', 'span'),
+         ...     cross_tag_collapse=True,
+         ...     merge_attributes_exclusion=('__id__',)
+         ... )
+         >>> print(str(new_soup2) == str(new_soup))
+         True
     """
 
     if list_like_attrs is None:
@@ -512,9 +550,8 @@ def collapse_repeated_tags(
             if len(tag_children) == 1:
                 only_child = tag_children[0]
                 # either same tag, or cross-tag is allowed
-                same_or_cross = (
-                        only_child.name == node.name
-                        or (cross_tag_collapse and only_child.name in tags_to_consider)
+                same_or_cross = only_child.name == node.name or (
+                    cross_tag_collapse and only_child.name in tags_to_consider
                 )
                 # no parent text
                 if same_or_cross and not get_immediate_text(node, strip=True):
@@ -526,7 +563,7 @@ def collapse_repeated_tags(
                             list_like_attrs=list_like_attrs,
                             excluded_attrs=merge_attributes_exclusion,
                             deduplicate_list_values=True,
-                            deduplicate_text_values=True
+                            deduplicate_text_values=True,
                         )
                     # 4) Mark node as replaced by its single child
                     replaced_map[node] = only_child
@@ -542,7 +579,7 @@ def collapse_repeated_tags(
         get_children=get_tag_children,  # how to find child tags
         process_node=process_node_for_collapse,
         get_value=None,  # we’re dealing directly with Tag objects,
-        return_iterator=False
+        return_iterator=False,
     )
 
     # 6) Return the (possibly collapsed) new root
@@ -550,29 +587,34 @@ def collapse_repeated_tags(
 
 
 def clean_html(
-        html_content: str,
-        tags_to_always_remove: Iterable[str] = DEFAULT_HTML_CLEAN_TAGS_TO_ALWAYS_REMOVE,
-        replace_tags_by_begin_end_marks: Optional[
-            Mapping[str, Union[str, Tuple[str, str]]]] = DEFAULT_HTML_TAGS_REPLACE_BY_BEGIN_END_MARKS,
-        tags_to_keep: Iterable[str] = DEFAULT_HTML_CLEAN_TAGS_TO_KEEP,
-        attributes_to_keep: Union[str, Iterable[str]] = DEFAULT_HTML_CLEAN_ATTRIBUTES_TO_KEEP,
-        keep_elements_with_immediate_text: bool = True,
-        remove_comments: bool = True,
-        remove_extra_newlines_between_tags: bool = True,
-        collapse_non_interactive_tags: Union[bool, Iterable[str]] = False,
-        collapse_non_interactive_tags_merge_attributes_exclusion: Iterable[str] = None,
-        keep_only_incremental_change: Union[bool, float] = 0.9,
-        html_content_to_compare: str = None,
-        consider_text_for_comparison: bool = False,
-        keep_all_text_in_hierarchy_for_incremental_change: bool = True,
-        ignore_attrs_for_comparison=None,
-        additional_rule_sets: Mapping = DEFAULT_ADDITIONAL_RULES,
-        additional_rule_to_trigger: str = None,
-        additional_rule_set_activation_flags: Optional[Sequence[str]] = DEFAULT_RULE_ACTIVATION_FLAGS,
-        disabled_element_rule_sets: Mapping = DEFAULT_ADDITIONAL_RULES_FOR_DISABLED_ELEMENTS,
-        disabled_element_rule_activation_flags: Optional[Sequence[str]] = None,
-        hidden_element_rule_sets: Mapping = DEFAULT_ADDITIONAL_RULES_FOR_HIDDEN_ELEMENTS,
-        hidden_element_rule_activation_flags: Optional[Sequence[str]] = None
+    html_content: str,
+    tags_to_always_remove: Iterable[str] = DEFAULT_HTML_CLEAN_TAGS_TO_ALWAYS_REMOVE,
+    replace_tags_by_begin_end_marks: Optional[
+        Mapping[str, Union[str, Tuple[str, str]]]
+    ] = DEFAULT_HTML_TAGS_REPLACE_BY_BEGIN_END_MARKS,
+    tags_to_keep: Iterable[str] = DEFAULT_HTML_CLEAN_TAGS_TO_KEEP,
+    attributes_to_keep: Union[
+        str, Iterable[str]
+    ] = DEFAULT_HTML_CLEAN_ATTRIBUTES_TO_KEEP,
+    keep_elements_with_immediate_text: bool = True,
+    remove_comments: bool = True,
+    remove_extra_newlines_between_tags: bool = True,
+    collapse_non_interactive_tags: Union[bool, Iterable[str]] = False,
+    collapse_non_interactive_tags_merge_attributes_exclusion: Iterable[str] = None,
+    keep_only_incremental_change: Union[bool, float] = 0.9,
+    html_content_to_compare: str = None,
+    consider_text_for_comparison: bool = False,
+    keep_all_text_in_hierarchy_for_incremental_change: bool = True,
+    ignore_attrs_for_comparison=None,
+    additional_rule_sets: Mapping = DEFAULT_ADDITIONAL_RULES,
+    additional_rule_to_trigger: str = None,
+    additional_rule_set_activation_flags: Optional[
+        Sequence[str]
+    ] = DEFAULT_RULE_ACTIVATION_FLAGS,
+    disabled_element_rule_sets: Mapping = DEFAULT_ADDITIONAL_RULES_FOR_DISABLED_ELEMENTS,
+    disabled_element_rule_activation_flags: Optional[Sequence[str]] = None,
+    hidden_element_rule_sets: Mapping = DEFAULT_ADDITIONAL_RULES_FOR_HIDDEN_ELEMENTS,
+    hidden_element_rule_activation_flags: Optional[Sequence[str]] = None,
 ):
     """
     Cleans HTML content by selectively preserving and removing specified elements and attributes,
@@ -1048,7 +1090,10 @@ def clean_html(
     if keep_only_incremental_change and html_content_to_compare is not None:
         if keep_only_incremental_change is True:
             max_relative_change_for_extraction = 0
-        elif isinstance(keep_only_incremental_change, float) and 0 <= keep_only_incremental_change <= 1:
+        elif (
+            isinstance(keep_only_incremental_change, float)
+            and 0 <= keep_only_incremental_change <= 1
+        ):
             max_relative_change_for_extraction = keep_only_incremental_change
         else:
             raise ValueError(
@@ -1062,17 +1107,17 @@ def clean_html(
             max_relative_change_for_extraction=max_relative_change_for_extraction,
             consider_text_for_comparison=consider_text_for_comparison,
             keep_all_text_in_hierarchy_for_incremental_change=keep_all_text_in_hierarchy_for_incremental_change,
-            ignore_attrs_for_comparison=ignore_attrs_for_comparison
+            ignore_attrs_for_comparison=ignore_attrs_for_comparison,
         )
 
-    soup = BeautifulSoup(html_content, 'html.parser')
+    soup = BeautifulSoup(html_content, "html.parser")
 
     # Get active rules based on activation flags
     active_rules, rule_set_name_for_error = get_active_rules(
         additional_rule_sets=additional_rule_sets,
         additional_rule_to_trigger=additional_rule_to_trigger,
         additional_rule_set_activation_flags=additional_rule_set_activation_flags,
-        global_rule_set_name=RULESET_NAME_GLOBAL
+        global_rule_set_name=RULESET_NAME_GLOBAL,
     )
 
     # Remove explicitly unwanted tags
@@ -1089,24 +1134,31 @@ def clean_html(
     # Activate rules for hidden elements (only if not empty dict and not sentinel)
     activate_is_element_hidden_rules = None
     is_element_hidden_rule_set_name = None
-    if hidden_element_rule_sets and '__use_comprehensive_check__' not in hidden_element_rule_sets:
+    if (
+        hidden_element_rule_sets
+        and "__use_comprehensive_check__" not in hidden_element_rule_sets
+    ):
         if len(hidden_element_rule_sets) > 0:
-            activate_is_element_hidden_rules, is_element_hidden_rule_set_name = get_active_rules(
-                additional_rule_sets=hidden_element_rule_sets,
-                additional_rule_to_trigger=None,
-                additional_rule_set_activation_flags=hidden_element_rule_activation_flags,
-                global_rule_set_name=RULESET_NAME_GLOBAL
+            activate_is_element_hidden_rules, is_element_hidden_rule_set_name = (
+                get_active_rules(
+                    additional_rule_sets=hidden_element_rule_sets,
+                    additional_rule_to_trigger=None,
+                    additional_rule_set_activation_flags=hidden_element_rule_activation_flags,
+                    global_rule_set_name=RULESET_NAME_GLOBAL,
+                )
             )
 
     # Activate rules for disabled elements (only if not empty dict)
     activate_is_element_disabled_rules = None
     is_element_disabled_rule_set_name = None
     if disabled_element_rule_sets and len(disabled_element_rule_sets) > 0:
-        activate_is_element_disabled_rules, is_element_disabled_rule_set_name = get_active_rules(
-            additional_rule_sets=disabled_element_rule_sets,
-            additional_rule_to_trigger=None,
-            additional_rule_set_activation_flags=disabled_element_rule_activation_flags,
-            global_rule_set_name=RULESET_NAME_GLOBAL
+        activate_is_element_disabled_rules, is_element_disabled_rule_set_name = (
+            get_active_rules(
+                additional_rule_sets=disabled_element_rule_sets,
+                additional_rule_to_trigger=None,
+                additional_rule_set_activation_flags=disabled_element_rule_activation_flags,
+                global_rule_set_name=RULESET_NAME_GLOBAL,
+            )
         )
 
     # Create combined filter function
@@ -1119,7 +1171,8 @@ def clean_html(
                 if is_element_hidden_(
                     element,
                     additional_rules=activate_is_element_hidden_rules,
-                    rule_set_name_for_error=is_element_hidden_rule_set_name or 'hidden_element_rules'
+                    rule_set_name_for_error=is_element_hidden_rule_set_name
+                    or "hidden_element_rules",
                 ):
                     return True
             else:
@@ -1133,7 +1186,8 @@ def clean_html(
                 if is_element_disabled_(
                     element,
                     additional_rules=activate_is_element_disabled_rules,
-                    rule_set_name_for_error=is_element_disabled_rule_set_name or 'disabled_element_rules'
+                    rule_set_name_for_error=is_element_disabled_rule_set_name
+                    or "disabled_element_rules",
                 ):
                     return True
 
@@ -1166,11 +1220,13 @@ def clean_html(
     for element in list(soup.find_all()):
         # Evaluate additional rules first (if active)
         if active_rules:
-            action = is_element_matching_rule_set(element, active_rules, rule_set_name_for_error)
-            if action == 'keep':
+            action = is_element_matching_rule_set(
+                element, active_rules, rule_set_name_for_error
+            )
+            if action == "keep":
                 keep_specified_attributes(element, attributes_to_keep)
                 continue
-            elif action == 'remove':
+            elif action == "remove":
                 element.decompose()
                 continue
             # action is None, falls through to existing logic
@@ -1199,7 +1255,7 @@ def clean_html(
             tags_to_consider=collapse_non_interactive_tags,
             merge_attributes=True,
             merge_attributes_exclusion=collapse_non_interactive_tags_merge_attributes_exclusion,
-            cross_tag_collapse=True
+            cross_tag_collapse=True,
         )
 
     cleaned_html = str(soup).strip()

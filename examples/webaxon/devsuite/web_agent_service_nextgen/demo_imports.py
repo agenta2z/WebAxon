@@ -2,6 +2,7 @@
 
 This script shows various ways to import components from the package.
 """
+
 import resolve_path  # Sets up Python path for webaxon imports
 
 print("=" * 70)
@@ -26,15 +27,15 @@ print(")")
 print()
 
 from webaxon.devsuite.web_agent_service_nextgen import (
-    WebAgentService,
-    ServiceConfig,
-    AgentSessionManager,
     AgentFactory,
-    QueueManager,
-    MessageHandlers,
     AgentRunner,
+    AgentSessionManager,
+    MessageHandlers,
+    QueueManager,
+    ServiceConfig,
+    SessionMonitor,
     TemplateManagerWrapper,
-    SessionMonitor
+    WebAgentService,
 )
 
 print("✓ All components imported successfully")
@@ -44,14 +45,18 @@ print()
 print("Method 2: Direct module imports")
 print("-" * 70)
 print("from webaxon.devsuite.web_agent_service_nextgen.core import ServiceConfig")
-print("from webaxon.devsuite.web_agent_service_nextgen.communication import QueueManager")
+print(
+    "from webaxon.devsuite.web_agent_service_nextgen.communication import QueueManager"
+)
 print("from webaxon.devsuite.web_agent_service_nextgen.agents import AgentRunner")
 print("from webaxon.devsuite.web_agent_service_nextgen.session import SessionMonitor")
 print()
 
-from webaxon.devsuite.web_agent_service_nextgen.core import ServiceConfig as Config
-from webaxon.devsuite.web_agent_service_nextgen.communication import QueueManager as QMgr
 from webaxon.devsuite.web_agent_service_nextgen.agents import AgentRunner as Runner
+from webaxon.devsuite.web_agent_service_nextgen.communication import (
+    QueueManager as QMgr,
+)
+from webaxon.devsuite.web_agent_service_nextgen.core import ServiceConfig as Config
 from webaxon.devsuite.web_agent_service_nextgen.session import SessionMonitor as Monitor
 
 print("✓ All components imported successfully")
@@ -72,6 +77,7 @@ print()
 print("Package Information")
 print("-" * 70)
 import webaxon.devsuite.web_agent_service_nextgen as web_agent_service_nextgen
+
 print(f"Version: {web_agent_service_nextgen.__version__}")
 print(f"Author: {web_agent_service_nextgen.__author__}")
 print(f"License: {web_agent_service_nextgen.__license__}")
@@ -82,7 +88,7 @@ print("Available Exports")
 print("-" * 70)
 print(f"Main module exports {len(web_agent_service_nextgen.__all__)} components:")
 for i, name in enumerate(web_agent_service_nextgen.__all__, 1):
-    if not name.startswith('__'):
+    if not name.startswith("__"):
         print(f"  {i}. {name}")
 print()
 

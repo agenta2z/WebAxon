@@ -4,6 +4,7 @@ This module provides the AgentSessionInfo dataclass that holds only data fields
 for an agent session. Runtime objects (agent, thread, interactive) and logging
 (debugger, session_logger) live on AgentSession instead.
 """
+
 from dataclasses import dataclass
 from typing import Optional
 
@@ -29,6 +30,7 @@ class AgentSessionInfo(SessionInfo):
         last_agent_status: Last known agent status for change detection
         template_version: Template version for this session
     """
+
     # Status tracking
     last_agent_status: Optional[str] = None
 

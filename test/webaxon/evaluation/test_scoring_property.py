@@ -27,9 +27,7 @@ for _mod_name in ("PIL", "PIL.Image", "bs4", "BeautifulSoup", "beautifulsoup4"):
         sys.modules[_mod_name] = MagicMock()
 
 import pytest
-from hypothesis import given, settings, assume
-from hypothesis import strategies as st
-
+from hypothesis import assume, given, settings, strategies as st
 from webaxon.evaluation.scoring import (
     _is_infra_failure,
     _SKIP_PATTERNS,
@@ -39,6 +37,7 @@ from webaxon.evaluation.scoring import (
 
 
 # ── Strategies ────────────────────────────────────────────────────────────────
+
 
 # Safe text that does NOT contain any skip pattern substring
 def _safe_text() -> st.SearchStrategy[str]:
@@ -54,11 +53,16 @@ def _safe_text() -> st.SearchStrategy[str]:
 
 
 # Windows reserved device names that cannot be used as directory names
-_WINDOWS_RESERVED = frozenset({
-    "CON", "PRN", "AUX", "NUL",
-    *(f"COM{i}" for i in range(1, 10)),
-    *(f"LPT{i}" for i in range(1, 10)),
-})
+_WINDOWS_RESERVED = frozenset(
+    {
+        "CON",
+        "PRN",
+        "AUX",
+        "NUL",
+        *(f"COM{i}" for i in range(1, 10)),
+        *(f"LPT{i}" for i in range(1, 10)),
+    }
+)
 
 # Task ID strategy — simple alphanumeric identifiers (excluding Windows reserved names)
 _task_id = st.text(
@@ -72,6 +76,7 @@ _skip_pattern = st.sampled_from(_SKIP_PATTERNS)
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
+
 
 def _create_run_dir(
     base: Path,
@@ -93,11 +98,11 @@ def _create_run_dir(
     (task_dir / "result.json").write_text(json.dumps(result), encoding="utf-8")
 
     # Create screenshot files
-    for name in (screenshots or ["0_screenshot.png"]):
+    for name in screenshots or ["0_screenshot.png"]:
         (traj_dir / name).write_bytes(b"\x89PNG_fake")
 
     # Create snapshot text files
-    for name in (snapshot_texts or []):
+    for name in snapshot_texts or []:
         (traj_dir / name).write_text("DOM content", encoding="utf-8")
 
     return task_dir
@@ -147,7 +152,9 @@ class TestSanitizationPreservesNonFailedRuns:
         sanitized_dir = tmp_path / "sanitized"
 
         # Pad responses to match task_ids length
-        responses = [safe_responses[i % len(safe_responses)] for i in range(len(task_ids))]
+        responses = [
+            safe_responses[i % len(safe_responses)] for i in range(len(task_ids))
+        ]
 
         for tid, resp in zip(task_ids, responses):
             _create_run_dir(runs_dir, tid, final_result_response=resp)
@@ -331,9 +338,7 @@ class TestWriteRetryTasksCorrectSubset:
 
     @given(all_ids=st.lists(_task_id, min_size=1, max_size=5, unique=True))
     @settings(max_examples=100)
-    def test_empty_excluded_writes_nothing(
-        self, all_ids: list[str], tmp_path_factory
-    ):
+    def test_empty_excluded_writes_nothing(self, all_ids: list[str], tmp_path_factory):
         tmp_path = tmp_path_factory.mktemp("retry_empty")
         tasks_jsonl = tmp_path / "tasks.jsonl"
         output_path = tmp_path / "retry.jsonl"

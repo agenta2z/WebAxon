@@ -1,6 +1,6 @@
 # Ignore development and build artifacts
-_dev/
-_archive/
+# Development directories — tracked here on dev, ignored on main
+# (main's .gitignore lists _dev/ _archive/)
 _runtime/
 _tmp/
 _logs/

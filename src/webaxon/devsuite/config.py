@@ -32,9 +32,9 @@ Use Case for True (default):
   4. User sends first message → Agent created → Browser opens → Message processed
 """
 
-OPTION_BASE_REASONER = 'AgClaude'
+OPTION_BASE_REASONER = "AgClaude"
 
-OPTION_DEFAULT_PROMPT_VERSION = ''
+OPTION_DEFAULT_PROMPT_VERSION = ""
 
 # Debug Mode Configuration
 # -------------------------
@@ -98,46 +98,33 @@ or multi-session scenarios.
 """
 
 MOCK_USER_PROFILE = {
-    'default': {
-        'Name': {
-            'FirstName': 'Tony',
-            'LastName': 'Chen'
-        },
-        'Known URLs': [
+    "default": {
+        "Name": {"FirstName": "Tony", "LastName": "Chen"},
+        "Known URLs": [
             {
-                'Name': 'Slack',
-                'URL': 'https://app.slack.com/client/',
-                'Description': 'Visit corporate slack chat page to access Slack channels, direct messages, etc.'
-            }
-        ]
-    },
-    'end_customers': {
-        'Name': {
-            'FirstName': 'Tony',
-            'LastName': 'Chen'
-        },
-        'Family': [
-            {
-                'Relation': 'Son',
-                'Age': 9,
-                'FirstName': 'Lincoln',
-                'LastName': 'Yuan'
+                "Name": "Slack",
+                "URL": "https://app.slack.com/client/",
+                "Description": "Visit corporate slack chat page to access Slack channels, direct messages, etc.",
             }
         ],
-        'PhoneNumber': '206-653-6387',
-        'Location': 'Seattle, Washington, USA',
-        'ZipCode': '98121',
-        'Grocery Stores': """- Safeway (https://www.safeway.com), member, frequent customer, free delivery for qualifying purchases
-- QFC (https://www.qfc.com), member, frequent customer, free delivery for qualifying purchases"""
-    }
+    },
+    "end_customers": {
+        "Name": {"FirstName": "Tony", "LastName": "Chen"},
+        "Family": [
+            {"Relation": "Son", "Age": 9, "FirstName": "Lincoln", "LastName": "Yuan"}
+        ],
+        "PhoneNumber": "206-653-6387",
+        "Location": "Seattle, Washington, USA",
+        "ZipCode": "98121",
+        "Grocery Stores": """- Safeway (https://www.safeway.com), member, frequent customer, free delivery for qualifying purchases
+- QFC (https://www.qfc.com), member, frequent customer, free delivery for qualifying purchases""",
+    },
 }
 
 DEFAULT_AGENT_REASONER_ARGS = {
-    'connect_timeout': 20,
-    'response_timeout': 120,
-    'max_new_tokens': 8192
+    "connect_timeout": 20,
+    "response_timeout": 120,
+    "max_new_tokens": 8192,
 }
 
-RESPONSE_AGENT_REASONER_ARGS = {
-    'max_new_tokens': 16384
-}
+RESPONSE_AGENT_REASONER_ARGS = {"max_new_tokens": 16384}

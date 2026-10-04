@@ -44,18 +44,16 @@ for pkg in ["SciencePythonUtils", "ScienceModelingTools"]:
     if os.path.exists(pkg_src) and pkg_src not in sys.path:
         sys.path.insert(0, pkg_src)
 
-from create_goodtime_template_selection_graph import (
-    create_goodtime_template_selection_graph,
-)
 from agent_foundation.common.inferencers.api_inferencers.ag.ag_claude_api_inferencer import (
     AgClaudeApiInferencer as ClaudeApiInferencer,
+)
+from create_goodtime_template_selection_graph import (
+    create_goodtime_template_selection_graph,
 )
 from rich_python_utils.string_utils.formatting.handlebars_format import (
     format_template as handlebars_format,
 )
-from rich_python_utils.string_utils.formatting.template_manager import (
-    TemplateManager,
-)
+from rich_python_utils.string_utils.formatting.template_manager import TemplateManager
 from webaxon.automation.agents import FindElementInferenceConfig, FindElementInferencer
 from webaxon.automation.backends import BrowserConfig, UndetectedChromeConfig
 from webaxon.automation.web_driver import WebDriver
